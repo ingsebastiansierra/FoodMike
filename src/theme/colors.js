@@ -1,0 +1,42 @@
+export const COLORS = {
+  // Brand colors
+  primary: '#4C4DDC',
+  accent: '#FF6B00',
+  
+  // Base colors
+  white: '#FFFFFF',
+  black: '#000000',
+  
+  // Text colors
+  text: {
+    primary: '#0F0F0F',
+    secondary: '#878787',
+    disabled: '#A5A5A5',
+  },
+  
+  // Background colors
+  background: {
+    primary: '#FFFFFF',
+    secondary: '#FAFAFA',
+    divider: '#D6D6D6',
+  },
+
+  // Shadow colors
+  shadow: {
+    light: '#0000000D',
+  }
+};
+
+// Utility function to get shadow style
+export const getShadowStyle = (elevation = 20) => ({
+  shadowColor: COLORS.shadow.light,
+  shadowOpacity: 0.1,
+  shadowOffset: {
+    width: 0,
+    height: 4,
+  },
+  shadowRadius: elevation,
+  elevation: elevation,
+});
+
+export default COLORS; 
