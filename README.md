@@ -29,12 +29,12 @@ Aplicación móvil para pedidos de comida en Samacá, desarrollada con React Nat
 
 1. Clona el repositorio:
 ```bash
-git clone https://github.com/TU_USUARIO/rappifood-samaca.git
+git clone https://github.com/ingsebastiansierra/food-mike.git
 ```
 
 2. Instala las dependencias:
 ```bash
-cd rappifood-samaca
+cd food-mike
 npm install
 ```
 

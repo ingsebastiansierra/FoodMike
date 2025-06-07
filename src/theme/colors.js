@@ -1,11 +1,12 @@
 export const COLORS = {
   // Brand colors
-  primary: '#4C4DDC',
+  primary: '#FF6B00',
   accent: '#FF6B00',
   
   // Base colors
   white: '#FFFFFF',
   black: '#000000',
+  gray: '#878787',
   
   // Text colors
   text: {
@@ -24,7 +25,8 @@ export const COLORS = {
   // Shadow colors
   shadow: {
     light: '#0000000D',
-  }
+  },
+  onboardingBackground: '#FF6B00',
 };
 
 // Utility function to get shadow style
@@ -39,4 +41,4 @@ export const getShadowStyle = (elevation = 20) => ({
   elevation: elevation,
 });
 
-export default COLORS; 
+export default COLORS;
