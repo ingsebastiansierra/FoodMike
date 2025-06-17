@@ -5,10 +5,10 @@ import { COLORS } from '../theme/colors';
 
 const NavItem = ({ iconName, title, isActive, onPress }) => (
   <TouchableOpacity style={styles.navItem} onPress={onPress}>
-    <Icon 
-      name={iconName} 
-      size={24} 
-      color={isActive ? COLORS.accent : COLORS.text.secondary} 
+    <Icon
+      name={iconName}
+      size={24}
+      color={isActive ? COLORS.accent : COLORS.text.secondary}
     />
     <Text style={[
       styles.navText,
@@ -19,31 +19,39 @@ const NavItem = ({ iconName, title, isActive, onPress }) => (
   </TouchableOpacity>
 );
 
-const BottomNavBar = ({ activeTab, onTabPress }) => (
+const BottomNavBar = ({ navigation, activeTab, onTabPress }) => (
   <View style={styles.container}>
-    <NavItem 
-      iconName="home" 
+    <NavItem
+      iconName="home"
       title="Inicio"
-      isActive={activeTab === 'home'} 
-      onPress={() => onTabPress('home')} 
+      isActive={activeTab === 'Home'}
+      onPress={() => {
+        onTabPress('Home');
+      }}
     />
-    <NavItem 
-      iconName="favorite-border" 
+    <NavItem
+      iconName="favorite-border"
       title="Favoritos"
-      isActive={activeTab === 'favorites'} 
-      onPress={() => onTabPress('favorites')} 
+      isActive={activeTab === 'Favoritos'}
+      onPress={() => {
+        onTabPress('Favoritos');
+      }}
     />
-    <NavItem 
-      iconName="notifications-none" 
+    <NavItem
+      iconName="notifications-none"
       title="Notificaciones"
-      isActive={activeTab === 'notifications'} 
-      onPress={() => onTabPress('notifications')} 
+      isActive={activeTab === 'Notificaciones'}
+      onPress={() => {
+        onTabPress('Notificaciones');
+      }}
     />
-    <NavItem 
-      iconName="person-outline" 
+    <NavItem
+      iconName="person-outline"
       title="Perfil"
-      isActive={activeTab === 'profile'} 
-      onPress={() => onTabPress('profile')} 
+      isActive={activeTab === 'Perfil'}
+      onPress={() => {
+        onTabPress('Perfil');
+      }}
     />
   </View>
 );
@@ -81,4 +89,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default BottomNavBar; 
+export default BottomNavBar;
