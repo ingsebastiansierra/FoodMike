@@ -1,5 +1,11 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+} from "react-native";
 import { COLORS } from "../theme/colors";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import BottomNavBar from "../components/BottomNavBar";
@@ -8,7 +14,7 @@ import FavoritosComponent from "../components/FavoritosComponent";
 import NotificacionesComponent from "../components/NotificacionesComponent";
 import PerfilComponent from "../components/PerfilComponent";
 import HomeContentComponent from "../components/HomeContentComponent";
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation } from "@react-navigation/native";
 
 const HomeScreen = () => {
   const navigation = useNavigation();
@@ -18,7 +24,9 @@ const HomeScreen = () => {
     <ScreenContainer>
       <View style={styles.header}>
         <TouchableOpacity>
-          <Icon name="menu" size={30} color={COLORS.black} />
+          <Text style={{ fontSize: 24, color: COLORS.text.primary }}>
+            Food Mike
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity>
           <Icon name="shopping-cart" size={30} color={COLORS.black} />
@@ -73,8 +81,8 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
 

@@ -99,6 +99,69 @@ const POPULAR_FOODS = [
 const HomeContentComponent = () => {
   const [activeCategory, setActiveCategory] = useState("0");
 
+  const RESTAURANTS = [
+    {
+      id: "1",
+      name: "El Corral",
+      stars: 4.5,
+      address: "Calle 123 # 45-67",
+      schedule: "10:00 AM - 10:00 PM",
+      image: {
+        uri: "https://elcorral.com/wp-content/uploads/2023/05/home-el-corral-especial.png",
+      },
+    },
+    {
+      id: "2",
+      name: "McDonalds",
+      stars: 4.0,
+      address: "Avenida 456 # 78-90",
+      schedule: "6:00 AM - 12:00 AM",
+      image: {
+        uri: "https://corporate.mcdonalds.com/content/dam/gwscorp/nfl/nfl-navigation/mcdonalds_logo.png",
+      },
+    },
+    {
+      id: "3",
+      name: "Burger King",
+      stars: 3.5,
+      address: "Carrera 789 # 01-23",
+      schedule: "7:00 AM - 11:00 PM",
+      image: {
+        uri: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Burger_King_logo_%281999-2021%29.svg/2024px-Burger_King_logo_%281999-2021%29.svg.png",
+      },
+    },
+    {
+      id: "4",
+      name: "KFC",
+      stars: 4.2,
+      address: "Transversal 012 # 34-56",
+      schedule: "9:00 AM - 9:00 PM",
+      image: {
+        uri: "https://upload.wikimedia.org/wikipedia/en/thumb/b/bf/KFC_logo.svg/1200px-KFC_logo.svg.png",
+      },
+    },
+    {
+      id: "5",
+      name: "Domino's Pizza",
+      stars: 4.8,
+      address: "Diagonal 345 # 67-89",
+      schedule: "11:00 AM - 11:00 PM",
+      image: {
+        uri: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/Dominos_pizza_logo.svg/2560px-Dominos_pizza_logo.svg.png",
+      },
+    },
+    {
+      id: "6",
+      name: "Subway",
+      stars: 3.9,
+      address: "Circular 678 # 90-12",
+      schedule: "8:00 AM - 10:00 PM",
+      image: {
+        uri: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Subway_logo.svg/2560px-Subway_logo.svg.png",
+      },
+    },
+  ];
+
   const filteredFoods =
     activeCategory === "0"
       ? POPULAR_FOODS
@@ -106,8 +169,7 @@ const HomeContentComponent = () => {
 
   return (
     <ScrollView showsVerticalScrollIndicator={false}>
-      <Text style={styles.title}>Comida deliciosa</Text>
-      <Text style={styles.subtitle}>Entrega súper rápida</Text>
+      
 
       <SearchBar onSearch={() => {}} />
 
@@ -148,7 +210,13 @@ const HomeContentComponent = () => {
       <View style={styles.openRestaurantsSection}>
         <Text style={styles.sectionTitle}>Restaurantes Abiertos</Text>
         <View style={styles.openRestaurantsGrid}>
-          <RestaurantCard restaurant={{}} style={styles.restaurantCard} />
+          {RESTAURANTS.map((restaurant) => (
+            <RestaurantCard
+              key={restaurant.id}
+              restaurant={restaurant}
+              style={styles.restaurantCard}
+            />
+          ))}
         </View>
       </View>
     </ScrollView>

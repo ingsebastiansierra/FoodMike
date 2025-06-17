@@ -4,12 +4,13 @@ import { View, Text, Image, StyleSheet } from 'react-native';
 const RestaurantCard = ({ restaurant }) => {
   return (
     <View style={styles.card}>
-      <Image source={{ uri: restaurant.image }} style={styles.image} />
+      <Image source={{ uri: restaurant.image.uri }} style={styles.image} />
       <View style={styles.info}>
         <Text style={styles.name}>{restaurant.name}</Text>
-        <Text style={styles.cuisine}>{restaurant.cuisine}</Text>
+        <Text style={styles.address}>{restaurant.address}</Text>
+        <Text style={styles.schedule}>{restaurant.schedule}</Text>
         <View style={styles.ratingContainer}>
-          <Text style={styles.rating}>{restaurant.rating}</Text>
+          <Text style={styles.rating}>{restaurant.stars}</Text>
         </View>
       </View>
     </View>
@@ -44,8 +45,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 5,
   },
-  cuisine: {
+  address: {
     fontSize: 14,
+    color: 'gray',
+    marginBottom: 5,
+  },
+  schedule: {
+    fontSize: 12,
     color: 'gray',
     marginBottom: 5,
   },
