@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -15,72 +15,12 @@ import AutoCarousel from "../components/AutoCarousel";
 import { SPACING } from "../theme/spacing";
 import RestaurantCard from "../components/RestaurantCard";
 
-const OPEN_RESTAURANTS = [
-  {
-    id: "1",
-    name: "La fontana",
-    cuisine: "Hamburguesas",
-    rating: 4.5,
-    image:
-      "https://images.unsplash.com/photo-1553979459-d2229ba7433b?ixlib=rb-4.0.3",
-  },
-  {
-    id: "2",
-    name: "Punto rico",
-    cuisine: "Pollo",
-    rating: 4.2,
-    image:
-      "https://images.unsplash.com/photo-1712579733874-c3a79f0f9d12?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-  },
-  {
-    id: "3",
-    name: "La Pizzeria the sanchez",
-    cuisine: "Hamburguesas",
-    rating: 4.5,
-    image:
-      "https://images.unsplash.com/photo-1553979459-d2229ba7433b?ixlib=rb-4.0.3",
-  },
-  {
-    id: "5",
-    name: "Pake pike",
-    cuisine: "Comida mexicana",
-    rating: 4.7,
-    image:
-      "https://images.unsplash.com/photo-1679605097294-ad339b020c0f?q=80&w=1976&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-  },
-];
-
-const CAROUSEL_ITEMS = [
-  {
-    id: "1",
-    image: {
-      uri: "https://images.unsplash.com/photo-1513104890138-7c749659a591?ixlib=rb-4.0.3",
-    },
-    title: "Pizzas 2x1",
-    description: "Todos los martes y jueves",
-    onPress: () => {},
-  },
-  {
-    id: "2",
-    image: {
-      uri: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-4.0.3",
-    },
-    title: "Hamburguesas",
-    description: "¡20% de descuento!",
-    onPress: () => {},
-  },
-  {
-    id: "3",
-    image: {
-      uri: "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?ixlib=rb-4.0.3",
-    },
-    title: "Pollo Broster",
-    description: "Nuevo combo familiar",
-    onPress: () => {},
-  },
-];
-
 const CATEGORIES = [
+  {
+    id: "0",
+    icon: { name: "list" },
+    title: "Todo",
+  },
   {
     id: "1",
     icon: { uri: "https://cdn-icons-png.flaticon.com/512/877/877951.png" },
@@ -93,8 +33,8 @@ const CATEGORIES = [
   },
   {
     id: "3",
-    icon: { uri: "https://cdn-icons-png.flaticon.com/512/1046/1046784.png" },
-    title: "Pollo",
+    icon: { uri: "https://cdn-icons-png.flaticon.com/512/6594/6594511.png"},
+    title: "Pollo"
   },
   {
     id: "4",
@@ -103,7 +43,7 @@ const CATEGORIES = [
   },
   {
     id: "5",
-    icon: { uri: "https://cdn-icons-png.flaticon.com/512/8090/8090510.png" },
+    icon: { uri: "https://cdn-icons-png.flaticon.com/512/2755/2755254.png" },
     title: "Pollo Broster",
   },
 ];
@@ -116,6 +56,7 @@ const POPULAR_FOODS = [
     },
     title: "Hamburguesa Clásica Especial",
     price: "12",
+    category: "1",
   },
   {
     id: "2",
@@ -124,6 +65,7 @@ const POPULAR_FOODS = [
     },
     title: "Pizza Suprema",
     price: "15",
+    category: "2",
   },
   {
     id: "3",
@@ -132,6 +74,7 @@ const POPULAR_FOODS = [
     },
     title: "Pollo Broster Familiar",
     price: "20",
+    category: "5",
   },
   {
     id: "4",
@@ -140,25 +83,36 @@ const POPULAR_FOODS = [
     },
     title: "Alitas BBQ x12",
     price: "18",
+    category: "3",
+  },
+  {
+    id: "5",
+    image: {
+      uri: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    },
+    title: "Coca-Cola",
+    price: "2",
+    category: "4",
   },
 ];
 
 const HomeContentComponent = () => {
-  const [activeCategory, setActiveCategory] = React.useState("1");
+  const [activeCategory, setActiveCategory] = useState("0");
+
+  const filteredFoods =
+    activeCategory === "0"
+      ? POPULAR_FOODS
+      : POPULAR_FOODS.filter((food) => food.category === activeCategory);
 
   return (
     <ScrollView showsVerticalScrollIndicator={false}>
-      {/* Title */}
       <Text style={styles.title}>Comida deliciosa</Text>
       <Text style={styles.subtitle}>Entrega súper rápida</Text>
 
-      {/* Search Bar */}
       <SearchBar onSearch={() => {}} />
 
-      {/* Carousel */}
-      <AutoCarousel items={CAROUSEL_ITEMS} />
+      <AutoCarousel items={[]} />
 
-      {/* Categories */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -175,11 +129,10 @@ const HomeContentComponent = () => {
         ))}
       </ScrollView>
 
-      {/* Popular Now */}
       <View style={styles.popularSection}>
         <Text style={styles.sectionTitle}>Populares ahora</Text>
         <View style={styles.popularGrid}>
-          {POPULAR_FOODS.map((food) => (
+          {filteredFoods.map((food) => (
             <FoodCard
               key={food.id}
               image={food.image}
@@ -192,17 +145,10 @@ const HomeContentComponent = () => {
         </View>
       </View>
 
-      {/* Restaurantes Abiertos */}
       <View style={styles.openRestaurantsSection}>
         <Text style={styles.sectionTitle}>Restaurantes Abiertos</Text>
         <View style={styles.openRestaurantsGrid}>
-          {OPEN_RESTAURANTS.map((restaurant) => (
-            <RestaurantCard
-              key={restaurant.id}
-              restaurant={restaurant}
-              style={styles.restaurantCard}
-            />
-          ))}
+          <RestaurantCard restaurant={{}} style={styles.restaurantCard} />
         </View>
       </View>
     </ScrollView>
@@ -210,13 +156,6 @@ const HomeContentComponent = () => {
 };
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    alignItems: "center",
-  },
   title: {
     fontSize: 32,
     fontWeight: "bold",

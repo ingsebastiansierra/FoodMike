@@ -1,11 +1,18 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
-import { COLORS } from '../theme/colors';
+import React from "react";
+import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
+import { COLORS } from "../theme/colors";
+import Icon from "react-native-vector-icons/MaterialIcons";
 
 const CategoryCard = ({ icon, title, isActive, onPress }) => (
   <TouchableOpacity style={styles.card} onPress={onPress}>
-    <View style={[styles.iconContainer, isActive && styles.activeIconContainer]}>
-      <Image source={icon} style={styles.icon} />
+    <View
+      style={[styles.iconContainer, isActive && styles.activeIconContainer]}
+    >
+      {icon.name ? (
+        <Icon name={icon.name} size={47} color={COLORS.text.primary} />
+      ) : (
+        <Image source={icon} style={styles.icon} />
+      )}
     </View>
     <Text style={[styles.title, isActive && styles.activeTitle]}>{title}</Text>
   </TouchableOpacity>
@@ -13,7 +20,7 @@ const CategoryCard = ({ icon, title, isActive, onPress }) => (
 
 const styles = StyleSheet.create({
   card: {
-    alignItems: 'center',
+    alignItems: "center",
     marginRight: 17,
   },
   iconContainer: {
@@ -21,10 +28,10 @@ const styles = StyleSheet.create({
     height: 77,
     backgroundColor: COLORS.white,
     borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     elevation: 5,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
@@ -49,4 +56,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CategoryCard; 
+export default CategoryCard;
