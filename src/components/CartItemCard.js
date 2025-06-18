@@ -20,8 +20,8 @@ const CartItemCard = ({ item }) => {
           </TouchableOpacity>
         </View>
         <Text style={styles.price}>Price: ${parseFloat(item.price) * item.quantity}</Text>
-        <TouchableOpacity onPress={() => removeFromCart(item.id)}>
-          <Text style={styles.deleteButton}>Delete</Text>
+        <TouchableOpacity onPress={() => removeFromCart(item.id)} style={styles.deleteButton}>
+          <Text style={styles.deleteButtonText}>X</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -77,9 +77,20 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
   },
   deleteButton: {
-    fontSize: 16,
-    color: "red",
-    fontWeight: "bold",
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    width: 25,
+    height: 25,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 12.5,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  deleteButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
 });
 

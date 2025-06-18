@@ -2,7 +2,6 @@ import React, { useState, useContext } from "react";
 import {
   View,
   Text,
-  StyleSheet,
   ScrollView,
   TouchableOpacity,
 } from "react-native";
@@ -16,12 +15,15 @@ import PerfilComponent from "../components/PerfilComponent";
 import HomeContentComponent from "../components/HomeContentComponent";
 import { useNavigation } from "@react-navigation/native";
 import { CartContext } from "../context/CartContext";
+import { Button, StyleSheet } from 'react-native';
+import ConfirmarOrdenComponente from "../components/ConfirmarOrdenComponente";
 
 const HomeScreen = () => {
   const navigation = useNavigation();
   const [activeTab, setActiveTab] = useState("Home");
   const { addToCart, getTotalQuantity, cartItems } = useContext(CartContext);
   const [cartCount, setCartCount] = useState(0);
+  const [showConfirmarOrden, setShowConfirmarOrden] = useState(false);
 
   const handleAddToCart = (food) => {
     addToCart(food);
@@ -31,6 +33,10 @@ const HomeScreen = () => {
   React.useEffect(() => {
     setCartCount(getTotalQuantity());
   }, [cartItems]);
+
+  const toggleConfirmarOrden = () => {
+    setShowConfirmarOrden(!showConfirmarOrden);
+  };
 
   return (
     <ScreenContainer>
@@ -56,12 +62,17 @@ const HomeScreen = () => {
             <PerfilComponent />
           </View>
         ) : null}
-        {activeTab === "Carrito" ? (
-          <View style={styles.container}>
-            <Text style={styles.title}>Carrito</Text>
+        {activeTab === "Carrito" && !showConfirmarOrden ? (
+          <View style={styles.container}> 
             <CarritoComponent />
+           
           </View>
         ) : null}
+        {showConfirmarOrden && (
+          <View style={styles.container}>
+            <ConfirmarOrdenComponente />
+          </View>
+        )}
       </View>
 
       <BottomNavBar
