@@ -96,7 +96,7 @@ const POPULAR_FOODS = [
   },
 ];
 
-const HomeContentComponent = () => {
+const HomeContentComponent = ({ onAddToCart }) => {
   const [activeCategory, setActiveCategory] = useState("0");
 
   const RESTAURANTS = [
@@ -195,13 +195,13 @@ const HomeContentComponent = () => {
         <Text style={styles.sectionTitle}>Populares ahora</Text>
         <View style={styles.popularGrid}>
           {filteredFoods.map((food) => (
-            <FoodCard
+<FoodCard
               key={food.id}
               image={food.image}
               title={food.title}
               price={food.price}
               onPress={() => {}}
-              onAddPress={() => {}}
+              onAddPress={() => onAddToCart(food)}
             />
           ))}
         </View>

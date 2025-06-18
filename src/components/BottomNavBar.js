@@ -3,23 +3,32 @@ import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { COLORS } from '../theme/colors';
 
-const NavItem = ({ iconName, title, isActive, onPress }) => (
-  <TouchableOpacity style={styles.navItem} onPress={onPress}>
-    <Icon
-      name={iconName}
-      size={24}
-      color={isActive ? COLORS.accent : COLORS.text.secondary}
-    />
-    <Text style={[
-      styles.navText,
-      isActive && styles.navTextActive
-    ]}>
-      {title}
-    </Text>
-  </TouchableOpacity>
-);
+const NavItem = ({ iconName, title, subTitle, isActive, onPress }) => {
+  return (
+    <TouchableOpacity style={styles.navItem} onPress={onPress}>
+      <View>
+        <Icon
+          name={iconName}
+          size={24}
+          color={isActive ? COLORS.accent : COLORS.text.secondary}
+        />
+        {subTitle !== undefined && (
+          <View style={styles.badgeContainer}>
+            <Text style={styles.badgeText}>{subTitle}</Text>
+          </View>
+        )}
+      </View>
+      <Text style={[
+        styles.navText,
+        isActive && styles.navTextActive
+      ]}>
+        {title}
+      </Text>
+    </TouchableOpacity>
+  );
+};
 
-const BottomNavBar = ({ navigation, activeTab, onTabPress }) => (
+const BottomNavBar = ({ navigation, activeTab, onTabPress, cartCount }) => (
   <View style={styles.container}>
     <NavItem
       iconName="home"
@@ -38,19 +47,20 @@ const BottomNavBar = ({ navigation, activeTab, onTabPress }) => (
       }}
     />
     <NavItem
-      iconName="notifications-none"
-      title="Notificaciones"
-      isActive={activeTab === 'Notificaciones'}
-      onPress={() => {
-        onTabPress('Notificaciones');
-      }}
-    />
-    <NavItem
       iconName="person-outline"
       title="Perfil"
       isActive={activeTab === 'Perfil'}
       onPress={() => {
         onTabPress('Perfil');
+      }}
+    />
+    <NavItem
+      iconName="shopping-cart"
+      title="Carrito"
+      subTitle={cartCount > 0 ? cartCount : undefined}
+      isActive={activeTab === 'Carrito'}
+      onPress={() => {
+        onTabPress('Carrito');
       }}
     />
   </View>
@@ -83,9 +93,29 @@ const styles = StyleSheet.create({
     marginTop: 2,
     color: COLORS.text.secondary,
   },
+  navSubText: {
+    fontSize: 8,
+    color: COLORS.text.secondary,
+  },
   navTextActive: {
     color: COLORS.accent,
     fontWeight: '500',
+  },
+  badgeContainer: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: 'red',
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  badgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
 });
 
