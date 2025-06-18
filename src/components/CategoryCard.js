@@ -21,13 +21,13 @@ const CategoryCard = ({ icon, title, isActive, onPress }) => (
 const styles = StyleSheet.create({
   card: {
     alignItems: "center",
-    marginRight: 17,
+    paddingRight: 25,
   },
   iconContainer: {
-    width: 77,
-    height: 77,
+    width: 50,
+    height: 50,
     backgroundColor: COLORS.white,
-    borderRadius: 20,
+    borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
     elevation: 5,
@@ -47,9 +47,9 @@ const styles = StyleSheet.create({
     height: 47,
   },
   title: {
-    marginTop: 10,
+    marginTop: 5,
     color: COLORS.text.secondary,
-    fontSize: 16,
+    fontSize: 13,
   },
   activeTitle: {
     color: COLORS.text.primary,
