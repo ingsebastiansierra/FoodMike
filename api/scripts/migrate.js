@@ -288,8 +288,15 @@ async function main() {
   process.exit(0);
 }
 
-// Ejecutar migración
-main().catch(error => {
-  console.error('❌ Error fatal:', error);
-  process.exit(1);
-}); 
+module.exports = {
+  migrateRestaurants,
+  clearData,
+};
+
+// Ejecutar el script si se llama directamente
+if (require.main === module) {
+  main().catch(error => {
+    console.error('❌ Error fatal durante la ejecución del script:', error);
+    process.exit(1);
+  });
+} 

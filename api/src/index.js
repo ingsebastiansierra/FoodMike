@@ -64,6 +64,19 @@ app.use('/api/restaurants', restaurantsRoutes);
 app.use('/api/products', productsRoutes);
 app.use('/api/search', searchRoutes);
 
+// --- RUTA DE MIGRACIÓN TEMPORAL ---
+// ADVERTENCIA: Esta ruta es solo para un uso. Debería ser eliminada después de la migración.
+const { migrateRestaurants } = require('../scripts/migrate'); // Importar la función
+app.get('/api/migrate-data-now', async (req, res) => {
+  try {
+    console.log('--- 🚀 INICIANDO MIGRACIÓN MANUAL DESDE ENDPOINT 🚀 ---');
+    await migrateRestaurants();
+    res.status(200).send('<h1>🎉 Migración completada exitosamente!</h1><p>Por favor, elimina esta ruta de api/src/index.js ahora.</p>');
+  } catch (error) {
+    res.status(500).send(`<h1>❌ Error durante la migración</h1><p>${error.message}</p>`);
+  }
+});
+
 // Middleware para manejo de errores 404
 app.use('*', (req, res) => {
   res.status(404).json({
