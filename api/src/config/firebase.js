@@ -1,37 +1,47 @@
 const admin = require('firebase-admin');
 
-// Configuración de Firebase Admin SDK
-const serviceAccount = {
-  type: process.env.FIREBASE_TYPE || "service_account",
-  project_id: process.env.FIREBASE_PROJECT_ID || "foodmike-autenticacion",
-  private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID || "your-private-key-id",
-  private_key: process.env.FIREBASE_PRIVATE_KEY ? 
-    process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n') : 
-    "-----BEGIN PRIVATE KEY-----\nYour private key here\n-----END PRIVATE KEY-----\n",
-  client_email: process.env.FIREBASE_CLIENT_EMAIL || "firebase-adminsdk-xxxxx@foodmike-autenticacion.iam.gserviceaccount.com",
-  client_id: process.env.FIREBASE_CLIENT_ID || "your-client-id",
-  auth_uri: process.env.FIREBASE_AUTH_URI || "https://accounts.google.com/o/oauth2/auth",
-  token_uri: process.env.FIREBASE_TOKEN_URI || "https://oauth2.googleapis.com/token",
-  auth_provider_x509_cert_url: process.env.FIREBASE_AUTH_PROVIDER_X509_CERT_URL || "https://www.googleapis.com/oauth2/v1/certs",
-  client_x509_cert_url: process.env.FIREBASE_CLIENT_X509_CERT_URL || "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-xxxxx%40foodmike-autenticacion.iam.gserviceaccount.com"
-};
-
 // Inicializar Firebase Admin SDK
 if (!admin.apps.length) {
   try {
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-      databaseURL: process.env.FIREBASE_DATABASE_URL || "https://foodmike-autenticacion.firebaseio.com"
-    });
-    console.log('✅ Firebase Admin SDK initialized successfully');
-  } catch (error) {
-    console.error('❌ Error initializing Firebase Admin SDK:', error);
-    // Para desarrollo, usar configuración básica
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔄 Using development configuration...');
+    let serviceAccount;
+
+    // Prioridad 1: Usar la variable de entorno con el JSON completo (para Railway, Vercel, etc.)
+    if (process.env.FIREBASE_CREDENTIALS_JSON) {
+      console.log('🚀 Initializing Firebase Admin SDK from FIREBASE_CREDENTIALS_JSON...');
+      serviceAccount = JSON.parse(process.env.FIREBASE_CREDENTIALS_JSON);
+    } 
+    // Prioridad 2: Usar un archivo local (para desarrollo local)
+    else {
+      try {
+        // Este archivo NUNCA debe subirse a GitHub. Asegúrate que esté en .gitignore
+        serviceAccount = require('../../../serviceAccountKey.json'); 
+        console.log('🚀 Initializing Firebase Admin SDK from local serviceAccountKey.json file...');
+      } catch (e) {
+        console.warn('⚠️ Firebase credentials not found. Could not find FIREBASE_CREDENTIALS_JSON env var or local serviceAccountKey.json file.');
+        if (process.env.NODE_ENV !== 'development') {
+          throw new Error('Firebase initialization failed in production.');
+        }
+      }
+    }
+    
+    if (serviceAccount) {
       admin.initializeApp({
-        projectId: 'foodmike-autenticacion'
+        credential: admin.credential.cert(serviceAccount),
+        databaseURL: `https://${serviceAccount.project_id}.firebaseio.com`
       });
+      console.log('✅ Firebase Admin SDK initialized successfully.');
+    } else {
+      // Fallback para desarrollo local sin credenciales. La app corre, pero las funciones de Firebase fallarán.
+      console.log('🔄 Initializing Firebase Admin SDK in basic mode for local development.');
+      admin.initializeApp({
+        projectId: 'foodmike-autenticacion' // Reemplaza con tu project ID si es necesario
+      });
+    }
+
+  } catch (error) {
+    console.error('❌ Error initializing Firebase Admin SDK:', error.message);
+    if (process.env.NODE_ENV !== 'development') {
+      process.exit(1); // Detiene la aplicación si la inicialización falla en producción
     }
   }
 }
