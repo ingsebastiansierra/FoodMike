@@ -97,3 +97,7 @@ yarn-error.log
 # Ruby / CocoaPods
 /ios/Pods/
 /vendor/bundle/
+
+# Service account keys
+serviceAccountKey.json
+*.service-account.json

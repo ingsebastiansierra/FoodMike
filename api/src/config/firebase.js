@@ -20,7 +20,7 @@ if (!admin.apps.length) {
       // Prioridad 2: Usar un archivo local (para desarrollo local)
       try {
         // Este archivo NUNCA debe subirse a GitHub. Asegúrate que esté en .gitignore
-        serviceAccount = require('../../../serviceAccountKey.json'); 
+        serviceAccount = require('../../serviceAccountKey.json'); 
         console.log('🚀 Initializing Firebase Admin SDK from local serviceAccountKey.json file...');
       } catch (e) {
         console.warn('⚠️ Firebase credentials not found. Could not find FIREBASE_CREDENTIALS_JSON env var or local serviceAccountKey.json file.');
