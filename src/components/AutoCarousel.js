@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../theme/colors';
 import { SPACING, BORDER_RADIUS } from '../theme/spacing';
 import { FONT_SIZES, FONT_WEIGHTS } from '../theme/typography';
+import { normalizeImageSource } from '../utils/imageUtils';
 
 const { width } = Dimensions.get('window');
 const ITEM_WIDTH = width - 40; // 20px padding on each side
@@ -20,16 +21,6 @@ const ITEM_WIDTH = width - 40; // 20px padding on each side
 const AutoCarousel = ({ items, autoPlay = true, interval = 3000 }) => {
   const scrollViewRef = useRef(null);
   const [currentIndex, setCurrentIndex] = useState(0);
-
-  const normalizeImageSource = (img) => {
-    if (typeof img === 'string' && img) {
-      return { uri: img };
-    }
-    if (img && typeof img === 'object' && img.uri) {
-      return img;
-    }
-    return null;
-  };
 
   useEffect(() => {
     if (!autoPlay || items.length <= 1) return;

@@ -5,6 +5,7 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import { COLORS } from '../theme/colors';
 import { SPACING } from '../theme/spacing';
 import { showConfirmAlert } from '../utils';
+import { normalizeImageSource } from '../utils/imageUtils';
 
 const CartItemCard = ({ item, index }) => {
   const { increaseQuantity, decreaseQuantity, removeFromCart } = useContext(CartContext);
@@ -28,19 +29,7 @@ const CartItemCard = ({ item, index }) => {
   const itemTotal = parseFloat(item.price) * item.quantity;
 
   // Normalizar la imagen para manejar múltiples formatos
-  const getImageSource = () => {
-    if (typeof item.image === 'string' && item.image) {
-      return { uri: item.image };
-    }
-    if (item.image && typeof item.image === 'object' && item.image.uri) {
-      return item.image;
-    }
-    // Retorna null si no hay imagen válida.
-    // Podrías retornar una imagen por defecto aquí.
-    return null;
-  };
-
-  const imageSource = getImageSource();
+  const imageSource = normalizeImageSource(item.image);
 
   return (
     <View style={styles.cardContainer}>

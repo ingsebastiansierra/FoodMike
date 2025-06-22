@@ -16,9 +16,8 @@ export const normalizeImageSource = (image) => {
     return image;
   }
 
-  // En todos los demás casos (null, undefined, string vacío, objeto malformado), retornar null
-  // El componente puede entonces decidir mostrar un placeholder o nada
-  return null;
+  // En todos los demás casos (null, undefined, string vacío, objeto malformado), retornar una imagen local por defecto
+  return require('../assets/logos/food_logo_1.png');
 };
 
 /**

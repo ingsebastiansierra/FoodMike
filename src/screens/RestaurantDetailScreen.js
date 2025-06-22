@@ -22,6 +22,7 @@ import { showAlert } from '../utils';
 import { restaurantsService } from '../services/restaurantsService';
 import { productsService } from '../services/productsService';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { normalizeImageSource } from '../utils/imageUtils';
 
 const { width, height } = Dimensions.get('window');
 
@@ -209,7 +210,7 @@ const RestaurantDetailScreen = ({ route, navigation }) => {
   const categories = getCategories();
 
   // Normalizar la imagen del restaurante
-  const normalizedRestaurantImage = typeof restaurant.image === 'string' ? { uri: restaurant.image } : restaurant.image;
+  const normalizedRestaurantImage = normalizeImageSource(restaurant.image);
 
   return (
     <View style={styles.container}>

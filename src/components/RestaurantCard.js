@@ -4,6 +4,7 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../theme/colors';
 import { SPACING } from '../theme/spacing';
+import { normalizeImageSource } from '../utils/imageUtils';
 
 const { width } = Dimensions.get('window');
 
@@ -64,7 +65,7 @@ const RestaurantCard = ({ restaurant, onPress }) => {
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.9}>
       <View style={styles.imageContainer}>
-        <Image source={normalizedImage} style={styles.image} />
+        <Image source={normalizeImageSource(restaurant.image)} style={styles.image} />
         <LinearGradient
           colors={['transparent', 'rgba(0,0,0,0.7)']}
           style={styles.imageOverlay}

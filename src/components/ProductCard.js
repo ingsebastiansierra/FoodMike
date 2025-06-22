@@ -10,12 +10,13 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, typography } from '../theme';
+import { normalizeImageSource } from '../utils/imageUtils';
 
 const { width } = Dimensions.get('window');
 
 const ProductCard = ({ product, onPress, onAddToCart }) => {
   // Normalizar la imagen para manejar tanto strings como objetos
-  const normalizedImage = typeof product.image === 'string' ? { uri: product.image } : product.image;
+  const normalizedImage = normalizeImageSource(product.image);
   
   const renderStars = (stars) => {
     const fullStars = Math.floor(stars);
