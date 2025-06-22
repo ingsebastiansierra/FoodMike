@@ -3,15 +3,21 @@ const admin = require('firebase-admin');
 // Inicializar Firebase Admin SDK
 if (!admin.apps.length) {
   try {
+    console.log('🔍 Checking for Firebase credentials...');
     let serviceAccount;
 
-    // Prioridad 1: Usar la variable de entorno con el JSON completo (para Railway, Vercel, etc.)
-    if (process.env.FIREBASE_CREDENTIALS_JSON) {
-      console.log('🚀 Initializing Firebase Admin SDK from FIREBASE_CREDENTIALS_JSON...');
-      serviceAccount = JSON.parse(process.env.FIREBASE_CREDENTIALS_JSON);
-    } 
-    // Prioridad 2: Usar un archivo local (para desarrollo local)
-    else {
+    if (process.env.FIREBASE_CREDENTIALS_JSON && process.env.FIREBASE_CREDENTIALS_JSON.length > 10) {
+      console.log('✅ FIREBASE_CREDENTIALS_JSON variable found. Attempting to parse...');
+      try {
+        serviceAccount = JSON.parse(process.env.FIREBASE_CREDENTIALS_JSON);
+        console.log('✅ JSON parsed successfully. Project ID:', serviceAccount.project_id);
+      } catch (e) {
+        console.error('❌ CRITICAL: Failed to parse FIREBASE_CREDENTIALS_JSON.', e.message);
+        throw new Error('Firebase credentials JSON is malformed.');
+      }
+    } else {
+      console.log('⚠️ FIREBASE_CREDENTIALS_JSON not found or is empty. Checking for local file...');
+      // Prioridad 2: Usar un archivo local (para desarrollo local)
       try {
         // Este archivo NUNCA debe subirse a GitHub. Asegúrate que esté en .gitignore
         serviceAccount = require('../../../serviceAccountKey.json'); 
@@ -39,7 +45,7 @@ if (!admin.apps.length) {
     }
 
   } catch (error) {
-    console.error('❌ Error initializing Firebase Admin SDK:', error.message);
+    console.error('❌ Fatal error initializing Firebase Admin SDK:', error.message);
     if (process.env.NODE_ENV !== 'development') {
       process.exit(1); // Detiene la aplicación si la inicialización falla en producción
     }
