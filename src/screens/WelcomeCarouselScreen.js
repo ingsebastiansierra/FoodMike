@@ -7,66 +7,185 @@ import {
   Text,
   TouchableOpacity,
   Dimensions,
-  ImageBackground,
-} from "react-native"; // <-- agregamos ImageBackground
+  StatusBar,
+  Animated,
+} from "react-native";
 import { COLORS } from "../theme/colors";
 import { SPACING } from "../theme/spacing";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { completeOnboarding } from "../utils";
+import Icon from "react-native-vector-icons/FontAwesome";
+import { LinearGradient } from 'expo-linear-gradient';
 
 const { width, height } = Dimensions.get("window");
 const imageSize = width * 0.6;
 
-const WelcomeCarouselScreen = ({ navigation }) => {
+const WelcomeCarouselScreen = ({ navigation, route }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollViewRef = useRef();
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const onComplete = route.params?.onComplete;
 
   const data = [
     {
       id: "1",
       imageSource: require("../assets/Onbornig_1.jpeg"),
       titleText: "¡Bienvenido a Food Mike!",
-      subtitleText:
-        "Encuentra tus comidas favoritas en un solo lugar. ¡Pide y nosotros nos encargamos del resto!",
+      subtitleText: "Descubre la mejor experiencia gastronómica en tu ciudad. Ordena, disfruta y repite con la mejor calidad.",
+      icon: "cutlery",
+      color: "#FF6B00",
+      gradient: ["#FF6B00", "#FF8E53"]
     },
     {
       id: "2",
       imageSource: require("../assets/Onbornig_2.jpeg"),
-      titleText: "Antojos al instante",
-      subtitleText:
-        "¿Se te antoja algo delicioso? ¡Lo tenemos! Pide ahora y recíbelo en minutos.",
+      titleText: "Entrega Rápida y Segura",
+      subtitleText: "Recibe tus pedidos en tiempo récord con seguimiento en tiempo real. Nuestros repartidores están listos para ti.",
+      icon: "truck",
+      color: "#4ECDC4",
+      gradient: ["#4ECDC4", "#7FDBDA"]
     },
     {
       id: "3",
       imageSource: require("../assets/Onbornig_3.jpeg"),
-      titleText: "La mejor variedad",
-      subtitleText:
-        "Desde sushi hasta hamburguesas, ¡encuentra todo lo que buscas en un solo lugar!",
+      titleText: "Variedad Sin Límites",
+      subtitleText: "Desde comida local hasta internacional. Tenemos todo lo que tu paladar desee con los mejores restaurantes.",
+      icon: "globe",
+      color: "#45B7D1",
+      gradient: ["#45B7D1", "#6BC5D8"]
     },
   ];
 
-  const handleNext = async () => {
-    if (currentIndex < data.length - 1) {
-      scrollViewRef.current.scrollTo({
-        x: (currentIndex + 1) * width,
-        animated: true,
-      });
-      setCurrentIndex(currentIndex + 1);
-    } else {
-      try {
-        await AsyncStorage.setItem("onboardingCompleted", "true");
-      } catch (e) {
-        // saving error
+  const completeOnboardingFlow = async () => {
+    try {
+      await completeOnboarding();
+      // Llamar al callback para actualizar el estado en AppNavigator
+      if (onComplete) {
+        onComplete();
       }
-      navigation.navigate("LoginRegister");
+    } catch (error) {
+      console.error("Error completing onboarding:", error);
+      // En caso de error, también intentar actualizar
+      if (onComplete) {
+        onComplete();
+      }
     }
   };
 
-  const handleSkip = () => {
-    navigation.navigate("LoginRegister");
+  const handleNext = async () => {
+    if (currentIndex < data.length - 1) {
+      // Animación de fade out
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }).start(() => {
+        scrollViewRef.current.scrollTo({
+          x: (currentIndex + 1) * width,
+          animated: true,
+        });
+        setCurrentIndex(currentIndex + 1);
+        
+        // Animación de fade in
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }).start();
+      });
+    } else {
+      await completeOnboardingFlow();
+    }
   };
+
+  const handleSkip = async () => {
+    await completeOnboardingFlow();
+  };
+
+  const renderDots = () => (
+    <View style={styles.dotsContainer}>
+      {data.map((_, index) => (
+        <Animated.View
+          key={index}
+          style={[
+            styles.dot,
+            index === currentIndex && styles.activeDot,
+            {
+              transform: [{
+                scale: index === currentIndex ? 1.2 : 1
+              }]
+            }
+          ]}
+        />
+      ))}
+    </View>
+  );
+
+  const renderSlide = (item, index) => (
+    <View key={item.id} style={styles.slideContainer}>
+      <LinearGradient 
+        colors={item.gradient}
+        style={styles.backgroundGradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      >
+        <View style={styles.contentContainer}>
+          <Animated.View 
+            style={[
+              styles.iconContainer,
+              {
+                opacity: fadeAnim,
+                transform: [{
+                  scale: fadeAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0.8, 1]
+                  })
+                }]
+              }
+            ]}
+          >
+            <Icon name={item.icon} size={45} color={item.color} />
+          </Animated.View>
+          
+          <Animated.View
+            style={{
+              opacity: fadeAnim,
+              transform: [{
+                translateY: fadeAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [20, 0]
+                })
+              }]
+            }}
+          >
+            <Image source={item.imageSource} style={styles.image} />
+          </Animated.View>
+          
+          <Animated.View 
+            style={[
+              styles.textContainer,
+              {
+                opacity: fadeAnim,
+                transform: [{
+                  translateY: fadeAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [30, 0]
+                  })
+                }]
+              }
+            ]}
+          >
+            <Text style={styles.title}>{item.titleText}</Text>
+            <Text style={styles.subtitle}>{item.subtitleText}</Text>
+          </Animated.View>
+        </View>
+      </LinearGradient>
+    </View>
+  );
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+      
       <ScrollView
         ref={scrollViewRef}
         horizontal
@@ -82,26 +201,39 @@ const WelcomeCarouselScreen = ({ navigation }) => {
         contentContainerStyle={{ width: width * data.length }}
         style={{ flexGrow: 1 }}
       >
-        {data.map((item) => (
-          <View key={item.id} style={styles.itemContainer}>
-            <View style={styles.cardContainer}>
-              <Image source={item.imageSource} style={styles.image} />
-              <Text style={styles.title}>{item.titleText}</Text>
-              <Text style={styles.subtitle}>{item.subtitleText}</Text>
-            </View>
-          </View>
-        ))}
+        {data.map((item, index) => renderSlide(item, index))}
       </ScrollView>
 
-      <View style={styles.buttonsContainer}>
-        <TouchableOpacity style={styles.button} onPress={handleSkip}>
-          <Text style={styles.buttonText}>Omitir</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={handleNext}>
-          <Text style={styles.buttonText}>
-            {currentIndex === data.length - 1 ? "Comenzar" : "Siguiente"}
-          </Text>
-        </TouchableOpacity>
+      <View style={styles.bottomContainer}>
+        {renderDots()}
+        
+        <View style={styles.buttonsContainer}>
+          <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
+            <Text style={styles.skipButtonText}>Omitir</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[
+              styles.nextButton, 
+              { 
+                backgroundColor: data[currentIndex]?.color || COLORS.primary,
+                shadowColor: data[currentIndex]?.color || COLORS.primary,
+              }
+            ]} 
+            onPress={handleNext}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.nextButtonText}>
+              {currentIndex === data.length - 1 ? "Comenzar" : "Siguiente"}
+            </Text>
+            <Icon 
+              name={currentIndex === data.length - 1 ? "check" : "arrow-right"} 
+              size={18} 
+              color={COLORS.white} 
+              style={{ marginLeft: SPACING.sm }}
+            />
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -110,60 +242,133 @@ const WelcomeCarouselScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    width,
-    height,
     backgroundColor: COLORS.white,
   },
-  itemContainer: {
+  slideContainer: {
     width: width,
-    alignItems: "center",
-    justifyContent: "center",
+    height: height,
   },
-  cardContainer: {
+  backgroundGradient: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  contentContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.xl * 2,
+  },
+  iconContainer: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
     backgroundColor: COLORS.white,
-    alignItems: "center",
-    padding: SPACING.md,
-    borderRadius: 15,
-    marginHorizontal: SPACING.md,
-    elevation: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: SPACING.xl,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
   },
   image: {
     width: imageSize,
     height: imageSize,
     borderRadius: imageSize / 2,
     resizeMode: "cover",
-    alignSelf: "center",
-    overflow: "hidden",
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.xl,
+    elevation: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    borderWidth: 4,
+    borderColor: COLORS.white,
+  },
+  textContainer: {
+    alignItems: 'center',
+    maxWidth: width * 0.85,
   },
   title: {
-    fontSize: 24,
+    fontSize: 32,
     fontWeight: "bold",
-    color: COLORS.text.primary,
-    textAlign: "center",
-    marginBottom: SPACING.sm,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: COLORS.primary,
+    color: COLORS.white,
     textAlign: "center",
     marginBottom: SPACING.md,
+    lineHeight: 38,
+    textShadowColor: 'rgba(0, 0, 0, 0.1)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
+  },
+  subtitle: {
+    fontSize: 18,
+    color: COLORS.white,
+    textAlign: "center",
+    lineHeight: 26,
+    paddingHorizontal: SPACING.md,
+    opacity: 0.95,
+    textShadowColor: 'rgba(0, 0, 0, 0.1)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  bottomContainer: {
+    paddingBottom: SPACING.xl + 20,
     paddingHorizontal: SPACING.lg,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    marginTop: SPACING.xl,
+  },
+  dotsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: SPACING.xl,
+    marginTop: SPACING.lg,
+  },
+  dot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    marginHorizontal: 6,
+  },
+  activeDot: {
+    width: 30,
+    backgroundColor: COLORS.white,
   },
   buttonsContainer: {
     flexDirection: "row",
-    justifyContent: "space-around",
-    padding: SPACING.lg,
-    backgroundColor: "transparent", // ✅ quitamos fondo blanco
+    justifyContent: "space-between",
+    alignItems: "center",
   },
-  button: {
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.md,
-    borderRadius: 5,
-    backgroundColor: COLORS.white,
+  skipButton: {
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
   },
-  buttonText: {
-    color: COLORS.primary,
+  skipButtonText: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: "600",
+    opacity: 0.8,
+  },
+  nextButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: SPACING.md + 4,
+    paddingHorizontal: SPACING.xl + 8,
+    borderRadius: 30,
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+  },
+  nextButtonText: {
+    color: COLORS.white,
     fontSize: 16,
     fontWeight: "bold",
   },

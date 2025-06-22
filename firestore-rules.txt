@@ -1,0 +1,139 @@
+// Reglas de Seguridad de Firestore para Food Mike
+// Copia estas reglas en tu consola de Firebase > Firestore > Rules
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Función para verificar si el usuario está autenticado
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Función para verificar si el usuario es administrador
+    function isAdmin() {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'administrador';
+    }
+    
+    // Función para verificar si el usuario es cliente
+    function isClient() {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'cliente';
+    }
+    
+    // Función para verificar si el usuario accede a su propio documento
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Reglas para la colección de usuarios
+    match /users/{userId} {
+      // Usuarios pueden leer y escribir solo su propio documento
+      allow read, write: if isOwner(userId);
+      
+      // Administradores pueden leer todos los documentos de usuarios
+      allow read: if isAdmin();
+      
+      // Administradores pueden actualizar roles de otros usuarios
+      allow update: if isAdmin() && 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role']);
+    }
+    
+    // Reglas para la colección de restaurantes (futuro)
+    match /restaurants/{restaurantId} {
+      // Todos los usuarios autenticados pueden leer restaurantes
+      allow read: if isAuthenticated();
+      
+      // Solo administradores pueden crear, actualizar y eliminar restaurantes
+      allow create, update, delete: if isAdmin();
+    }
+    
+    // Reglas para la colección de pedidos (futuro)
+    match /orders/{orderId} {
+      // Usuarios pueden leer y crear sus propios pedidos
+      allow read, create: if isAuthenticated() && 
+        request.auth.uid == resource.data.userId;
+      
+      // Administradores pueden leer todos los pedidos
+      allow read: if isAdmin();
+      
+      // Administradores pueden actualizar el estado de los pedidos
+      allow update: if isAdmin() && 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'adminNotes']);
+    }
+    
+    // Reglas para la colección de menús (futuro)
+    match /menus/{menuId} {
+      // Todos los usuarios autenticados pueden leer menús
+      allow read: if isAuthenticated();
+      
+      // Solo administradores pueden gestionar menús
+      allow create, update, delete: if isAdmin();
+    }
+    
+    // Reglas para la colección de favoritos (futuro)
+    match /favorites/{favoriteId} {
+      // Usuarios pueden leer y gestionar sus propios favoritos
+      allow read, write: if isAuthenticated() && 
+        request.auth.uid == resource.data.userId;
+    }
+    
+    // Reglas para la colección de reseñas (futuro)
+    match /reviews/{reviewId} {
+      // Usuarios pueden leer todas las reseñas
+      allow read: if isAuthenticated();
+      
+      // Usuarios pueden crear reseñas
+      allow create: if isAuthenticated() && 
+        request.auth.uid == request.resource.data.userId;
+      
+      // Usuarios pueden actualizar sus propias reseñas
+      allow update: if isAuthenticated() && 
+        request.auth.uid == resource.data.userId;
+      
+      // Administradores pueden eliminar reseñas inapropiadas
+      allow delete: if isAdmin();
+    }
+    
+    // Reglas para la colección de configuraciones del sistema
+    match /system/{configId} {
+      // Solo administradores pueden acceder a configuraciones del sistema
+      allow read, write: if isAdmin();
+    }
+    
+    // Reglas para la colección de notificaciones (futuro)
+    match /notifications/{notificationId} {
+      // Usuarios pueden leer sus propias notificaciones
+      allow read: if isAuthenticated() && 
+        request.auth.uid == resource.data.userId;
+      
+      // Administradores pueden crear notificaciones para todos los usuarios
+      allow create: if isAdmin();
+    }
+    
+    // Reglas para la colección de reportes (futuro)
+    match /reports/{reportId} {
+      // Solo administradores pueden acceder a reportes
+      allow read, write: if isAdmin();
+    }
+    
+    // Regla por defecto: denegar todo lo demás
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+
+// Instrucciones de implementación:
+// 1. Ve a la consola de Firebase
+// 2. Navega a Firestore Database
+// 3. Haz clic en la pestaña "Rules"
+// 4. Reemplaza las reglas existentes con las de arriba
+// 5. Haz clic en "Publish"
+
+// Notas importantes:
+// - Estas reglas asumen que tienes una colección 'users' con documentos que contienen un campo 'role'
+// - Las reglas están preparadas para funcionalidades futuras (restaurantes, pedidos, etc.)
+// - Asegúrate de probar las reglas en modo de prueba antes de publicarlas
+// - Considera usar Firebase Emulator para desarrollo local 

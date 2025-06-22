@@ -13,6 +13,16 @@ export const FONT_SIZES = {
   h1: 64,           // Line height: 72px
 };
 
+// Tamaños adicionales para el sistema de búsqueda
+export const TYPOGRAPHY_SIZES = {
+  xs: 10,
+  sm: 12,
+  md: 14,
+  lg: 16,
+  xl: 18,
+  xxl: 24,
+};
+
 export const FONT_WEIGHTS = {
   regular: 'normal',
   medium: '500',

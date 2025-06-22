@@ -2,7 +2,14 @@ import React, { useState, useEffect } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import HomeScreen from "../screens/HomeScreen";
+import { ActivityIndicator, View, StyleSheet } from "react-native";
+import { COLORS } from "../theme/colors";
+
+// Importar el contexto de autenticación
+import { AuthProvider, useAuth } from "../context/AuthContext";
+import { CartProvider } from "../context/CartContext";
+
+// Pantallas existentes
 import WelcomeCarouselScreen from "../screens/WelcomeCarouselScreen";
 import LoginRegisterScreen from "../screens/LoginRegisterScreen";
 import ForgotPasswordScreen from "../screens/ForgotPasswordScreen";
@@ -10,50 +17,125 @@ import VerifyCodeScreen from "../screens/VerifyCodeScreen";
 import LocationScreen from "../screens/LocationScreen";
 import SplashScreen from "../screens/splash/SplashScreen";
 
+// Nuevas pantallas por roles
+import AdminScreen from "../screens/AdminScreen";
+import ClientHomeScreen from "../screens/ClientHomeScreen";
+import CarritoComponent from '../components/CarritoComponent';
+
+// Nuevas pantallas de búsqueda
+import SearchScreen from "../screens/SearchScreen";
+import RestaurantDetailScreen from "../screens/RestaurantDetailScreen";
+
 const Stack = createStackNavigator();
 
-const AppNavigator = () => {
-  const [isOnboardingCompleted, setIsOnboardingCompleted] = useState(false);
+// Componente de carga
+const LoadingScreen = () => (
+  <View style={styles.loadingContainer}>
+    <ActivityIndicator size="large" color={COLORS.primary} />
+  </View>
+);
+
+// Navegador principal con lógica de autenticación
+const MainNavigator = () => {
+  const [isOnboardingCompleted, setIsOnboardingCompleted] = useState(null);
+  const [isInitializing, setIsInitializing] = useState(true);
+  const [forceUpdate, setForceUpdate] = useState(0);
+  const { user, userRole, loading } = useAuth();
 
   useEffect(() => {
     const checkOnboardingStatus = async () => {
       try {
         const value = await AsyncStorage.getItem("onboardingCompleted");
-        if (value !== null) {
-          setIsOnboardingCompleted(true);
-        }
+        setIsOnboardingCompleted(value === "true");
       } catch (e) {
-        // error reading value
+        console.error("Error al verificar onboarding:", e);
+        setIsOnboardingCompleted(false);
+      } finally {
+        setIsInitializing(false);
       }
     };
 
     checkOnboardingStatus();
-  }, []);
+  }, [forceUpdate]);
 
-  const initialRouteName = isOnboardingCompleted ? "LoginRegister" : "Splash";
+  // Función para actualizar el estado del onboarding
+  const updateOnboardingStatus = () => {
+    setForceUpdate(prev => prev + 1);
+  };
 
-  return (
-    <NavigationContainer>
-      <Stack.Navigator
-        initialRouteName={initialRouteName}
-        screenOptions={{
-          headerShown: false,
-        }}
-      >
-        <Stack.Screen name="Splash" component={SplashScreen} />
-        <Stack.Screen name="WelcomeCarousel" component={WelcomeCarouselScreen} />
-        <Stack.Screen
-          name="LoginRegister"
-          component={LoginRegisterScreen}
-          options={{ gestureEnabled: false }}
-        />
-        <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
-        <Stack.Screen name="VerifyCode" component={VerifyCodeScreen} />
-        <Stack.Screen name="Location" component={LocationScreen} />
-        <Stack.Screen name="Home" component={HomeScreen} />
+  // Mostrar pantalla de carga mientras se verifica la autenticación y onboarding
+  if (loading || isInitializing) {
+    return <LoadingScreen />;
+  }
+
+  // Si el usuario está autenticado, NO mostrar onboarding, ir directamente a las pantallas principales
+  if (user) {
+    return (
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {userRole === 'administrador' ? (
+          // Pantallas para administradores
+          <Stack.Screen name="AdminDashboard" component={AdminScreen} />
+        ) : (
+          // Pantallas para clientes usando ClientHomeScreen directamente
+          <>
+            <Stack.Screen name="ClientDashboard" component={ClientHomeScreen} />
+            <Stack.Screen name="Carrito" component={CarritoComponent} />
+            <Stack.Screen name="Search" component={SearchScreen} />
+            <Stack.Screen name="RestaurantDetail" component={RestaurantDetailScreen} />
+          </>
+        )}
       </Stack.Navigator>
-    </NavigationContainer>
+    );
+  }
+
+  // Si el usuario NO está autenticado y NO ha completado el onboarding, mostrar onboarding
+  if (!isOnboardingCompleted) {
+    return (
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Splash" component={SplashScreen} />
+        <Stack.Screen 
+          name="WelcomeCarousel" 
+          component={WelcomeCarouselScreen}
+          initialParams={{ onComplete: updateOnboardingStatus }}
+        />
+      </Stack.Navigator>
+    );
+  }
+
+  // Si el usuario NO está autenticado pero YA completó el onboarding, mostrar pantallas de autenticación
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen
+        name="LoginRegister"
+        component={LoginRegisterScreen}
+        options={{ gestureEnabled: false }}
+      />
+      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+      <Stack.Screen name="VerifyCode" component={VerifyCodeScreen} />
+    </Stack.Navigator>
   );
 };
+
+// Navegador principal envuelto en los providers
+const AppNavigator = () => {
+  return (
+    <AuthProvider>
+      <CartProvider>
+        <NavigationContainer>
+          <MainNavigator />
+        </NavigationContainer>
+      </CartProvider>
+    </AuthProvider>
+  );
+};
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: COLORS.white,
+  },
+});
 
 export default AppNavigator;

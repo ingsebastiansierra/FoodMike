@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, Image, TouchableOpacity, StatusBar } from "react-native";
 import BotonEstandar from "../components/BotonEstandar";
 import { COLORS } from "../theme/colors";
 import { SPACING } from "../theme/spacing";
@@ -30,6 +30,7 @@ const OnboardingScreen = ({
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
 
       {/* Title and Subtitle */}
       <Text style={styles.title}>{titleText}</Text>

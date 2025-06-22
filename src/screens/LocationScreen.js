@@ -4,6 +4,7 @@ import { COLORS } from '../theme/colors';
 import { SPACING } from '../theme/spacing';
 import BotonEstandar from '../components/BotonEstandar';
 import * as Location from 'expo-location';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const LocationScreen = ({ navigation }) => {
   const [location, setLocation] = useState(null);

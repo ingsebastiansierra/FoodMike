@@ -8,6 +8,8 @@ import {
   TouchableOpacity,
   Text,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../theme/colors';
 import { SPACING, BORDER_RADIUS } from '../theme/spacing';
 import { FONT_SIZES, FONT_WEIGHTS } from '../theme/typography';
@@ -15,66 +17,102 @@ import { FONT_SIZES, FONT_WEIGHTS } from '../theme/typography';
 const { width } = Dimensions.get('window');
 const ITEM_WIDTH = width - 40; // 20px padding on each side
 
-const AutoCarousel = ({ items }) => {
+const AutoCarousel = ({ items, autoPlay = true, interval = 3000 }) => {
   const scrollViewRef = useRef(null);
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  const normalizeImageSource = (img) => {
+    if (typeof img === 'string' && img) {
+      return { uri: img };
+    }
+    if (img && typeof img === 'object' && img.uri) {
+      return img;
+    }
+    return null;
+  };
+
   useEffect(() => {
+    if (!autoPlay || items.length <= 1) return;
+
     const timer = setInterval(() => {
-      const nextIndex = (currentIndex + 1) % items.length;
-      scrollViewRef.current?.scrollTo({
-        x: nextIndex * ITEM_WIDTH,
-        animated: true,
+      setCurrentIndex((prevIndex) => {
+        const nextIndex = (prevIndex + 1) % items.length;
+        scrollViewRef.current?.scrollTo({
+          x: nextIndex * width,
+          animated: true,
+        });
+        return nextIndex;
       });
-      setCurrentIndex(nextIndex);
-    }, 3000); // Change slide every 3 seconds
+    }, interval);
 
     return () => clearInterval(timer);
-  }, [currentIndex, items.length]);
+  }, [autoPlay, interval, items.length]);
 
   const handleScroll = (event) => {
     const contentOffset = event.nativeEvent.contentOffset.x;
-    const index = Math.round(contentOffset / ITEM_WIDTH);
+    const index = Math.round(contentOffset / width);
     setCurrentIndex(index);
   };
 
+  if (!items || items.length === 0) {
+    return null;
+  }
+
   return (
     <View style={styles.container}>
-      <ScrollView
-        ref={scrollViewRef}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-        style={styles.scrollView}
-      >
-        {items.map((item, index) => (
-          <TouchableOpacity 
-            key={item.id} 
-            style={styles.itemContainer}
-            onPress={item.onPress}
-          >
-            <Image source={item.image} style={styles.image} />
-            <View style={styles.overlay}>
-              <Text style={styles.title}>{item.title}</Text>
-              <Text style={styles.description}>{item.description}</Text>
-            </View>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-      
-      <View style={styles.dotsContainer}>
-        {items.map((_, index) => (
-          <View
-            key={index}
-            style={[
-              styles.dot,
-              currentIndex === index ? styles.activeDot : styles.inactiveDot,
-            ]}
-          />
-        ))}
+      <View style={styles.carouselContainer}>
+        <ScrollView
+          ref={scrollViewRef}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+          style={styles.scrollView}
+        >
+          {items.map((item, index) => {
+            const imageSource = normalizeImageSource(item.image);
+            
+            return (
+              <TouchableOpacity 
+                key={item.id} 
+                style={styles.itemContainer}
+                onPress={item.onPress}
+              >
+                {imageSource ? (
+                  <Image source={imageSource} style={styles.image} resizeMode="cover" />
+                ) : (
+                  <View style={[styles.image, styles.placeholderImage]}>
+                    <Ionicons name="restaurant-outline" size={50} color={COLORS.mediumGray} />
+                  </View>
+                )}
+                <LinearGradient
+                  colors={['transparent', 'rgba(0,0,0,0.7)']}
+                  style={styles.overlay}
+                >
+                  <Text style={styles.title}>{item.title}</Text>
+                  <Text style={styles.description}>{item.description}</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
       </View>
+
+      {/* Indicadores */}
+      {items.length > 1 && (
+        <View style={styles.indicators}>
+          {items.map((_, index) => (
+            <View
+              key={index}
+              style={[
+                styles.indicator,
+                index === currentIndex && styles.indicatorActive
+              ]}
+            />
+          ))}
+        </View>
+      )}
     </View>
   );
 };
@@ -82,72 +120,64 @@ const AutoCarousel = ({ items }) => {
 const styles = StyleSheet.create({
   container: {
     marginVertical: SPACING.md,
-    alignItems: 'center',
   },
-  scrollView: {
-    marginHorizontal: -20,
-  },
-  itemContainer: {
-    width: ITEM_WIDTH,
-    height: 160,
-    marginHorizontal: 20,
+  carouselContainer: {
+    height: 200,
     borderRadius: BORDER_RADIUS.lg,
     overflow: 'hidden',
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  itemContainer: {
+    width: width - (SPACING.md * 2),
+    height: 200,
+    position: 'relative',
   },
   image: {
     width: '100%',
     height: '100%',
-    resizeMode: 'cover',
+  },
+  placeholderImage: {
+    backgroundColor: COLORS.lightGray,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     padding: SPACING.lg,
-    justifyContent: 'flex-end',
+    paddingTop: SPACING.xl,
   },
   title: {
-    color: COLORS.white,
-    fontSize: FONT_SIZES.h5,
+    fontSize: FONT_SIZES.lg,
     fontWeight: FONT_WEIGHTS.bold,
+    color: COLORS.white,
     marginBottom: SPACING.xs,
-    textAlign: 'center',
   },
   description: {
+    fontSize: FONT_SIZES.sm,
     color: COLORS.white,
-    fontSize: FONT_SIZES.md,
-    textAlign: 'center',
+    opacity: 0.9,
   },
-  dotsContainer: {
+  indicators: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: SPACING.md,
-    position: 'absolute',
-    bottom: SPACING.md,
-    left: 0,
-    right: 0,
+    marginTop: SPACING.sm,
   },
-  dot: {
+  indicator: {
     width: 8,
     height: 8,
     borderRadius: BORDER_RADIUS.full,
-    marginHorizontal: 4,
+    backgroundColor: COLORS.mediumGray,
+    marginHorizontal: SPACING.xs,
   },
-  activeDot: {
+  indicatorActive: {
     backgroundColor: COLORS.primary,
     width: 24,
-    height: 8,
-  },
-  inactiveDot: {
-    backgroundColor: COLORS.background.divider,
   },
 });
 

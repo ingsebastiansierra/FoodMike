@@ -1,28 +1,131 @@
 import React, { useContext } from "react";
-import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, Image, TouchableOpacity, Animated } from "react-native";
 import { CartContext } from "../context/CartContext";
+import Icon from 'react-native-vector-icons/FontAwesome';
+import { COLORS } from '../theme/colors';
+import { SPACING } from '../theme/spacing';
+import { showConfirmAlert } from '../utils';
 
-const CartItemCard = ({ item }) => {
+const CartItemCard = ({ item, index }) => {
   const { increaseQuantity, decreaseQuantity, removeFromCart } = useContext(CartContext);
+
+  const handleRemoveItem = () => {
+    showConfirmAlert(
+      'Eliminar Producto',
+      `¿Estás seguro de que quieres eliminar "${item.title}" del carrito?`,
+      () => removeFromCart(item.id)
+    );
+  };
+
+  const handleDecreaseQuantity = () => {
+    if (item.quantity === 1) {
+      handleRemoveItem();
+    } else {
+      decreaseQuantity(item.id);
+    }
+  };
+
+  const itemTotal = parseFloat(item.price) * item.quantity;
+
+  // Normalizar la imagen para manejar múltiples formatos
+  const getImageSource = () => {
+    if (typeof item.image === 'string' && item.image) {
+      return { uri: item.image };
+    }
+    if (item.image && typeof item.image === 'object' && item.image.uri) {
+      return item.image;
+    }
+    // Retorna null si no hay imagen válida.
+    // Podrías retornar una imagen por defecto aquí.
+    return null;
+  };
+
+  const imageSource = getImageSource();
 
   return (
     <View style={styles.cardContainer}>
-      <Image source={{ uri: item.image.uri }} style={styles.image} />
-      <View style={styles.textContainer}>
-        <Text style={styles.title}>{item.title}</Text>
-        <View style={styles.quantityContainer}>
-          <TouchableOpacity onPress={() => decreaseQuantity(item.id)}>
-            <Text style={styles.quantityButton}>-</Text>
-          </TouchableOpacity>
-          <Text style={styles.quantity}>Quantity: {item.quantity}</Text>
-          <TouchableOpacity onPress={() => increaseQuantity(item.id)}>
-            <Text style={styles.quantityButton}>+</Text>
+      <View style={styles.imageContainer}>
+        {imageSource ? (
+          <Image source={imageSource} style={styles.image} />
+        ) : (
+          <View style={[styles.image, styles.imagePlaceholder]}>
+            <Icon name="image" size={30} color={COLORS.lightGray} />
+          </View>
+        )}
+        <View style={styles.categoryBadge}>
+          <Text style={styles.categoryText}>
+            {item.category === '1' ? 'Hamburguesas' : 
+             item.category === '2' ? 'Pizzas' : 
+             item.category === '3' ? 'Alitas' : 
+             item.category === '4' ? 'Bebidas' : 'Otros'}
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.contentContainer}>
+        <View style={styles.headerRow}>
+          <Text style={styles.title} numberOfLines={2}>
+            {item.title}
+          </Text>
+          <TouchableOpacity 
+            onPress={handleRemoveItem}
+            style={styles.removeButton}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Icon name="times" size={14} color={COLORS.gray} />
           </TouchableOpacity>
         </View>
-        <Text style={styles.price}>Price: ${parseFloat(item.price) * item.quantity}</Text>
-        <TouchableOpacity onPress={() => removeFromCart(item.id)} style={styles.deleteButton}>
-          <Text style={styles.deleteButtonText}>X</Text>
-        </TouchableOpacity>
+
+        <View style={styles.priceRow}>
+          <Text style={styles.unitPrice}>
+            ${parseFloat(item.price).toFixed(2)} c/u
+          </Text>
+          <Text style={styles.totalPrice}>
+            ${itemTotal.toFixed(2)}
+          </Text>
+        </View>
+
+        <View style={styles.quantityContainer}>
+          <Text style={styles.quantityLabel}>Cantidad:</Text>
+          
+          <View style={styles.quantityControls}>
+            <TouchableOpacity 
+              onPress={handleDecreaseQuantity}
+              style={[
+                styles.quantityButton,
+                item.quantity === 1 && styles.quantityButtonDanger
+              ]}
+              activeOpacity={0.7}
+            >
+              <Icon 
+                name={item.quantity === 1 ? "trash" : "minus"} 
+                size={12} 
+                color={item.quantity === 1 ? COLORS.white : COLORS.primary} 
+              />
+            </TouchableOpacity>
+
+            <View style={styles.quantityDisplay}>
+              <Text style={styles.quantityText}>{item.quantity}</Text>
+            </View>
+
+            <TouchableOpacity 
+              onPress={() => increaseQuantity(item.id)}
+              style={styles.quantityButton}
+              activeOpacity={0.7}
+            >
+              <Icon name="plus" size={12} color={COLORS.primary} />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {item.quantity > 1 && (
+          <View style={styles.savingsNote}>
+            <Icon name="info-circle" size={10} color="#4CAF50" />
+            <Text style={styles.savingsText}>
+              Ahorras ${((item.quantity - 1) * parseFloat(item.price)).toFixed(2)} en este producto
+            </Text>
+          </View>
+        )}
       </View>
     </View>
   );
@@ -30,68 +133,154 @@ const CartItemCard = ({ item }) => {
 
 const styles = StyleSheet.create({
   cardContainer: {
-    flexDirection: "column",
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2},
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 2,
+    flexDirection: "row",
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    marginHorizontal: SPACING.md,
+    marginBottom: SPACING.md,
+    padding: SPACING.lg,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    overflow: 'hidden',
+  },
+  imageContainer: {
+    position: 'relative',
+    marginRight: SPACING.md,
+    flexShrink: 0,
   },
   image: {
     width: 80,
     height: 80,
-    borderRadius: 8,
-    marginRight: 10,
+    borderRadius: 12,
   },
-  textContainer: {
+  categoryBadge: {
+    position: 'absolute',
+    top: -4,
+    left: -4,
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: SPACING.xs,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  categoryText: {
+    fontSize: 10,
+    color: COLORS.white,
+    fontWeight: 'bold',
+  },
+  contentContainer: {
     flex: 1,
+    justifyContent: 'space-between',
+    minWidth: 0, // Importante para que el flex funcione correctamente
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: SPACING.sm,
   },
   title: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 5,
-  },
-  price: {
     fontSize: 16,
-    color: "green",
-    marginBottom: 5,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+    flex: 1,
+    marginRight: SPACING.sm,
+    lineHeight: 20,
   },
-  quantity: {
-    fontSize: 16,
-  },
-  quantityContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 5,
-  },
-  quantityButton: {
-    fontSize: 20,
-    fontWeight: "bold",
-    paddingHorizontal: 10,
-    borderRadius: 5,
-    backgroundColor: "#ddd",
-    marginHorizontal: 5,
-  },
-  deleteButton: {
-    position: 'absolute',
-    top: 5,
-    right: 5,
-    width: 25,
-    height: 25,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    borderRadius: 12.5,
+  removeButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: COLORS.lightGray,
     justifyContent: 'center',
     alignItems: 'center',
+    flexShrink: 0,
   },
-  deleteButtonText: {
-    color: 'white',
+  priceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.sm,
+  },
+  unitPrice: {
+    fontSize: 14,
+    color: COLORS.gray,
+    fontWeight: '500',
+  },
+  totalPrice: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#4CAF50',
+  },
+  quantityContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: SPACING.sm,
+  },
+  quantityLabel: {
+    fontSize: 14,
+    color: COLORS.gray,
+    fontWeight: '500',
+  },
+  quantityControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.lightGray,
+    borderRadius: 18,
+    padding: 2,
+    flexShrink: 0,
+  },
+  quantityButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: COLORS.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
+  },
+  quantityButtonDanger: {
+    backgroundColor: '#FF6B6B',
+  },
+  quantityDisplay: {
+    minWidth: 36,
+    alignItems: 'center',
+    paddingHorizontal: SPACING.xs,
+  },
+  quantityText: {
     fontSize: 14,
     fontWeight: 'bold',
+    color: COLORS.primary,
+  },
+  savingsNote: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E8F5E8',
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 4,
+    borderRadius: 8,
+    marginTop: SPACING.xs,
+  },
+  savingsText: {
+    fontSize: 11,
+    color: '#4CAF50',
+    marginLeft: SPACING.xs,
+    fontWeight: '500',
+    flex: 1,
+  },
+  imagePlaceholder: {
+    backgroundColor: COLORS.background.divider,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 
 export default CartItemCard;
+
