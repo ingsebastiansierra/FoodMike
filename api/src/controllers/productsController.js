@@ -1,21 +1,22 @@
-const { PRODUCTS_DATA } = require('../data/mockData');
+const { db } = require('../config/firebase');
 
 // Obtener todos los productos
 const getAllProducts = async (req, res) => {
   try {
-    console.log('📦 Getting all products');
+    console.log('📦 Getting all products from Firestore...');
+    const productsSnapshot = await db.collection('products').get();
     
-    res.status(200).json({
-      success: true,
-      data: PRODUCTS_DATA,
-      count: PRODUCTS_DATA.length
-    });
+    if (productsSnapshot.empty) {
+      console.log('⚠️ No products found in Firestore.');
+      return res.status(200).json({ success: true, data: [], count: 0 });
+    }
+    
+    const products = productsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    console.log(`✅ Found ${products.length} products.`);
+    res.status(200).json({ success: true, data: products, count: products.length });
   } catch (error) {
-    console.error('❌ Error getting products:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Error al obtener productos'
-    });
+    console.error('❌ Error getting products from Firestore:', error);
+    res.status(500).json({ success: false, error: 'Error al obtener productos desde la base de datos' });
   }
 };
 
@@ -24,26 +25,17 @@ const getProductById = async (req, res) => {
   try {
     const { id } = req.params;
     console.log(`📦 Getting product by ID: ${id}`);
+    const productRef = db.collection('products').doc(id);
+    const doc = await productRef.get();
     
-    const product = PRODUCTS_DATA.find(p => p.id === id);
-    
-    if (!product) {
-      return res.status(404).json({
-        success: false,
-        error: 'Producto no encontrado'
-      });
+    if (!doc.exists) {
+      return res.status(404).json({ success: false, error: 'Producto no encontrado' });
     }
     
-    res.status(200).json({
-      success: true,
-      data: product
-    });
+    res.status(200).json({ success: true, data: { id: doc.id, ...doc.data() } });
   } catch (error) {
     console.error('❌ Error getting product:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Error al obtener producto'
-    });
+    res.status(500).json({ success: false, error: 'Error al obtener producto' });
   }
 };
 
@@ -53,19 +45,17 @@ const getProductsByRestaurant = async (req, res) => {
     const { restaurantId } = req.params;
     console.log(`📦 Getting products by restaurant: ${restaurantId}`);
     
-    const products = PRODUCTS_DATA.filter(p => p.restaurantId === restaurantId);
+    const productsSnapshot = await db.collection('products').where('restaurantId', '==', restaurantId).get();
     
-    res.status(200).json({
-      success: true,
-      data: products,
-      count: products.length
-    });
+    if (productsSnapshot.empty) {
+      return res.status(200).json({ success: true, data: [], count: 0 });
+    }
+    
+    const products = productsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    res.status(200).json({ success: true, data: products, count: products.length });
   } catch (error) {
     console.error('❌ Error getting products by restaurant:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Error al obtener productos del restaurante'
-    });
+    res.status(500).json({ success: false, error: 'Error al obtener productos del restaurante' });
   }
 };
 
@@ -75,21 +65,17 @@ const getProductsByCategory = async (req, res) => {
     const { category } = req.params;
     console.log(`📦 Getting products by category: ${category}`);
     
-    const products = PRODUCTS_DATA.filter(p => 
-      p.category.toLowerCase() === category.toLowerCase()
-    );
+    const productsSnapshot = await db.collection('products').where('category', '==', category).get();
+
+    if (productsSnapshot.empty) {
+      return res.status(200).json({ success: true, data: [], count: 0 });
+    }
     
-    res.status(200).json({
-      success: true,
-      data: products,
-      count: products.length
-    });
+    const products = productsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    res.status(200).json({ success: true, data: products, count: products.length });
   } catch (error) {
     console.error('❌ Error getting products by category:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Error al obtener productos por categoría'
-    });
+    res.status(500).json({ success: false, error: 'Error al obtener productos por categoría' });
   }
 };
 
@@ -98,22 +84,17 @@ const getPopularProducts = async (req, res) => {
   try {
     console.log('📦 Getting popular products');
     
-    // Ordenar por estrellas y tomar los top 10
-    const popularProducts = [...PRODUCTS_DATA]
-      .sort((a, b) => b.stars - a.stars)
-      .slice(0, 10);
+    const productsSnapshot = await db.collection('products').orderBy('stars', 'desc').limit(10).get();
     
-    res.status(200).json({
-      success: true,
-      data: popularProducts,
-      count: popularProducts.length
-    });
+    if (productsSnapshot.empty) {
+      return res.status(200).json({ success: true, data: [], count: 0 });
+    }
+    
+    const products = productsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    res.status(200).json({ success: true, data: products, count: products.length });
   } catch (error) {
     console.error('❌ Error getting popular products:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Error al obtener productos populares'
-    });
+    res.status(500).json({ success: false, error: 'Error al obtener productos populares' });
   }
 };
 
@@ -123,27 +104,17 @@ const createProduct = async (req, res) => {
     const productData = req.body;
     console.log('📦 Creating new product:', productData.name);
     
-    const newProduct = {
-      id: `prod${Date.now()}`,
+    const docRef = await db.collection('products').add({
       ...productData,
       createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    
-    // En un entorno real, aquí se guardaría en la base de datos
-    console.log('✅ Product created successfully');
-    
-    res.status(201).json({
-      success: true,
-      data: newProduct,
-      message: 'Producto creado exitosamente'
+      updatedAt: new Date(),
     });
+    
+    console.log('✅ Product created successfully with ID:', docRef.id);
+    res.status(201).json({ success: true, data: { id: docRef.id, ...productData }, message: 'Producto creado exitosamente' });
   } catch (error) {
     console.error('❌ Error creating product:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Error al crear producto'
-    });
+    res.status(500).json({ success: false, error: 'Error al crear producto' });
   }
 };
 
@@ -154,35 +125,23 @@ const updateProduct = async (req, res) => {
     const updateData = req.body;
     console.log(`📦 Updating product: ${id}`);
     
-    const productIndex = PRODUCTS_DATA.findIndex(p => p.id === id);
-    
-    if (productIndex === -1) {
-      return res.status(404).json({
-        success: false,
-        error: 'Producto no encontrado'
-      });
+    const productRef = db.collection('products').doc(id);
+    const doc = await productRef.get();
+
+    if (!doc.exists) {
+      return res.status(404).json({ success: false, error: 'Producto no encontrado' });
     }
     
-    const updatedProduct = {
-      ...PRODUCTS_DATA[productIndex],
+    await productRef.update({
       ...updateData,
-      updatedAt: new Date()
-    };
-    
-    // En un entorno real, aquí se actualizaría en la base de datos
-    console.log('✅ Product updated successfully');
-    
-    res.status(200).json({
-      success: true,
-      data: updatedProduct,
-      message: 'Producto actualizado exitosamente'
+      updatedAt: new Date(),
     });
+    
+    console.log('✅ Product updated successfully');
+    res.status(200).json({ success: true, message: 'Producto actualizado exitosamente' });
   } catch (error) {
     console.error('❌ Error updating product:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Error al actualizar producto'
-    });
+    res.status(500).json({ success: false, error: 'Error al actualizar producto' });
   }
 };
 
@@ -192,28 +151,20 @@ const deleteProduct = async (req, res) => {
     const { id } = req.params;
     console.log(`📦 Deleting product: ${id}`);
     
-    const productIndex = PRODUCTS_DATA.findIndex(p => p.id === id);
-    
-    if (productIndex === -1) {
-      return res.status(404).json({
-        success: false,
-        error: 'Producto no encontrado'
-      });
+    const productRef = db.collection('products').doc(id);
+    const doc = await productRef.get();
+
+    if (!doc.exists) {
+      return res.status(404).json({ success: false, error: 'Producto no encontrado' });
     }
+
+    await productRef.delete();
     
-    // En un entorno real, aquí se eliminaría de la base de datos
     console.log('✅ Product deleted successfully');
-    
-    res.status(200).json({
-      success: true,
-      message: 'Producto eliminado exitosamente'
-    });
+    res.status(200).json({ success: true, message: 'Producto eliminado exitosamente' });
   } catch (error) {
     console.error('❌ Error deleting product:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Error al eliminar producto'
-    });
+    res.status(500).json({ success: false, error: 'Error al eliminar producto' });
   }
 };
 
