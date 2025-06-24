@@ -24,6 +24,18 @@ router.get('/category/:category', authenticate, allowRoles('admin', 'user'), get
 // GET /api/restaurants/:id - Obtener restaurante por ID
 router.get('/:id', authenticate, allowRoles('admin', 'user'), getRestaurantById);
 
+// GET /api/restaurants/:id/products - Obtener productos de un restaurante
+router.get('/:id/products', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const snapshot = await require('../config/firebase').db.collection('places').doc(id).collection('products').get();
+    const products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    res.status(200).json({ success: true, data: products, count: products.length });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
 // POST /api/restaurants - Crear nuevo restaurante (solo admin)
 router.post('/', authenticate, allowRoles('admin'), createRestaurant);
 
