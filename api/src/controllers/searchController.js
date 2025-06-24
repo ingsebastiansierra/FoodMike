@@ -1,5 +1,5 @@
 const { searchProducts, PRODUCTS_DATA } = require('../data/mockData');
-const { db } = require('../firebase');
+const { db } = require('../config/firebase');
 
 // Búsqueda básica de productos
 const searchProductsBasic = async (req, res) => {
