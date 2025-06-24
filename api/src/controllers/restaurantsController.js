@@ -1,14 +1,20 @@
-const { RESTAURANTS_DATA } = require('../data/mockData');
+const { db } = require('../config/firebase');
 
 // Obtener todos los restaurantes
 const getAllRestaurants = async (req, res) => {
   try {
-    console.log('📋 Getting all restaurants');
+    console.log('📋 Getting all restaurants from Firestore');
+    
+    const snapshot = await db.collection('places').get();
+    const restaurants = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
     
     res.status(200).json({
       success: true,
-      data: RESTAURANTS_DATA,
-      count: RESTAURANTS_DATA.length
+      data: restaurants,
+      count: restaurants.length
     });
   } catch (error) {
     console.error('❌ Error getting restaurants:', error);
@@ -25,14 +31,19 @@ const getRestaurantById = async (req, res) => {
     const { id } = req.params;
     console.log(`🏪 Getting restaurant by ID: ${id}`);
     
-    const restaurant = RESTAURANTS_DATA.find(r => r.id === id);
+    const doc = await db.collection('places').doc(id).get();
     
-    if (!restaurant) {
+    if (!doc.exists) {
       return res.status(404).json({
         success: false,
         error: 'Restaurante no encontrado'
       });
     }
+    
+    const restaurant = {
+      id: doc.id,
+      ...doc.data()
+    };
     
     res.status(200).json({
       success: true,
@@ -53,9 +64,14 @@ const getRestaurantsByCategory = async (req, res) => {
     const { category } = req.params;
     console.log(`🏪 Getting restaurants by category: ${category}`);
     
-    const restaurants = RESTAURANTS_DATA.filter(r => 
-      r.category.toLowerCase() === category.toLowerCase()
-    );
+    const snapshot = await db.collection('places')
+      .where('category', '==', category)
+      .get();
+    
+    const restaurants = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
     
     res.status(200).json({
       success: true,
@@ -74,14 +90,21 @@ const getRestaurantsByCategory = async (req, res) => {
 // Obtener restaurantes abiertos
 const getOpenRestaurants = async (req, res) => {
   try {
-    console.log('🏪 Getting open restaurants');
+    console.log('🏪 Getting open restaurants from Firestore');
     
-    const openRestaurants = RESTAURANTS_DATA.filter(r => r.isOpen);
+    const snapshot = await db.collection('places')
+      .where('isOpen', '==', true)
+      .get();
+    
+    const restaurants = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
     
     res.status(200).json({
       success: true,
-      data: openRestaurants,
-      count: openRestaurants.length
+      data: restaurants,
+      count: restaurants.length
     });
   } catch (error) {
     console.error('❌ Error getting open restaurants:', error);
@@ -99,18 +122,21 @@ const createRestaurant = async (req, res) => {
     console.log('🏪 Creating new restaurant:', restaurantData.name);
     
     const newRestaurant = {
-      id: `rest${Date.now()}`,
       ...restaurantData,
       createdAt: new Date(),
       updatedAt: new Date()
     };
     
-    // En un entorno real, aquí se guardaría en la base de datos
-    console.log('✅ Restaurant created successfully');
+    const docRef = await db.collection('places').add(newRestaurant);
+    
+    console.log('✅ Restaurant created successfully with ID:', docRef.id);
     
     res.status(201).json({
       success: true,
-      data: newRestaurant,
+      data: {
+        id: docRef.id,
+        ...newRestaurant
+      },
       message: 'Restaurante creado exitosamente'
     });
   } catch (error) {
@@ -129,27 +155,21 @@ const updateRestaurant = async (req, res) => {
     const updateData = req.body;
     console.log(`🏪 Updating restaurant: ${id}`);
     
-    const restaurantIndex = RESTAURANTS_DATA.findIndex(r => r.id === id);
-    
-    if (restaurantIndex === -1) {
-      return res.status(404).json({
-        success: false,
-        error: 'Restaurante no encontrado'
-      });
-    }
-    
-    const updatedRestaurant = {
-      ...RESTAURANTS_DATA[restaurantIndex],
+    const updatePayload = {
       ...updateData,
       updatedAt: new Date()
     };
     
-    // En un entorno real, aquí se actualizaría en la base de datos
+    await db.collection('places').doc(id).update(updatePayload);
+    
     console.log('✅ Restaurant updated successfully');
     
     res.status(200).json({
       success: true,
-      data: updatedRestaurant,
+      data: {
+        id,
+        ...updatePayload
+      },
       message: 'Restaurante actualizado exitosamente'
     });
   } catch (error) {
@@ -167,16 +187,8 @@ const deleteRestaurant = async (req, res) => {
     const { id } = req.params;
     console.log(`🏪 Deleting restaurant: ${id}`);
     
-    const restaurantIndex = RESTAURANTS_DATA.findIndex(r => r.id === id);
+    await db.collection('places').doc(id).delete();
     
-    if (restaurantIndex === -1) {
-      return res.status(404).json({
-        success: false,
-        error: 'Restaurante no encontrado'
-      });
-    }
-    
-    // En un entorno real, aquí se eliminaría de la base de datos
     console.log('✅ Restaurant deleted successfully');
     
     res.status(200).json({
