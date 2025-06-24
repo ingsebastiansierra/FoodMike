@@ -1,6 +1,10 @@
 const { searchProducts, PRODUCTS_DATA } = require('../data/mockData');
 const { db } = require('../config/firebase');
 
+const MAIN_CATEGORIES = [
+  'hamburguesa', 'pizza', 'plato', 'sushi', 'mexicana', 'pollo', 'ensalada', 'postre'
+];
+
 // Búsqueda básica de productos
 const searchProductsBasic = async (req, res) => {
   try {
@@ -55,7 +59,10 @@ const advancedSearch = async (req, res) => {
 
     // Filtros
     let results = allProducts;
-    if (category && category !== 'all') {
+    // Si no se especifica categoría, solo mostrar productos principales
+    if (!category || category === 'all') {
+      results = results.filter(p => MAIN_CATEGORIES.includes((p.category || '').toLowerCase()));
+    } else {
       results = results.filter(p => (p.category || '').toLowerCase() === category.toLowerCase());
     }
     if (minPrice) {
