@@ -41,7 +41,7 @@ const searchProductsBasic = async (req, res) => {
 // Búsqueda avanzada con información de restaurantes
 const advancedSearch = async (req, res) => {
   try {
-    const { q = '', category, minPrice, maxPrice, minStars, limit = 20 } = req.query;
+    const { q = '', category, minPrice, maxPrice, minStars, limit = 100 } = req.query;
     let searchTerm = q.toLowerCase();
 
     // Obtener todos los lugares
