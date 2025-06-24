@@ -10,6 +10,7 @@ const compression = require('compression');
 const restaurantsRoutes = require('./routes/restaurants');
 const productsRoutes = require('./routes/products');
 const searchRoutes = require('./routes/search');
+const placesRoutes = require('./routes/places');
 
 // Importar middleware
 const corsMiddleware = require('./middleware/cors');
@@ -49,6 +50,7 @@ app.get('/health', (req, res) => {
 app.use('/api/restaurants', restaurantsRoutes);
 app.use('/api/products', productsRoutes);
 app.use('/api/search', searchRoutes);
+app.use('/api/places', placesRoutes);
 
 // Middleware para manejo de errores 404
 app.use('*', (req, res) => {

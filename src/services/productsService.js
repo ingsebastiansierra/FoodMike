@@ -1,20 +1,20 @@
 import api from '../config/api';
 
 export const productsService = {
-  // Obtener todos los productos
-  getAll: async () => {
+  // Obtener productos de un lugar
+  getByPlace: async (placeId) => {
     try {
-      const response = await api.get('/products');
+      const response = await api.get(`/places/${placeId}/products`);
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.error || 'Error al obtener productos');
+      throw new Error(error.response?.data?.error || 'Error al obtener productos del lugar');
     }
   },
 
-  // Obtener producto por ID
-  getById: async (id) => {
+  // Obtener producto por ID dentro de un lugar
+  getById: async (placeId, productId) => {
     try {
-      const response = await api.get(`/products/${id}`);
+      const response = await api.get(`/places/${placeId}/products/${productId}`);
       return response.data;
     } catch (error) {
       throw new Error(error.response?.data?.error || 'Error al obtener producto');

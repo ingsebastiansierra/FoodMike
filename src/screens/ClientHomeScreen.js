@@ -148,14 +148,7 @@ const SearchContent = ({ navigation }) => {
 
   // Función para navegar al restaurante
   const handleProductPress = (product) => {
-    if (product.restaurant && product.restaurant.id) {
-      navigation.navigate('RestaurantDetail', {
-        restaurantId: product.restaurant.id,
-        productId: product.id,
-      });
-    } else {
-      showAlert('Error', 'Este producto no tiene restaurante asociado.');
-    }
+    navigation.navigate('ProductDetail', { product });
   };
 
   return (
@@ -237,6 +230,10 @@ const ClientHomeScreen = ({ navigation: propNavigation }) => {
     console.log("Adding to cart:", food);
   };
 
+  const handleProductPress = (product) => {
+    navigation.navigate('ProductDetail', { product });
+  };
+
   React.useEffect(() => {
     setCartCount(getTotalQuantity());
   }, [cartItems]);
@@ -276,7 +273,10 @@ const ClientHomeScreen = ({ navigation: propNavigation }) => {
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
             }
           >
-            <HomeContentComponent onAddToCart={handleAddToCart} />
+            <HomeContentComponent
+              onAddToCart={handleAddToCart}
+              onProductPress={handleProductPress}
+            />
           </ScrollView>
         );
       

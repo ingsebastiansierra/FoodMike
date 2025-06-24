@@ -20,11 +20,11 @@ export const CartProvider = ({ children }) => {
       const updatedCartItems = [...cartItems];
       updatedCartItems[existingItemIndex] = {
         ...updatedCartItems[existingItemIndex],
-        quantity: updatedCartItems[existingItemIndex].quantity + 1,
+        quantity: updatedCartItems[existingItemIndex].quantity + (item.quantity || 1),
       };
       setCartItems(updatedCartItems);
     } else {
-      setCartItems([...cartItems, { ...item, quantity: 1 }]);
+      setCartItems([...cartItems, { ...item, quantity: item.quantity || 1 }]);
     }
   };
 

@@ -76,11 +76,11 @@ const ProductCard = ({ product, onPress, onAddToCart }) => {
 
         {/* Información del producto */}
         <View style={styles.content}>
-          <Text style={styles.name} numberOfLines={1}>
+          <Text style={styles.name} numberOfLines={1} ellipsizeMode="tail">
             {product.name}
           </Text>
           
-          <Text style={styles.description} numberOfLines={2}>
+          <Text style={styles.description} numberOfLines={2} ellipsizeMode="tail">
             {product.description}
           </Text>
 
@@ -95,9 +95,6 @@ const ProductCard = ({ product, onPress, onAddToCart }) => {
           {/* Calificación y reviews */}
           <View style={styles.ratingContainer}>
             {renderStars(product.stars)}
-            <Text style={styles.reviewsText}>
-              ({product.reviews} reviews)
-            </Text>
           </View>
 
           {/* Precio */}
@@ -118,8 +115,10 @@ const ProductCard = ({ product, onPress, onAddToCart }) => {
 
 const styles = StyleSheet.create({
   container: {
-    width: width * 0.45,
+    width: '50%',
     marginBottom: spacing.md,
+    marginHorizontal: 0,
+    paddingLeft: 8,
   },
   card: {
     borderRadius: 16,
@@ -129,6 +128,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
+    minHeight: 240,
   },
   imageContainer: {
     position: 'relative',
@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
     top: 8,
     left: 8,
     flexDirection: 'row',
-    gap: 4,
+    gap: 1,
   },
   tag: {
     backgroundColor: colors.primary,
@@ -173,19 +173,24 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
   },
   content: {
-    padding: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.sm,
+    minHeight: 90,
+    justifyContent: 'space-between',
+    flex: 1,
   },
   name: {
     fontSize: typography.sizes.md,
     fontWeight: '700',
     color: colors.darkGray,
     marginBottom: 4,
+    lineHeight: 18,
   },
   description: {
-    fontSize: typography.sizes.sm,
+    fontSize: typography.sizes.xs,
     color: colors.gray,
     marginBottom: 8,
-    lineHeight: 16,
+    lineHeight: 14,
   },
   restaurantInfo: {
     flexDirection: 'row',
@@ -202,22 +207,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 8,
-    gap: 6,
+    gap: 1,
   },
   starsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 2,
+    gap: 1,
   },
   starsText: {
     fontSize: typography.sizes.xs,
     fontWeight: '600',
     color: colors.darkGray,
-    marginLeft: 4,
-  },
-  reviewsText: {
-    fontSize: typography.sizes.xs,
-    color: colors.gray,
+    marginLeft: 2,
   },
   priceContainer: {
     flexDirection: 'row',
@@ -225,8 +226,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   price: {
-    fontSize: typography.sizes.lg,
-    fontWeight: '800',
+    fontSize: typography.sizes.md,
+    fontWeight: '700',
     color: colors.primary,
   },
   deliveryInfo: {

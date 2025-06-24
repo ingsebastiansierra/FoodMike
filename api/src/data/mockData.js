@@ -130,7 +130,14 @@ const PRODUCTS_DATA = [
     isAvailable: true,
     preparationTime: '25 min',
     createdAt: new Date(),
-    updatedAt: new Date()
+    updatedAt: new Date(),
+    ingredients: [
+      { icon: 'pizza-outline' },
+      { icon: 'egg-outline' },
+      { icon: 'leaf-outline' },
+      { icon: 'fish-outline' },
+      { icon: 'cheese-outline' },
+    ]
   },
   {
     id: 'prod5',
@@ -144,7 +151,13 @@ const PRODUCTS_DATA = [
     isAvailable: true,
     preparationTime: '28 min',
     createdAt: new Date(),
-    updatedAt: new Date()
+    updatedAt: new Date(),
+    ingredients: [
+      { icon: 'pizza-outline' },
+      { icon: 'flame-outline' },
+      { icon: 'egg-outline' },
+      { icon: 'leaf-outline' },
+    ]
   },
   {
     id: 'prod6',
@@ -174,7 +187,12 @@ const PRODUCTS_DATA = [
     isAvailable: true,
     preparationTime: '20 min',
     createdAt: new Date(),
-    updatedAt: new Date()
+    updatedAt: new Date(),
+    ingredients: [
+      { icon: 'drumstick-outline' },
+      { icon: 'flame-outline' },
+      { icon: 'egg-outline' },
+    ]
   },
   {
     id: 'prod8',

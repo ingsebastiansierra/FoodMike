@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const {
   searchProductsBasic,
-  searchProductsAdvanced,
+  advancedSearch,
   getFeaturedProducts,
   getCategories
 } = require('../controllers/searchController');
@@ -11,7 +11,7 @@ const {
 router.get('/', searchProductsBasic);
 
 // GET /api/search/advanced - Búsqueda avanzada con información de restaurantes
-router.get('/advanced', searchProductsAdvanced);
+router.get('/advanced', advancedSearch);
 
 // GET /api/search/featured - Obtener productos destacados
 router.get('/featured', getFeaturedProducts);

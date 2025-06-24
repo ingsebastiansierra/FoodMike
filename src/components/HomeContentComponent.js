@@ -50,7 +50,7 @@ const CATEGORIES = [
   },
 ];
 
-const HomeContentComponent = ({ onAddToCart }) => {
+const HomeContentComponent = ({ onAddToCart, onProductPress }) => {
   const [activeCategory, setActiveCategory] = useState("0");
   const [restaurants, setRestaurants] = useState([]);
   const [popularFoods, setPopularFoods] = useState([]);
@@ -80,8 +80,17 @@ const HomeContentComponent = ({ onAddToCart }) => {
 
   const loadPopularFoods = async () => {
     try {
+      console.log('DEBUG: Iniciando fetch de productos populares');
       const response = await searchService.getFeaturedProducts(5);
-      setPopularFoods(response.data || []);
+      console.log('DEBUG: Respuesta de la API', response);
+      // Asegura que popularFoods sea un array de productos
+      const products = Array.isArray(response.data?.data)
+        ? response.data.data
+        : Array.isArray(response.data)
+          ? response.data
+          : [];
+      console.log('DEBUG: Productos extraídos', products);
+      setPopularFoods(products);
     } catch (error) {
       console.error('Error cargando productos populares:', error);
     } finally {
@@ -93,6 +102,9 @@ const HomeContentComponent = ({ onAddToCart }) => {
     activeCategory === "0"
       ? popularFoods
       : popularFoods.filter((food) => food.category === activeCategory);
+
+  // DEBUG: Ver los datos que llegan de la API
+  console.log('DEBUG popularFoods:', popularFoods);
 
   if (loading) {
     return (
@@ -109,37 +121,44 @@ const HomeContentComponent = ({ onAddToCart }) => {
 
       <AutoCarousel items={[]} />
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.categoriesContainer}
-      >
-        {CATEGORIES.map((category) => (
-          <CategoryCard
-            key={category.id}
-            icon={category.icon}
-            title={category.title}
-            isActive={activeCategory === category.id}
-            onPress={() => setActiveCategory(category.id)}
-          />
-        ))}
-      </ScrollView>
-
       <View style={styles.popularSection}>
-        <Text style={styles.sectionTitle}>Populares ahora</Text>
-        <View style={styles.popularGrid}>
-          {filteredFoods
-            .filter(food => food !== null)
-            .map((food) => (
-<FoodCard
-              key={food.id}
-              image={food.image}
-              title={food.title}
-              price={food.price}
-              onPress={() => {}}
-              onAddPress={() => onAddToCart(food)}
-            />
-          ))}
+        <Text style={[styles.sectionTitle, {textAlign: 'center'}]}>Populares ahora</Text>
+        <Text style={[styles.sectionSubtitle, {textAlign: 'center'}]}>¡Descubre los favoritos de nuestros usuarios!</Text>
+        <View style={{alignItems: 'center'}}>
+          {(() => {
+            const rows = [];
+            for (let i = 0; i < filteredFoods.length; i += 2) {
+              rows.push(
+                <View key={i} style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 10 }}>
+                  <View style={{ width: '50%', marginRight: 8 }}>
+                    <FoodCard
+                      key={filteredFoods[i]?.id}
+                      image={filteredFoods[i]?.image}
+                      name={filteredFoods[i]?.name}
+                      price={filteredFoods[i]?.price}
+                      stars={filteredFoods[i]?.stars}
+                      onPress={() => onProductPress(filteredFoods[i])}
+                      onAddPress={() => onAddToCart(filteredFoods[i])}
+                    />
+                  </View>
+                  {filteredFoods[i + 1] && (
+                    <View style={{ width: '48%', marginLeft: 8 }}>
+                      <FoodCard
+                        key={filteredFoods[i + 1]?.id}
+                        image={filteredFoods[i + 1]?.image}
+                        name={filteredFoods[i + 1]?.name}
+                        price={filteredFoods[i + 1]?.price}
+                        stars={filteredFoods[i + 1]?.stars}
+                        onPress={() => onProductPress(filteredFoods[i + 1])}
+                        onAddPress={() => onAddToCart(filteredFoods[i + 1])}
+                      />
+                    </View>
+                  )}
+                </View>
+              );
+            }
+            return rows;
+          })()}
         </View>
       </View>
 
@@ -192,7 +211,7 @@ const styles = StyleSheet.create({
   },
   popularSection: {
     paddingHorizontal: 20,
-    marginTop: SPACING.lg,
+    marginTop: SPACING.sm,
     paddingBottom: 20,
   },
   sectionTitle: {
@@ -200,6 +219,12 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: COLORS.text.primary,
     marginBottom: SPACING.md,
+  },
+  sectionSubtitle: {
+    fontSize: 16,
+    color: COLORS.text.secondary,
+    marginBottom: 12,
+    textAlign: 'center',
   },
   popularGrid: {
     flexDirection: "row",

@@ -1,9 +1,7 @@
 import axios from 'axios';
 
 // Configuración base de la API
-const API_BASE_URL = __DEV__ 
-  ? 'http://192.168.1.6:3001/api'  // Usar la IP de tu PC en la red local
-  : 'https://foodmike-production.up.railway.app/api'; // URL de producción en Railway
+const API_BASE_URL = 'https://foodmike.onrender.com/api';
 
 // Crear instancia de axios
 const api = axios.create({

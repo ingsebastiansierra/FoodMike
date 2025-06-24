@@ -9,6 +9,7 @@ import {
   RefreshControl,
   Keyboard,
   Dimensions,
+  ScrollView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -113,15 +114,6 @@ const SearchScreen = ({ navigation }) => {
     // Aquí puedes implementar la lógica para agregar al carrito
     console.log('Agregando al carrito:', product);
   }, []);
-
-  // Renderizar item de producto
-  const renderProductItem = ({ item }) => (
-    <ProductCard
-      product={item}
-      onPress={() => handleProductPress(item)}
-      onAddToCart={() => handleAddToCart(item)}
-    />
-  );
 
   // Renderizar header de resultados
   const renderResultsHeader = () => {
@@ -244,16 +236,10 @@ const SearchScreen = ({ navigation }) => {
       )}
 
       {/* Lista de resultados */}
-      <FlatList
-        data={searchResults}
-        renderItem={renderProductItem}
-        keyExtractor={(item) => item.id}
-        numColumns={2}
-        columnWrapperStyle={styles.productRow}
+      <ScrollView 
+        style={styles.scrollView}
         contentContainerStyle={styles.productList}
         showsVerticalScrollIndicator={false}
-        ListHeaderComponent={renderResultsHeader}
-        ListEmptyComponent={renderEmptyState}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -263,7 +249,49 @@ const SearchScreen = ({ navigation }) => {
           />
         }
         onScrollBeginDrag={Keyboard.dismiss}
-      />
+      >
+        {/* Header de resultados */}
+        {renderResultsHeader()}
+        
+        {/* Estado vacío */}
+        {renderEmptyState()}
+        
+        {/* Grid de productos */}
+        <View style={{ paddingHorizontal: 10 }}>
+          {(() => {
+            const rows = [];
+            for (let i = 0; i < searchResults.length; i += 2) {
+              rows.push(
+                <View
+                  key={i}
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    marginBottom: 16,
+                    width: '100%',
+                  }}
+                >
+                  <ProductCard
+                    product={searchResults[i]}
+                    onPress={() => handleProductPress(searchResults[i])}
+                    onAddToCart={() => handleAddToCart(searchResults[i])}
+                  />
+                  {searchResults[i + 1] ? (
+                    <ProductCard
+                      product={searchResults[i + 1]}
+                      onPress={() => handleProductPress(searchResults[i + 1])}
+                      onAddToCart={() => handleAddToCart(searchResults[i + 1])}
+                    />
+                  ) : (
+                    <View style={{ width: '50%' }} />
+                  )}
+                </View>
+              );
+            }
+            return rows;
+          })()}
+        </View>
+      </ScrollView>
 
       {/* Indicador de carga */}
       {loading && (
@@ -372,8 +400,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.xl,
   },
-  productRow: {
-    justifyContent: 'space-between',
+  scrollView: {
+    flex: 1,
   },
   emptyState: {
     flex: 1,

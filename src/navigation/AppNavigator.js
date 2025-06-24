@@ -25,6 +25,7 @@ import CarritoComponent from '../components/CarritoComponent';
 // Nuevas pantallas de búsqueda
 import SearchScreen from "../screens/SearchScreen";
 import RestaurantDetailScreen from "../screens/RestaurantDetailScreen";
+import ProductDetailScreen from "../screens/ProductDetailScreen";
 
 const Stack = createStackNavigator();
 
@@ -82,6 +83,7 @@ const MainNavigator = () => {
             <Stack.Screen name="Carrito" component={CarritoComponent} />
             <Stack.Screen name="Search" component={SearchScreen} />
             <Stack.Screen name="RestaurantDetail" component={RestaurantDetailScreen} />
+            <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
           </>
         )}
       </Stack.Navigator>

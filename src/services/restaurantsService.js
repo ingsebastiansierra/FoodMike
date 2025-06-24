@@ -1,73 +1,83 @@
 import api from '../config/api';
 
 export const restaurantsService = {
-  // Obtener todos los restaurantes
+  // Obtener todos los lugares (restaurantes, pizzerías, etc.)
   getAll: async () => {
     try {
-      const response = await api.get('/restaurants');
+      const response = await api.get('/places');
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.error || 'Error al obtener restaurantes');
+      throw new Error(error.response?.data?.error || 'Error al obtener lugares');
     }
   },
 
-  // Obtener restaurante por ID
+  // Obtener lugar por ID
   getById: async (id) => {
     try {
-      const response = await api.get(`/restaurants/${id}`);
+      const response = await api.get(`/places/${id}`);
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.error || 'Error al obtener restaurante');
+      throw new Error(error.response?.data?.error || 'Error al obtener lugar');
     }
   },
 
-  // Obtener restaurantes por categoría
+  // Obtener productos de un lugar
+  getProducts: async (placeId) => {
+    try {
+      const response = await api.get(`/places/${placeId}/products`);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.error || 'Error al obtener productos del lugar');
+    }
+  },
+
+  // Obtener lugares por categoría
   getByCategory: async (category) => {
     try {
-      const response = await api.get(`/restaurants/category/${category}`);
+      const response = await api.get(`/places/category/${category}`);
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.error || 'Error al obtener restaurantes por categoría');
+      throw new Error(error.response?.data?.error || 'Error al obtener lugares por categoría');
     }
   },
 
-  // Obtener restaurantes abiertos
+  // Obtener lugares abiertos
   getOpen: async () => {
     try {
-      const response = await api.get('/restaurants/open');
+      const response = await api.get('/places/open');
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.error || 'Error al obtener restaurantes abiertos');
+      throw new Error(error.response?.data?.error || 'Error al obtener lugares abiertos');
     }
   },
 
-  // Crear restaurante
-  create: async (restaurantData) => {
+  // Crear lugar
+  create: async (placeData) => {
     try {
-      const response = await api.post('/restaurants', restaurantData);
+      const response = await api.post('/places', placeData);
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.error || 'Error al crear restaurante');
+      throw new Error(error.response?.data?.error || 'Error al crear lugar');
     }
   },
 
-  // Actualizar restaurante
-  update: async (id, restaurantData) => {
+  // Actualizar lugar
+  update: async (id, placeData) => {
     try {
-      const response = await api.put(`/restaurants/${id}`, restaurantData);
+      const response = await api.put(`/places/${id}`, placeData);
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.error || 'Error al actualizar restaurante');
+      throw new Error(error.response?.data?.error || 'Error al actualizar lugar');
     }
   },
 
-  // Eliminar restaurante
+  // Eliminar lugar
   delete: async (id) => {
     try {
-      const response = await api.delete(`/restaurants/${id}`);
+      const response = await api.delete(`/places/${id}`);
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.error || 'Error al eliminar restaurante');
+      throw new Error(error.response?.data?.error || 'Error al eliminar lugar');
     }
   }
 }; 
