@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { firebase } from '../../firebase-config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import api from '../config/api';
 
 export const AuthContext = createContext();
 
@@ -87,40 +88,21 @@ export const AuthProvider = ({ children }) => {
   // Función para registrar usuario con rol
   const registerUser = async (email, password, name, role = 'cliente') => {
     console.log('🔐 AuthContext: Registrando usuario:', { email, name, role });
-    
     try {
-      const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
-      console.log('🔐 AuthContext: Usuario creado en Firebase Auth:', userCredential.user.uid);
-      
-      // Crear documento del usuario en Firestore
-      const userData = {
-        uid: userCredential.user.uid,
-        email: email,
-        name: name,
-        role: role,
-        createdAt: new Date(),
-        isActive: true,
-        profile: {
-          phone: '',
-          address: '',
-          preferences: []
-        }
-      };
-
-      console.log('🔐 AuthContext: Guardando datos en Firestore:', userData);
-      
-      await firebase.firestore()
-        .collection('users')
-        .doc(userCredential.user.uid)
-        .set(userData);
-
-      // Actualizar displayName en Firebase Auth
-      await userCredential.user.updateProfile({
-        displayName: name
-      });
-
-      console.log('🔐 AuthContext: Usuario registrado exitosamente');
-      return { success: true, user: userCredential.user };
+      // Primero registrar en la API (que crea en Firebase Auth y Firestore y devuelve JWT)
+      try {
+        const response = await api.post('/auth/register', { email, password, name, role });
+        const { token, user: apiUser } = response.data.data;
+        // Guardar token en AsyncStorage
+        await AsyncStorage.setItem('userToken', token);
+        console.log('🔐 AuthContext: Usuario registrado y JWT guardado');
+        return { success: true, user: apiUser, token };
+      } catch (apiError) {
+        console.error('❌ AuthContext: Error en registro vía API:', apiError);
+        // Fallback: registrar solo en Firebase Auth
+        const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+        return { success: true, user: userCredential.user };
+      }
     } catch (error) {
       console.error('❌ AuthContext: Error al registrar usuario:', error);
       throw error;
@@ -132,9 +114,25 @@ export const AuthProvider = ({ children }) => {
     console.log('🔐 AuthContext: Iniciando sesión para:', email);
     
     try {
+      // Primero autenticar con Firebase Auth
       const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
-      console.log('🔐 AuthContext: Login exitoso para:', email);
-      return { success: true, user: userCredential.user };
+      console.log('🔐 AuthContext: Login exitoso con Firebase para:', email);
+      
+      // Luego obtener JWT de la API
+      try {
+        const response = await api.post('/auth/login', { email, password });
+        const { token, user: apiUser } = response.data.data;
+        
+        // Guardar token en AsyncStorage
+        await AsyncStorage.setItem('userToken', token);
+        console.log('🔐 AuthContext: JWT obtenido y guardado');
+        
+        return { success: true, user: userCredential.user, token, apiUser };
+      } catch (apiError) {
+        console.error('❌ AuthContext: Error obteniendo JWT:', apiError);
+        // Si falla la API, continuar solo con Firebase Auth
+        return { success: true, user: userCredential.user };
+      }
     } catch (error) {
       console.error('❌ AuthContext: Error al iniciar sesión:', error);
       throw error;

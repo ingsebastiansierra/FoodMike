@@ -1,41 +1,36 @@
 const express = require('express');
-const admin = require('firebase-admin');
 const router = express.Router();
-const db = admin.firestore();
+const {
+  getAllRestaurants,
+  getRestaurantById,
+  getRestaurantsByCategory,
+  getOpenRestaurants,
+  createRestaurant,
+  updateRestaurant,
+  deleteRestaurant
+} = require('../controllers/restaurantsController');
+const authenticate = require('../middleware/auth');
+const allowRoles = require('../middleware/roles');
 
-// Obtener todos los lugares
-router.get('/', async (req, res) => {
-  try {
-    const snapshot = await db.collection('places').get();
-    const places = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    res.json(places);
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
+// GET /api/places - Obtener todos los lugares
+router.get('/', authenticate, allowRoles('admin', 'user'), getAllRestaurants);
 
-// Obtener productos de un lugar
-router.get('/:placeId/products', async (req, res) => {
-  try {
-    const { placeId } = req.params;
-    const snapshot = await db.collection('places').doc(placeId).collection('products').get();
-    const products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    res.json(products);
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
+// GET /api/places/open - Obtener lugares abiertos
+router.get('/open', authenticate, allowRoles('admin', 'user'), getOpenRestaurants);
 
-// Obtener un producto específico de un lugar
-router.get('/:placeId/products/:productId', async (req, res) => {
-  try {
-    const { placeId, productId } = req.params;
-    const doc = await db.collection('places').doc(placeId).collection('products').doc(productId).get();
-    if (!doc.exists) return res.status(404).json({ error: 'Producto no encontrado' });
-    res.json({ id: doc.id, ...doc.data() });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
+// GET /api/places/category/:category - Obtener lugares por categoría
+router.get('/category/:category', authenticate, allowRoles('admin', 'user'), getRestaurantsByCategory);
+
+// GET /api/places/:id - Obtener lugar por ID
+router.get('/:id', authenticate, allowRoles('admin', 'user'), getRestaurantById);
+
+// POST /api/places - Crear nuevo lugar (solo admin)
+router.post('/', authenticate, allowRoles('admin'), createRestaurant);
+
+// PUT /api/places/:id - Actualizar lugar (solo admin)
+router.put('/:id', authenticate, allowRoles('admin'), updateRestaurant);
+
+// DELETE /api/places/:id - Eliminar lugar (solo admin)
+router.delete('/:id', authenticate, allowRoles('admin'), deleteRestaurant);
 
 module.exports = router; 

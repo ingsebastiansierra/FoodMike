@@ -11,6 +11,7 @@ const restaurantsRoutes = require('./routes/restaurants');
 const productsRoutes = require('./routes/products');
 const searchRoutes = require('./routes/search');
 const placesRoutes = require('./routes/places');
+const authRoutes = require('./routes/auth');
 
 // Importar middleware
 const corsMiddleware = require('./middleware/cors');
@@ -47,6 +48,7 @@ app.get('/health', (req, res) => {
 });
 
 // Rutas de la API
+app.use('/api/auth', authRoutes);
 app.use('/api/restaurants', restaurantsRoutes);
 app.use('/api/products', productsRoutes);
 app.use('/api/search', searchRoutes);
