@@ -2,7 +2,8 @@ const { searchProducts, PRODUCTS_DATA } = require('../data/mockData');
 const { db } = require('../config/firebase');
 
 const MAIN_CATEGORIES = [
-  'hamburguesa', 'pizza', 'plato', 'sushi', 'mexicana', 'pollo', 'ensalada', 'postre'
+  'hamburguesa', 'pizza', 'plato', 'sushi', 'mexicana', 'pollo', 'ensalada', 'postre',
+  'combo', 'taco', 'parrilla', 'arepa'
 ];
 
 // Búsqueda básica de productos
