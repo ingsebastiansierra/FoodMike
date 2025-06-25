@@ -2,7 +2,11 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Configuración base de la API
-const API_BASE_URL = 'https://foodmike.onrender.com/api';
+const API_BASE_URL = __DEV__ 
+  ? 'http://localhost:3001/api'  // Desarrollo local
+  : 'https://foodmike.onrender.com/api'; // Producción
+
+console.log(`🌍 API Base URL: ${API_BASE_URL}`);
 
 // Crear instancia de axios
 const api = axios.create({

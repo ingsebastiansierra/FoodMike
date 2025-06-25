@@ -12,6 +12,7 @@ const firebaseConfig = {
   measurementId: "G-T3QWPTHG2T"
 };
 
+// Inicializar Firebase solo si no hay apps
 if (!firebase.apps.length) {
   firebase.initializeApp(firebaseConfig);
 }
@@ -22,7 +23,8 @@ const db = firebase.firestore();
 // Configurar reglas de Firestore para desarrollo
 if (__DEV__) {
   db.settings({
-    cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED
+    cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED,
+    ignoreUndefinedProperties: true
   });
 }
 
