@@ -16,8 +16,8 @@ const allowRoles = require('../middleware/roles');
 // GET /api/restaurants - Obtener todos los restaurantes
 router.get('/', authenticate, allowRoles('admin', 'user'), getAllRestaurants);
 
-// GET /api/restaurants/open - Obtener restaurantes abiertos
-router.get('/open', authenticate, allowRoles('admin', 'user'), getOpenRestaurants);
+// GET /api/restaurants/open - Obtener restaurantes abiertos (PÚBLICO)
+router.get('/open', getOpenRestaurants);
 
 // GET /api/restaurants/category/:category - Obtener restaurantes por categoría
 router.get('/category/:category', authenticate, allowRoles('admin', 'user'), getRestaurantsByCategory);

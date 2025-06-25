@@ -12,6 +12,7 @@ const productsRoutes = require('./routes/products');
 const searchRoutes = require('./routes/search');
 const placesRoutes = require('./routes/places');
 const authRoutes = require('./routes/auth');
+const adminRoutes = require('./routes/admin');
 
 // Importar middleware
 const corsMiddleware = require('./middleware/cors');
@@ -22,6 +23,9 @@ const { db } = require('./config/firebase');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Configurar trust proxy para rate limiting
+app.set('trust proxy', 1);
 
 // Middleware de seguridad y optimización
 app.use(helmet());
@@ -53,6 +57,7 @@ app.use('/api/restaurants', restaurantsRoutes);
 app.use('/api/products', productsRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/places', placesRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Middleware para manejo de errores 404
 app.use('*', (req, res) => {
