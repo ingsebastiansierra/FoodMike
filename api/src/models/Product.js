@@ -8,7 +8,7 @@ class Product {
     this.price = data.price;
     this.originalPrice = data.originalPrice;
     this.image = data.image;
-    this.category = data.category;
+    this.categoryId = data.categoryId;
     this.restaurantId = data.restaurantId;
     this.stars = data.stars || 0;
     this.reviews = data.reviews || 0;
@@ -19,6 +19,7 @@ class Product {
     this.preparationTime = data.preparationTime;
     this.allergens = data.allergens || [];
     this.nutritionalInfo = data.nutritionalInfo || {};
+    this.hasAdditions = data.hasAdditions || false;
     this.createdAt = data.createdAt || new Date();
     this.updatedAt = data.updatedAt || new Date();
   }
@@ -65,10 +66,10 @@ class Product {
     }
   }
 
-  static async findByCategory(category) {
+  static async findByCategory(categoryId) {
     try {
       const snapshot = await db.collection('products')
-        .where('category', '==', category)
+        .where('categoryId', '==', categoryId)
         .where('isAvailable', '==', true)
         .get();
       return snapshot.docs.map(doc => ({
@@ -100,8 +101,12 @@ class Product {
       let queryRef = db.collection('products').where('isAvailable', '==', true);
 
       // Aplicar filtros
-      if (filters.category && filters.category !== 'all') {
-        queryRef = queryRef.where('category', '==', filters.category);
+      if (filters.categoryId && filters.categoryId !== 'all') {
+        queryRef = queryRef.where('categoryId', '==', filters.categoryId);
+      }
+
+      if (filters.restaurantId) {
+        queryRef = queryRef.where('restaurantId', '==', filters.restaurantId);
       }
 
       if (filters.minPrice !== undefined) {
@@ -153,7 +158,7 @@ class Product {
         price: this.price,
         originalPrice: this.originalPrice,
         image: this.image,
-        category: this.category,
+        categoryId: this.categoryId,
         restaurantId: this.restaurantId,
         stars: this.stars,
         reviews: this.reviews,
@@ -164,6 +169,7 @@ class Product {
         preparationTime: this.preparationTime,
         allergens: this.allergens,
         nutritionalInfo: this.nutritionalInfo,
+        hasAdditions: this.hasAdditions,
         createdAt: this.createdAt,
         updatedAt: new Date()
       };

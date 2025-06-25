@@ -7,7 +7,8 @@ const {
   getOpenRestaurants,
   createRestaurant,
   updateRestaurant,
-  deleteRestaurant
+  deleteRestaurant,
+  getRestaurantMenu
 } = require('../controllers/restaurantsController');
 const authenticate = require('../middleware/auth');
 const allowRoles = require('../middleware/roles');
@@ -21,8 +22,11 @@ router.get('/open', authenticate, allowRoles('admin', 'user'), getOpenRestaurant
 // GET /api/restaurants/category/:category - Obtener restaurantes por categoría
 router.get('/category/:category', authenticate, allowRoles('admin', 'user'), getRestaurantsByCategory);
 
-// GET /api/restaurants/:id - Obtener restaurante por ID
+// GET /api/restaurants/:id - Obtener restaurante por ID con menú completo
 router.get('/:id', authenticate, allowRoles('admin', 'user'), getRestaurantById);
+
+// GET /api/restaurants/:id/menu - Obtener menú completo de un restaurante
+router.get('/:id/menu', authenticate, allowRoles('admin', 'user'), getRestaurantMenu);
 
 // GET /api/restaurants/:id/products - Obtener productos de un restaurante
 router.get('/:id/products', async (req, res) => {

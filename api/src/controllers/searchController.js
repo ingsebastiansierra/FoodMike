@@ -84,14 +84,70 @@ const advancedSearch = async (req, res) => {
         (p.tags || []).some(tag => tag.toLowerCase().includes(searchTerm))
       );
     }
-    // Ordenar por score de calidad (estrellas * 0.7 + precio * 0.3)
-    results.sort((a, b) => {
-      const scoreA = (a.stars || 0) * 0.7 + ((100 - (a.price || 0)) * 0.3);
-      const scoreB = (b.stars || 0) * 0.7 + ((100 - (b.price || 0)) * 0.3);
-      return scoreB - scoreA;
-    });
-    // Limitar resultados
-    results = results.slice(0, parseInt(limit));
+
+    // Si no hay búsqueda específica, crear variedad de categorías
+    if (!searchTerm && (!category || category === 'all')) {
+      // Agrupar productos por categoría
+      const productsByCategory = {};
+      results.forEach(product => {
+        const cat = (product.category || '').toLowerCase();
+        if (!productsByCategory[cat]) {
+          productsByCategory[cat] = [];
+        }
+        productsByCategory[cat].push(product);
+      });
+
+      // Ordenar productos dentro de cada categoría
+      Object.keys(productsByCategory).forEach(cat => {
+        productsByCategory[cat].sort((a, b) => {
+          const scoreA = (a.stars || 0) * 0.7 + ((100 - (a.price || 0)) * 0.3);
+          const scoreB = (b.stars || 0) * 0.7 + ((100 - (b.price || 0)) * 0.3);
+          return scoreB - scoreA;
+        });
+      });
+
+      // Crear resultado con variedad: tomar los mejores de cada categoría
+      const variedResults = [];
+      const maxPerCategory = Math.ceil(parseInt(limit) / MAIN_CATEGORIES.length);
+      
+      MAIN_CATEGORIES.forEach(cat => {
+        const categoryProducts = productsByCategory[cat] || [];
+        const productsToAdd = categoryProducts.slice(0, maxPerCategory);
+        variedResults.push(...productsToAdd);
+      });
+
+      // Si no llenamos el límite, agregar más productos de las categorías con más productos
+      if (variedResults.length < parseInt(limit)) {
+        const remainingSlots = parseInt(limit) - variedResults.length;
+        const allSortedProducts = results.sort((a, b) => {
+          const scoreA = (a.stars || 0) * 0.7 + ((100 - (a.price || 0)) * 0.3);
+          const scoreB = (b.stars || 0) * 0.7 + ((100 - (b.price || 0)) * 0.3);
+          return scoreB - scoreA;
+        });
+        
+        // Agregar productos que no estén ya en variedResults
+        const existingIds = new Set(variedResults.map(p => p.id));
+        const additionalProducts = allSortedProducts
+          .filter(p => !existingIds.has(p.id))
+          .slice(0, remainingSlots);
+        
+        variedResults.push(...additionalProducts);
+      }
+
+      results = variedResults;
+    } else {
+      // Ordenar por score de calidad (estrellas * 0.7 + precio * 0.3)
+      results.sort((a, b) => {
+        const scoreA = (a.stars || 0) * 0.7 + ((100 - (a.price || 0)) * 0.3);
+        const scoreB = (b.stars || 0) * 0.7 + ((100 - (b.price || 0)) * 0.3);
+        return scoreB - scoreA;
+      });
+      // Limitar resultados
+      results = results.slice(0, parseInt(limit));
+    }
+
+    console.log(`🔍 Búsqueda: "${searchTerm}", Categoría: "${category}", Resultados: ${results.length}`);
+    console.log(`📊 Categorías encontradas:`, [...new Set(results.map(p => p.category))]);
 
     res.status(200).json({
       success: true,
@@ -127,15 +183,19 @@ const getFeaturedProducts = async (req, res) => {
       allProducts = allProducts.concat(products);
     }
 
+    // Filtrar solo productos de categorías principales
+    let results = allProducts.filter(p => MAIN_CATEGORIES.includes((p.category || '').toLowerCase()));
+    console.log(`📊 Total productos: ${allProducts.length}, Productos principales: ${results.length}`);
+
     // Ordenar por estrellas y precio (puedes ajustar el score)
-    allProducts.sort((a, b) => {
+    results.sort((a, b) => {
       const scoreA = (a.stars || 0) * 0.7 + ((100 - (a.price || 0)) * 0.3);
       const scoreB = (b.stars || 0) * 0.7 + ((100 - (b.price || 0)) * 0.3);
       return scoreB - scoreA;
     });
 
     // Limitar resultados
-    const results = allProducts.slice(0, parseInt(limit));
+    results = results.slice(0, parseInt(limit));
 
     res.status(200).json({
       success: true,

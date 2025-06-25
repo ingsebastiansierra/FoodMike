@@ -17,6 +17,7 @@ class Restaurant {
     this.coverImage = data.coverImage;
     this.categories = data.categories || [];
     this.isOpen = data.isOpen !== undefined ? data.isOpen : true;
+    this.schedule = data.schedule || {};
     this.createdAt = data.createdAt || new Date();
     this.updatedAt = data.updatedAt || new Date();
   }
@@ -93,6 +94,7 @@ class Restaurant {
         coverImage: this.coverImage,
         categories: this.categories,
         isOpen: this.isOpen,
+        schedule: this.schedule,
         createdAt: this.createdAt,
         updatedAt: new Date()
       };

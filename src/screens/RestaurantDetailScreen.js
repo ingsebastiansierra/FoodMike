@@ -14,13 +14,11 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, typography } from '../theme';
-import { getRestaurantById, getRestaurantProducts } from '../data/restaurantsData';
 import ProductCard from '../components/ProductCard';
 import CartHeaderButton from '../components/CartHeaderButton';
 import { useCart } from '../context/CartContext';
 import { showAlert } from '../utils';
 import { restaurantsService } from '../services/restaurantsService';
-import { productsService } from '../services/productsService';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { normalizeImageSource } from '../utils/imageUtils';
 
@@ -29,13 +27,13 @@ const { width, height } = Dimensions.get('window');
 const RestaurantDetailScreen = ({ route, navigation }) => {
   const { restaurantId, productId } = route.params;
   const [restaurant, setRestaurant] = useState(null);
-  const [products, setProducts] = useState([]);
+  const [menu, setMenu] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const { addToCart, getTotalQuantity } = useCart();
 
-  // Cargar datos del restaurante y productos
+  // Cargar datos del restaurante y menú
   useEffect(() => {
     loadRestaurantData();
   }, [restaurantId]);
@@ -43,18 +41,14 @@ const RestaurantDetailScreen = ({ route, navigation }) => {
   const loadRestaurantData = useCallback(async () => {
     setLoading(true);
     try {
-      // Cargar restaurante y productos en paralelo
-      const [restaurantResponse, productsResponse] = await Promise.all([
-        restaurantsService.getById(restaurantId),
-        productsService.getByRestaurant(restaurantId)
-      ]);
-
-      setRestaurant(restaurantResponse.data);
-      setProducts(productsResponse.data || []);
+      // Cargar restaurante con menú completo
+      const response = await restaurantsService.getMenu(restaurantId);
+      
+      setRestaurant(response.data.restaurant);
+      setMenu(response.data.menu || []);
 
       // Si hay un producto específico, navegar a él
       if (productId) {
-        // Aquí podrías implementar scroll automático al producto
         console.log('Producto específico:', productId);
       }
     } catch (error) {
@@ -71,21 +65,25 @@ const RestaurantDetailScreen = ({ route, navigation }) => {
     setRefreshing(false);
   }, [loadRestaurantData]);
 
-  // Obtener categorías únicas de los productos
+  // Obtener categorías del menú
   const getCategories = () => {
-    const categories = ['all', ...new Set(products.map(p => p.category))];
-    return categories.map(cat => ({
-      id: cat,
-      name: cat === 'all' ? 'Todos' : cat,
-    }));
+    const categories = [
+      { id: 'all', name: 'Todos' },
+      ...menu.map(cat => ({
+        id: cat.id,
+        name: cat.name,
+      }))
+    ];
+    return categories;
   };
 
-  // Filtrar productos por categoría
+  // Obtener productos de la categoría seleccionada
   const getFilteredProducts = () => {
     if (selectedCategory === 'all') {
-      return products;
+      return menu.flatMap(category => category.products || []);
     }
-    return products.filter(product => product.category === selectedCategory);
+    const selectedCat = menu.find(cat => cat.id === selectedCategory);
+    return selectedCat ? selectedCat.products || [] : [];
   };
 
   // Renderizar estrellas
@@ -122,6 +120,7 @@ const RestaurantDetailScreen = ({ route, navigation }) => {
       image: product.image,
       restaurantId: restaurant.id,
       restaurantName: restaurant.name,
+      additions: product.additions || [],
     });
     showAlert('Éxito', `${product.name} agregado al carrito`);
   }, [addToCart, restaurant]);
@@ -156,8 +155,12 @@ const RestaurantDetailScreen = ({ route, navigation }) => {
           }
         }}
         onPress={() => {
-          // Aquí se podría navegar a un detalle del producto
-          showAlert('Producto', `${item.name} - $${item.price.toFixed(2)}`);
+          // Navegar al detalle del producto con opciones de adiciones
+          navigation.navigate('ProductDetail', {
+            product: item,
+            restaurant: restaurant,
+            fromRestaurant: true
+          });
         }}
         onAddToCart={() => handleAddToCart(item)}
       />
@@ -181,6 +184,49 @@ const RestaurantDetailScreen = ({ route, navigation }) => {
       </Text>
     </TouchableOpacity>
   );
+
+  // Renderizar horario de atención
+  const renderSchedule = () => {
+    if (!restaurant?.schedule) return null;
+
+    const days = {
+      monday: 'Lun',
+      tuesday: 'Mar',
+      wednesday: 'Mié',
+      thursday: 'Jue',
+      friday: 'Vie',
+      saturday: 'Sáb',
+      sunday: 'Dom'
+    };
+
+    const today = new Date().toLocaleDateString('es-ES', { weekday: 'long' }).toLowerCase();
+    const todayKey = Object.keys(days).find(key => days[key].toLowerCase() === today.slice(0, 3));
+
+    return (
+      <View style={styles.scheduleContainer}>
+        <Text style={styles.scheduleTitle}>Horario de atención:</Text>
+        {Object.entries(restaurant.schedule).map(([day, hours]) => (
+          <View key={day} style={[
+            styles.scheduleRow,
+            day === todayKey && styles.scheduleRowToday
+          ]}>
+            <Text style={[
+              styles.scheduleDay,
+              day === todayKey && styles.scheduleDayToday
+            ]}>
+              {days[day]}
+            </Text>
+            <Text style={[
+              styles.scheduleHours,
+              day === todayKey && styles.scheduleHoursToday
+            ]}>
+              {hours.open} - {hours.close}
+            </Text>
+          </View>
+        ))}
+      </View>
+    );
+  };
 
   if (loading) {
     return (
@@ -239,23 +285,27 @@ const RestaurantDetailScreen = ({ route, navigation }) => {
       </View>
 
       {/* Información del restaurante */}
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.content} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        }
+      >
         <View style={styles.restaurantInfo}>
           <Text style={styles.restaurantName}>{restaurant.name}</Text>
           
           <View style={styles.ratingRow}>
             {renderStars(restaurant.stars)}
-            <Text style={styles.category}>{restaurant.category}</Text>
+            <Text style={styles.reviewsText}>({restaurant.reviews} reseñas)</Text>
           </View>
+
+          <Text style={styles.description}>{restaurant.description}</Text>
 
           <View style={styles.detailsRow}>
             <View style={styles.detailItem}>
               <Ionicons name="location-outline" size={16} color={colors.gray} />
               <Text style={styles.detailText}>{restaurant.address}</Text>
-            </View>
-            <View style={styles.detailItem}>
-              <Ionicons name="time-outline" size={16} color={colors.gray} />
-              <Text style={styles.detailText}>{restaurant.schedule}</Text>
             </View>
           </View>
 
@@ -266,13 +316,16 @@ const RestaurantDetailScreen = ({ route, navigation }) => {
             </View>
             <View style={styles.deliveryItem}>
               <Ionicons name="card-outline" size={16} color={colors.primary} />
-              <Text style={styles.deliveryText}>{restaurant.deliveryFee}</Text>
+              <Text style={styles.deliveryText}>${restaurant.deliveryFee}</Text>
             </View>
             <View style={styles.deliveryItem}>
               <Ionicons name="bag-outline" size={16} color={colors.primary} />
-              <Text style={styles.deliveryText}>Mín. {restaurant.minOrder}</Text>
+              <Text style={styles.deliveryText}>Mín. ${restaurant.minOrder}</Text>
             </View>
           </View>
+
+          {/* Horario de atención */}
+          {renderSchedule()}
         </View>
 
         {/* Categorías */}
@@ -292,22 +345,32 @@ const RestaurantDetailScreen = ({ route, navigation }) => {
         <View style={styles.productsSection}>
           <View style={styles.productsHeader}>
             <Text style={styles.sectionTitle}>
-              {selectedCategory === 'all' ? 'Todos los productos' : selectedCategory}
+              {selectedCategory === 'all' ? 'Todos los productos' : 
+               categories.find(cat => cat.id === selectedCategory)?.name}
             </Text>
             <Text style={styles.productsCount}>
               {filteredProducts.length} productos
             </Text>
           </View>
 
-          <FlatList
-            data={filteredProducts}
-            renderItem={renderProductItem}
-            keyExtractor={(item) => item.id}
-            numColumns={2}
-            columnWrapperStyle={styles.productRow}
-            scrollEnabled={false}
-            showsVerticalScrollIndicator={false}
-          />
+          {filteredProducts.length === 0 ? (
+            <View style={styles.emptyProducts}>
+              <Icon name="restaurant-menu" size={48} color={colors.gray} />
+              <Text style={styles.emptyProductsText}>
+                No hay productos en esta categoría
+              </Text>
+            </View>
+          ) : (
+            <FlatList
+              data={filteredProducts}
+              renderItem={renderProductItem}
+              keyExtractor={(item) => item.id}
+              numColumns={2}
+              columnWrapperStyle={styles.productRow}
+              scrollEnabled={false}
+              showsVerticalScrollIndicator={false}
+            />
+          )}
         </View>
       </ScrollView>
     </View>
@@ -379,8 +442,7 @@ const styles = StyleSheet.create({
   ratingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   starsContainer: {
     flexDirection: 'row',
@@ -393,14 +455,16 @@ const styles = StyleSheet.create({
     color: colors.darkGray,
     marginLeft: 4,
   },
-  category: {
+  reviewsText: {
     fontSize: typography.sizes.sm,
-    fontWeight: '600',
-    color: colors.primary,
-    backgroundColor: colors.lightPrimary,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: 12,
+    color: colors.gray,
+    marginLeft: spacing.sm,
+  },
+  description: {
+    fontSize: typography.sizes.md,
+    color: colors.gray,
+    marginBottom: spacing.md,
+    lineHeight: 20,
   },
   detailsRow: {
     marginBottom: spacing.md,
@@ -422,6 +486,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.lightGray,
     padding: spacing.md,
     borderRadius: 12,
+    marginBottom: spacing.md,
   },
   deliveryItem: {
     flexDirection: 'row',
@@ -432,6 +497,44 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.sm,
     fontWeight: '600',
     color: colors.darkGray,
+  },
+  scheduleContainer: {
+    backgroundColor: colors.lightGray,
+    padding: spacing.md,
+    borderRadius: 12,
+  },
+  scheduleTitle: {
+    fontSize: typography.sizes.sm,
+    fontWeight: '600',
+    color: colors.darkGray,
+    marginBottom: spacing.sm,
+  },
+  scheduleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.xs,
+  },
+  scheduleRowToday: {
+    backgroundColor: colors.primary,
+    borderRadius: 8,
+    paddingHorizontal: spacing.sm,
+  },
+  scheduleDay: {
+    fontSize: typography.sizes.sm,
+    fontWeight: '500',
+    color: colors.darkGray,
+  },
+  scheduleDayToday: {
+    color: colors.white,
+    fontWeight: '600',
+  },
+  scheduleHours: {
+    fontSize: typography.sizes.sm,
+    color: colors.gray,
+  },
+  scheduleHoursToday: {
+    color: colors.white,
+    fontWeight: '500',
   },
   categoriesSection: {
     paddingHorizontal: spacing.lg,
@@ -482,6 +585,15 @@ const styles = StyleSheet.create({
   },
   productRow: {
     justifyContent: 'space-between',
+  },
+  emptyProducts: {
+    alignItems: 'center',
+    paddingVertical: spacing.xl,
+  },
+  emptyProductsText: {
+    fontSize: typography.sizes.md,
+    color: colors.gray,
+    marginTop: spacing.sm,
   },
   errorContainer: {
     flex: 1,

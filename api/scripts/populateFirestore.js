@@ -21,7 +21,8 @@ const nombresLugares = [
 ];
 
 const categorias = [
-  'pizza', 'bebidas', 'porciones', 'hamburguesa', 'taco', 'sushi', 'postre', 'ensalada', 'combo', 'acompañamiento'
+  'hamburguesa', 'pizza', 'plato', 'sushi', 'mexicana', 'pollo', 'ensalada', 'postre',
+  'combo', 'taco', 'parrilla', 'arepa'
 ];
 
 const productosBase = [
@@ -29,24 +30,23 @@ const productosBase = [
   { name: 'Pizza Hawaiana', category: 'pizza', description: 'Queso, jamón y piña', price: 32000 },
   { name: 'Pizza Pepperoni', category: 'pizza', description: 'Queso y pepperoni', price: 34000 },
   { name: 'Hamburguesa Clásica', category: 'hamburguesa', description: 'Carne, queso, lechuga y tomate', price: 18000 },
+  { name: 'Hamburguesa Doble', category: 'hamburguesa', description: 'Doble carne con queso y bacon', price: 22000 },
   { name: 'Tacos de Pollo', category: 'taco', description: '3 tacos con pollo, guacamole y salsa verde', price: 16000 },
+  { name: 'Tacos de Carne', category: 'taco', description: '3 tacos con carne asada y salsa', price: 18000 },
   { name: 'Sushi Roll California', category: 'sushi', description: 'Cangrejo, aguacate y pepino', price: 22000 },
+  { name: 'Sushi Roll Philadelphia', category: 'sushi', description: 'Salmón, queso crema y aguacate', price: 24000 },
   { name: 'Arepa Rellena', category: 'arepa', description: 'Arepa con queso y jamón', price: 9000 },
+  { name: 'Arepa de Pollo', category: 'arepa', description: 'Arepa con pollo desmechado', price: 11000 },
   { name: 'Parrillada Mixta', category: 'parrilla', description: 'Carne, pollo y chorizo', price: 38000 },
+  { name: 'Pollo Asado', category: 'pollo', description: 'Pollo asado con papas', price: 25000 },
   { name: 'Ensalada César', category: 'ensalada', description: 'Lechuga, pollo, queso y aderezo', price: 15000 },
+  { name: 'Ensalada Griega', category: 'ensalada', description: 'Lechuga, aceitunas, queso feta', price: 12000 },
   { name: 'Combo Familiar', category: 'combo', description: 'Pizza grande + 2 bebidas + papas', price: 48000 },
+  { name: 'Combo Individual', category: 'combo', description: 'Hamburguesa + papas + bebida', price: 28000 },
   { name: 'Helado de Vainilla', category: 'postre', description: 'Helado artesanal', price: 7000 },
-  // Bebidas
-  { name: 'Coca-Cola 400ml', category: 'bebidas', description: 'Bebida gaseosa', price: 4000 },
-  { name: 'Jugo Natural', category: 'bebidas', description: 'Jugo de fruta natural', price: 5000 },
-  { name: 'Agua Botella', category: 'bebidas', description: 'Agua mineral 600ml', price: 3500 },
-  // Porciones y adicionales
-  { name: 'Porción de papas', category: 'porciones', description: 'Papas a la francesa', price: 6000 },
-  { name: 'Porción de guacamole', category: 'porciones', description: 'Guacamole fresco', price: 5000 },
-  { name: 'Adicional de queso', category: 'porciones', description: 'Queso extra para tu plato', price: 4000 },
-  { name: 'Adicional de tocineta', category: 'porciones', description: 'Tocineta crocante', price: 5000 },
-  { name: 'Porción de arroz', category: 'porciones', description: 'Arroz blanco', price: 3000 },
-  { name: 'Porción de ensalada', category: 'porciones', description: 'Ensalada fresca', price: 4000 },
+  { name: 'Tiramisú', category: 'postre', description: 'Postre italiano tradicional', price: 12000 },
+  { name: 'Plato Mexicano', category: 'mexicana', description: 'Tacos, guacamole y frijoles', price: 20000 },
+  { name: 'Plato de Pasta', category: 'plato', description: 'Pasta con salsa boloñesa', price: 18000 },
 ];
 
 function getRandom(arr) {
