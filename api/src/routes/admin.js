@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { populateDatabase } = require('../../scripts/populateDatabase');
+const { clearDatabase } = require('../../scripts/clearDatabase');
 const authenticate = require('../middleware/auth');
 const allowRoles = require('../middleware/roles');
 
@@ -17,6 +18,39 @@ router.get('/health', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
+    });
+  }
+});
+
+// Endpoint público para limpiar base de datos en producción
+router.post('/clear-production', async (req, res) => {
+  try {
+    console.log('🧹 Iniciando limpieza de base de datos en producción...');
+    
+    // Verificar que estamos en producción
+    if (process.env.NODE_ENV !== 'production') {
+      return res.status(403).json({
+        success: false,
+        error: 'Este endpoint solo está disponible en producción'
+      });
+    }
+    
+    // Limpiar la base de datos
+    await clearDatabase();
+    
+    console.log('🎉 Base de datos limpiada exitosamente en producción!');
+    
+    res.json({
+      success: true,
+      message: 'Base de datos limpiada exitosamente',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('❌ Error limpiando base de datos:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error limpiando base de datos',
+      details: error.message
     });
   }
 });
