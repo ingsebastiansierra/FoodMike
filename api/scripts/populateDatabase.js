@@ -1,4 +1,4 @@
-const { db } = require('../config/firebase');
+const { db } = require('../src/config/firebase');
 const Restaurant = require('../src/models/Restaurant');
 const Category = require('../src/models/Category');
 const Product = require('../src/models/Product');
