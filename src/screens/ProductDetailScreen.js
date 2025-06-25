@@ -21,26 +21,7 @@ const ProductDetailScreen = ({ route, navigation }) => {
   const [quantity, setQuantity] = useState(1);
   const [isFavorite, setIsFavorite] = useState(false);
   const { addToCart, getTotalQuantity } = useCart();
-  const [restaurantName, setRestaurantName] = useState('');
-  const [loadingRestaurant, setLoadingRestaurant] = useState(true);
-
-  useEffect(() => {
-    let isMounted = true;
-    const fetchRestaurant = async () => {
-      try {
-        const data = await restaurantsService.getById(product.restaurantId);
-        if (isMounted) {
-          setRestaurantName(data.name || 'Restaurante desconocido');
-        }
-      } catch (e) {
-        if (isMounted) setRestaurantName('Restaurante desconocido');
-      } finally {
-        if (isMounted) setLoadingRestaurant(false);
-      }
-    };
-    fetchRestaurant();
-    return () => { isMounted = false; };
-  }, [product.restaurantId]);
+  const restaurantName = product.restaurant?.name || 'Restaurante desconocido';
 
   // Simulación de delivery y tiempo
   const deliveryFee = typeof product.deliveryFee === 'number' ? product.deliveryFee : 0;
@@ -111,7 +92,7 @@ const ProductDetailScreen = ({ route, navigation }) => {
           <ProductImage uri={product.image} />
           
           <Text style={styles.restaurantText}>
-            {loadingRestaurant ? 'Cargando restaurante...' : restaurantName}
+            {restaurantName}
           </Text>
           
           <Text style={styles.title}>

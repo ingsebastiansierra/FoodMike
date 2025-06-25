@@ -1,182 +1,272 @@
-const { db } = require('../config/firebase');
+const { db } = require('../src/config/firebase');
 const Restaurant = require('../src/models/Restaurant');
 const Category = require('../src/models/Category');
 const Product = require('../src/models/Product');
 const Addition = require('../src/models/Addition');
 
-// Datos de restaurantes con estructura completa
-const RESTAURANTS_DATA = [
+// Utilidades para generar datos aleatorios
+const randomFromArray = (arr) => arr[Math.floor(Math.random() * arr.length)];
+const randomPrice = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+const randomStars = () => (Math.random() * 1.5 + 3.5).toFixed(1);
+const randomReviews = () => Math.floor(Math.random() * 400) + 50;
+
+const RESTAURANTS = [
+  // Asadero de Pollo
   {
-    name: "Café del Sol",
-    description: "El mejor café colombiano con pastelería artesanal",
-    address: "Carrera 15 #93-47, Bogotá",
-    phone: "+57 300 567 8901",
-    email: "cafe@cafedelsol.com",
-    stars: 4.4,
-    reviews: 203,
-    deliveryTime: "15-25 min",
-    deliveryFee: 1500,
-    minOrder: 8000,
-    image: "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=400",
-    coverImage: "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=800",
-    categories: ["Café", "Pastelería"],
-    isOpen: true,
-    isFeatured: true,
-    schedule: {
-      monday: { open: "06:00", close: "20:00" },
-      tuesday: { open: "06:00", close: "20:00" },
-      wednesday: { open: "06:00", close: "20:00" },
-      thursday: { open: "06:00", close: "20:00" },
-      friday: { open: "06:00", close: "21:00" },
-      saturday: { open: "07:00", close: "21:00" },
-      sunday: { open: "07:00", close: "19:00" }
-    }
-  },
-  {
-    name: "Burger House",
-    description: "Hamburguesas gourmet con las mejores carnes y salsas",
-    address: "Avenida 68 #12-34, Cali",
-    phone: "+57 300 345 6789",
-    email: "contacto@burgerhouse.com",
-    stars: 4.7,
-    reviews: 156,
-    deliveryTime: "20-30 min",
+    name: "Asadero El Pollo Feliz",
+    type: "Asadero de Pollo",
+    image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800",
+    coverImage: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200",
+    address: "Cra 10 #20-30, Bogotá",
+    phone: "+57 300 111 2222",
+    email: "contacto@pollofeliz.com",
     deliveryFee: 2000,
-    minOrder: 10000,
-    image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400",
-    coverImage: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800",
-    categories: ["Hamburguesas", "Comida Rápida"],
-    isOpen: true,
-    isFeatured: true,
-    schedule: {
-      monday: { open: "12:00", close: "22:00" },
-      tuesday: { open: "12:00", close: "22:00" },
-      wednesday: { open: "12:00", close: "22:00" },
-      thursday: { open: "12:00", close: "22:00" },
-      friday: { open: "12:00", close: "23:00" },
-      saturday: { open: "12:00", close: "23:00" },
-      sunday: { open: "12:00", close: "21:00" }
-    }
-  },
-  {
-    name: "Pizza Express",
-    description: "Las mejores pizzas artesanales con ingredientes frescos",
-    address: "Carrera 78 #23-45, Medellín",
-    phone: "+57 300 234 5678",
-    email: "pedidos@pizzaexpress.com",
-    stars: 4.3,
-    reviews: 95,
-    deliveryTime: "25-35 min",
-    deliveryFee: 2500,
-    minOrder: 12000,
-    image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400",
-    coverImage: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800",
-    categories: ["Pizza", "Comida Rápida"],
-    isOpen: true,
-    isFeatured: true,
-    schedule: {
-      monday: { open: "11:00", close: "23:00" },
-      tuesday: { open: "11:00", close: "23:00" },
-      wednesday: { open: "11:00", close: "23:00" },
-      thursday: { open: "11:00", close: "23:00" },
-      friday: { open: "11:00", close: "00:00" },
-      saturday: { open: "12:00", close: "00:00" },
-      sunday: { open: "12:00", close: "22:00" }
-    }
-  },
-  {
-    name: "Sushi Master",
-    description: "Sushi fresco y auténtico preparado por expertos",
-    address: "Calle 45 #67-89, Barranquilla",
-    phone: "+57 300 456 7890",
-    email: "reservas@sushimaster.com",
-    stars: 4.6,
-    reviews: 89,
-    deliveryTime: "35-45 min",
-    deliveryFee: 4000,
-    minOrder: 20000,
-    image: "https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400",
-    coverImage: "https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=800",
-    categories: ["Sushi", "Comida Japonesa"],
-    isOpen: true,
-    isFeatured: true,
-    schedule: {
-      monday: { open: "12:00", close: "22:00" },
-      tuesday: { open: "12:00", close: "22:00" },
-      wednesday: { open: "12:00", close: "22:00" },
-      thursday: { open: "12:00", close: "22:00" },
-      friday: { open: "12:00", close: "23:00" },
-      saturday: { open: "12:00", close: "23:00" },
-      sunday: { open: "12:00", close: "21:00" }
-    }
-  },
-  {
-    name: "El Sabor Colombiano",
-    description: "Los mejores platos típicos de Colombia con sabores auténticos",
-    address: "Calle 123 #45-67, Bogotá",
-    phone: "+57 300 123 4567",
-    email: "info@elsaborcolombiano.com",
-    stars: 4.5,
-    reviews: 128,
-    deliveryTime: "30-45 min",
-    deliveryFee: 3000,
     minOrder: 15000,
-    image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400",
-    coverImage: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800",
-    categories: ["Restaurante Colombiano", "Comida Típica"],
-    isOpen: true,
-    isFeatured: false,
-    schedule: {
-      monday: { open: "07:00", close: "22:00" },
-      tuesday: { open: "07:00", close: "22:00" },
-      wednesday: { open: "07:00", close: "22:00" },
-      thursday: { open: "07:00", close: "22:00" },
-      friday: { open: "07:00", close: "23:00" },
-      saturday: { open: "08:00", close: "23:00" },
-      sunday: { open: "08:00", close: "21:00" }
-    }
-  },
-  {
-    name: "Tacos Mexicanos",
-    description: "Los auténticos tacos mexicanos con salsas caseras",
-    address: "Avenida 40 #15-67, Medellín",
-    phone: "+57 300 678 9012",
-    email: "tacos@mexicanos.com",
-    stars: 4.2,
-    reviews: 67,
-    deliveryTime: "25-35 min",
-    deliveryFee: 2000,
-    minOrder: 12000,
-    image: "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=400",
-    coverImage: "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=800",
-    categories: ["Tacos", "Comida Mexicana"],
-    isOpen: true,
-    isFeatured: false,
+    isFeatured: true,
     schedule: {
       monday: { open: "11:00", close: "22:00" },
       tuesday: { open: "11:00", close: "22:00" },
       wednesday: { open: "11:00", close: "22:00" },
       thursday: { open: "11:00", close: "22:00" },
       friday: { open: "11:00", close: "23:00" },
+      saturday: { open: "11:00", close: "23:00" },
+      sunday: { open: "11:00", close: "21:00" }
+    },
+    specialties: ["Pollo asado", "Papas fritas", "Arepas"],
+    categories: [
+      {
+        name: "Pollo Asado",
+        icon: "🍗",
+        products: [
+          { name: "Pollo Entero", description: "Pollo asado entero con papas y arepas", price: 35000, image: "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?w=800" },
+          { name: "Medio Pollo", description: "Medio pollo asado con papas y arepa", price: 20000, image: "https://images.unsplash.com/photo-1464306076886-debca5e8a6b0?w=800" },
+          { name: "Cuarto de Pollo", description: "Cuarto de pollo asado con papas", price: 12000, image: "https://images.unsplash.com/photo-1502741338009-cac2772e18bc?w=800" },
+          { name: "Alitas BBQ", description: "Alitas de pollo en salsa BBQ", price: 16000, image: "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?w=800" },
+          { name: "Pechuga Asada", description: "Pechuga de pollo asada con ensalada", price: 18000, image: "https://images.unsplash.com/photo-1464306076886-debca5e8a6b0?w=800" },
+          { name: "Brochetas de Pollo", description: "Brochetas de pollo con vegetales", price: 14000, image: "https://images.unsplash.com/photo-1502741338009-cac2772e18bc?w=800" }
+        ]
+      },
+      {
+        name: "Acompañamientos",
+        icon: "🍟",
+        products: [
+          { name: "Papas Fritas", description: "Porción de papas fritas crocantes", price: 6000, image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800" },
+          { name: "Arepas", description: "Arepas de maíz recién hechas", price: 4000, image: "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?w=800" },
+          { name: "Ensalada", description: "Ensalada fresca de la casa", price: 5000, image: "https://images.unsplash.com/photo-1464306076886-debca5e8a6b0?w=800" },
+          { name: "Yuca Frita", description: "Porción de yuca frita", price: 6000, image: "https://images.unsplash.com/photo-1502741338009-cac2772e18bc?w=800" },
+          { name: "Mazorca", description: "Mazorca asada con mantequilla", price: 7000, image: "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?w=800" },
+          { name: "Guacamole", description: "Guacamole casero", price: 8000, image: "https://images.unsplash.com/photo-1464306076886-debca5e8a6b0?w=800" }
+        ]
+      },
+      {
+        name: "Bebidas",
+        icon: "🥤",
+        products: [
+          { name: "Gaseosa 1.5L", description: "Botella de gaseosa 1.5 litros", price: 6000, image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800" },
+          { name: "Jugo Natural", description: "Jugo natural de frutas", price: 5000, image: "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?w=800" },
+          { name: "Agua", description: "Botella de agua", price: 3000, image: "https://images.unsplash.com/photo-1464306076886-debca5e8a6b0?w=800" },
+          { name: "Cerveza", description: "Cerveza nacional", price: 7000, image: "https://images.unsplash.com/photo-1502741338009-cac2772e18bc?w=800" },
+          { name: "Limonada", description: "Limonada natural", price: 5000, image: "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?w=800" },
+          { name: "Té frío", description: "Té frío de durazno", price: 4000, image: "https://images.unsplash.com/photo-1464306076886-debca5e8a6b0?w=800" }
+        ]
+      }
+    ]
+  },
+  // Pizzería
+  {
+    name: "Pizzería Napoli",
+    type: "Pizzería",
+    image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800",
+    coverImage: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=1200",
+    address: "Av 19 #120-45, Bogotá",
+    phone: "+57 300 222 3333",
+    email: "info@napolipizza.com",
+    deliveryFee: 0,
+    minOrder: 20000,
+    isFeatured: true,
+    schedule: {
+      monday: { open: "12:00", close: "23:00" },
+      tuesday: { open: "12:00", close: "23:00" },
+      wednesday: { open: "12:00", close: "23:00" },
+      thursday: { open: "12:00", close: "23:00" },
+      friday: { open: "12:00", close: "00:00" },
+      saturday: { open: "12:00", close: "00:00" },
+      sunday: { open: "12:00", close: "22:00" }
+    },
+    specialties: ["Pizza artesanal", "Calzone", "Lasaña"],
+    categories: [
+      {
+        name: "Pizzas",
+        icon: "🍕",
+        products: [
+          { name: "Pizza Margarita", description: "Queso mozzarella, tomate y albahaca", price: 22000, image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800" },
+          { name: "Pizza Hawaiana", description: "Jamón, piña y queso mozzarella", price: 25000, image: "https://images.unsplash.com/photo-1548365328-9c6dbb6b8b76?w=800" },
+          { name: "Pizza Pepperoni", description: "Pepperoni y queso mozzarella", price: 26000, image: "https://images.unsplash.com/photo-1542281286-9e0a16bb7366?w=800" },
+          { name: "Pizza Vegetariana", description: "Vegetales frescos y queso", price: 24000, image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800" },
+          { name: "Pizza BBQ Pollo", description: "Pollo, salsa BBQ y cebolla", price: 27000, image: "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?w=800" },
+          { name: "Pizza 4 Quesos", description: "Mezcla de quesos gourmet", price: 28000, image: "https://images.unsplash.com/photo-1464306076886-debca5e8a6b0?w=800" }
+        ]
+      },
+      {
+        name: "Entradas",
+        icon: "🥖",
+        products: [
+          { name: "Pan de Ajo", description: "Pan artesanal con ajo y mantequilla", price: 7000, image: "https://images.unsplash.com/photo-1502741338009-cac2772e18bc?w=800" },
+          { name: "Bruschetta", description: "Pan tostado con tomate y albahaca", price: 9000, image: "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?w=800" },
+          { name: "Ensalada Caprese", description: "Mozzarella, tomate y albahaca", price: 12000, image: "https://images.unsplash.com/photo-1464306076886-debca5e8a6b0?w=800" },
+          { name: "Calzone", description: "Calzone relleno de jamón y queso", price: 18000, image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800" },
+          { name: "Lasaña", description: "Lasaña de carne y queso", price: 20000, image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800" },
+          { name: "Bastones de Queso", description: "Palitos de queso mozzarella", price: 8000, image: "https://images.unsplash.com/photo-1548365328-9c6dbb6b8b76?w=800" }
+        ]
+      },
+      {
+        name: "Bebidas",
+        icon: "🥤",
+        products: [
+          { name: "Gaseosa", description: "Gaseosa personal", price: 4000, image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800" },
+          { name: "Jugo de Naranja", description: "Jugo natural de naranja", price: 6000, image: "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?w=800" },
+          { name: "Agua", description: "Botella de agua", price: 3000, image: "https://images.unsplash.com/photo-1464306076886-debca5e8a6b0?w=800" },
+          { name: "Cerveza", description: "Cerveza artesanal", price: 8000, image: "https://images.unsplash.com/photo-1502741338009-cac2772e18bc?w=800" },
+          { name: "Limonada", description: "Limonada natural", price: 5000, image: "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?w=800" },
+          { name: "Té frío", description: "Té frío de durazno", price: 4000, image: "https://images.unsplash.com/photo-1464306076886-debca5e8a6b0?w=800" }
+        ]
+      }
+    ]
+  },
+  // ...7 restaurantes más con estructura similar...
+  // Hamburguesería
+  {
+    name: "Burger House",
+    type: "Hamburguesería",
+    image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800",
+    coverImage: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=1200",
+    address: "Calle 45 #67-89, Medellín",
+    phone: "+57 300 333 4444",
+    email: "info@burgerhouse.com",
+    deliveryFee: 2500,
+    minOrder: 18000,
+    isFeatured: true,
+    schedule: {
+      monday: { open: "12:00", close: "22:00" },
+      tuesday: { open: "12:00", close: "22:00" },
+      wednesday: { open: "12:00", close: "22:00" },
+      thursday: { open: "12:00", close: "22:00" },
+      friday: { open: "12:00", close: "23:00" },
       saturday: { open: "12:00", close: "23:00" },
       sunday: { open: "12:00", close: "21:00" }
-    }
+    },
+    specialties: ["Hamburguesas gourmet", "Papas a la francesa", "Malteadas"],
+    categories: [
+      {
+        name: "Hamburguesas",
+        icon: "🍔",
+        products: [
+          { name: "Burger Clásica", description: "Carne 150g, queso, lechuga, tomate", price: 15000, image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800" },
+          { name: "Burger BBQ", description: "Carne, queso, cebolla crispy, salsa BBQ", price: 18000, image: "https://images.unsplash.com/photo-1550547660-d9450f859349?w=800" },
+          { name: "Burger Doble", description: "Doble carne, doble queso", price: 22000, image: "https://images.unsplash.com/photo-1550547660-d9450f859349?w=800" },
+          { name: "Burger Pollo", description: "Pechuga de pollo crispy, lechuga, tomate", price: 17000, image: "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?w=800" },
+          { name: "Burger Veggie", description: "Hamburguesa vegetariana de garbanzo", price: 16000, image: "https://images.unsplash.com/photo-1464306076886-debca5e8a6b0?w=800" },
+          { name: "Burger Mexicana", description: "Carne, guacamole, jalapeños", price: 19000, image: "https://images.unsplash.com/photo-1502741338009-cac2772e18bc?w=800" }
+        ]
+      },
+      {
+        name: "Acompañamientos",
+        icon: "🍟",
+        products: [
+          { name: "Papas a la Francesa", description: "Porción de papas fritas", price: 7000, image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800" },
+          { name: "Aros de Cebolla", description: "Aros de cebolla crocantes", price: 8000, image: "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?w=800" },
+          { name: "Nuggets de Pollo", description: "Nuggets de pollo con salsa", price: 9000, image: "https://images.unsplash.com/photo-1464306076886-debca5e8a6b0?w=800" },
+          { name: "Mazorca", description: "Mazorca asada con mantequilla", price: 7000, image: "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?w=800" },
+          { name: "Ensalada", description: "Ensalada fresca de la casa", price: 6000, image: "https://images.unsplash.com/photo-1502741338009-cac2772e18bc?w=800" },
+          { name: "Guacamole", description: "Guacamole casero", price: 8000, image: "https://images.unsplash.com/photo-1464306076886-debca5e8a6b0?w=800" }
+        ]
+      },
+      {
+        name: "Bebidas",
+        icon: "🥤",
+        products: [
+          { name: "Malteada de Chocolate", description: "Malteada con helado de chocolate", price: 9000, image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800" },
+          { name: "Malteada de Fresa", description: "Malteada con helado de fresa", price: 9000, image: "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?w=800" },
+          { name: "Gaseosa", description: "Gaseosa personal", price: 4000, image: "https://images.unsplash.com/photo-1464306076886-debca5e8a6b0?w=800" },
+          { name: "Jugo de Mango", description: "Jugo natural de mango", price: 6000, image: "https://images.unsplash.com/photo-1502741338009-cac2772e18bc?w=800" },
+          { name: "Agua", description: "Botella de agua", price: 3000, image: "https://images.unsplash.com/photo-1548365328-9c6dbb6b8b76?w=800" },
+          { name: "Cerveza", description: "Cerveza nacional", price: 7000, image: "https://images.unsplash.com/photo-1548365328-9c6dbb6b8b76?w=800" }
+        ]
+      }
+    ]
   },
+  // Mexicana
   {
-    name: "Helados Artesanales",
-    description: "Los mejores helados artesanales con sabores únicos",
-    address: "Carrera 50 #23-45, Barranquilla",
-    phone: "+57 300 890 1234",
-    email: "helados@artesanales.com",
-    stars: 4.8,
-    reviews: 178,
-    deliveryTime: "20-30 min",
+    name: "Tacos y Salsas",
+    type: "Restaurante Mexicano",
+    image: "https://images.unsplash.com/photo-1502741338009-cac2772e18bc?w=800",
+    coverImage: "https://images.unsplash.com/photo-1502741338009-cac2772e18bc?w=1200",
+    address: "Av 68 #45-67, Cali",
+    phone: "+57 300 444 5555",
+    email: "info@tacosysalsas.com",
+    deliveryFee: 3000,
+    minOrder: 18000,
+    isFeatured: true,
+    schedule: {
+      monday: { open: "12:00", close: "22:00" },
+      tuesday: { open: "12:00", close: "22:00" },
+      wednesday: { open: "12:00", close: "22:00" },
+      thursday: { open: "12:00", close: "22:00" },
+      friday: { open: "12:00", close: "23:00" },
+      saturday: { open: "12:00", close: "23:00" },
+      sunday: { open: "12:00", close: "21:00" }
+    },
+    specialties: ["Tacos", "Burritos", "Quesadillas"],
+    categories: [
+      {
+        name: "Tacos",
+        icon: "🌮",
+        products: [
+          { name: "Taco de Pollo", description: "Tortilla de maíz, pollo, salsa y vegetales", price: 9000, image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800" },
+          { name: "Taco de Res", description: "Tortilla de maíz, carne de res, guacamole", price: 10000, image: "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?w=800" },
+          { name: "Taco Veggie", description: "Tortilla de maíz, vegetales frescos", price: 8500, image: "https://images.unsplash.com/photo-1464306076886-debca5e8a6b0?w=800" },
+          { name: "Taco Pastor", description: "Carne al pastor, piña y cebolla", price: 11000, image: "https://images.unsplash.com/photo-1502741338009-cac2772e18bc?w=800" },
+          { name: "Taco de Chorizo", description: "Chorizo, cebolla y cilantro", price: 9500, image: "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?w=800" },
+          { name: "Taco de Camarón", description: "Camarón, salsa especial y vegetales", price: 12000, image: "https://images.unsplash.com/photo-1464306076886-debca5e8a6b0?w=800" }
+        ]
+      },
+      {
+        name: "Burritos",
+        icon: "🌯",
+        products: [
+          { name: "Burrito de Pollo", description: "Tortilla de trigo, pollo, arroz, frijoles", price: 13000, image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800" },
+          { name: "Burrito de Res", description: "Tortilla de trigo, carne de res, arroz, frijoles", price: 14000, image: "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?w=800" },
+          { name: "Burrito Veggie", description: "Tortilla de trigo, vegetales frescos", price: 12000, image: "https://images.unsplash.com/photo-1464306076886-debca5e8a6b0?w=800" },
+          { name: "Burrito Pastor", description: "Carne al pastor, arroz, frijoles", price: 14500, image: "https://images.unsplash.com/photo-1502741338009-cac2772e18bc?w=800" },
+          { name: "Burrito de Chorizo", description: "Chorizo, arroz, frijoles", price: 13500, image: "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?w=800" },
+          { name: "Burrito de Camarón", description: "Camarón, arroz, frijoles", price: 15000, image: "https://images.unsplash.com/photo-1464306076886-debca5e8a6b0?w=800" }
+        ]
+      },
+      {
+        name: "Bebidas",
+        icon: "🥤",
+        products: [
+          { name: "Agua Fresca", description: "Agua fresca de frutas", price: 5000, image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800" },
+          { name: "Margarita", description: "Cóctel margarita clásico", price: 12000, image: "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?w=800" },
+          { name: "Cerveza Mexicana", description: "Cerveza importada", price: 9000, image: "https://images.unsplash.com/photo-1464306076886-debca5e8a6b0?w=800" },
+          { name: "Jugo de Mango", description: "Jugo natural de mango", price: 6000, image: "https://images.unsplash.com/photo-1502741338009-cac2772e18bc?w=800" },
+          { name: "Gaseosa", description: "Gaseosa personal", price: 4000, image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800" },
+          { name: "Limonada", description: "Limonada natural", price: 5000, image: "https://images.unsplash.com/photo-1548365328-9c6dbb6b8b76?w=800" }
+        ]
+      }
+    ]
+  },
+  // ...4 más: Sandwichería, Sushi, Colombiana, Postres, Vegetariano...
+  {
+    name: "Sandwich Gourmet",
+    type: "Sandwichería",
+    image: "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?w=800",
+    coverImage: "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?w=1200",
+    address: "Cra 7 #45-12, Bogotá",
+    phone: "+57 300 555 6666",
+    email: "info@sandwichgourmet.com",
     deliveryFee: 1500,
-    minOrder: 8000,
-    image: "https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=400",
-    coverImage: "https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=800",
-    categories: ["Helados", "Postres"],
-    isOpen: true,
+    minOrder: 12000,
     isFeatured: false,
     schedule: {
       monday: { open: "10:00", close: "21:00" },
@@ -186,49 +276,229 @@ const RESTAURANTS_DATA = [
       friday: { open: "10:00", close: "22:00" },
       saturday: { open: "11:00", close: "22:00" },
       sunday: { open: "11:00", close: "20:00" }
-    }
+    },
+    specialties: ["Sandwiches artesanales", "Wraps", "Jugos naturales"],
+    categories: [
+      {
+        name: "Sandwiches",
+        icon: "🥪",
+        products: [
+          { name: "Sandwich de Pollo", description: "Pollo, lechuga, tomate, mayonesa", price: 12000, image: "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?w=800" },
+          { name: "Sandwich de Jamón y Queso", description: "Jamón, queso, mantequilla", price: 11000, image: "https://images.unsplash.com/photo-1464306076886-debca5e8a6b0?w=800" },
+          { name: "Sandwich Veggie", description: "Vegetales frescos, hummus", price: 10000, image: "https://images.unsplash.com/photo-1502741338009-cac2772e18bc?w=800" },
+          { name: "Sandwich de Atún", description: "Atún, lechuga, tomate, mayonesa", price: 13000, image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800" },
+          { name: "Sandwich de Roast Beef", description: "Roast beef, queso, mostaza", price: 14000, image: "https://images.unsplash.com/photo-1548365328-9c6dbb6b8b76?w=800" },
+          { name: "Sandwich Caprese", description: "Mozzarella, tomate, albahaca", price: 12000, image: "https://images.unsplash.com/photo-1542281286-9e0a16bb7366?w=800" }
+        ]
+      },
+      {
+        name: "Wraps",
+        icon: "🌯",
+        products: [
+          { name: "Wrap de Pollo", description: "Pollo, vegetales, salsa de yogur", price: 13000, image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800" },
+          { name: "Wrap Veggie", description: "Vegetales frescos, hummus", price: 12000, image: "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?w=800" },
+          { name: "Wrap de Atún", description: "Atún, vegetales, mayonesa", price: 14000, image: "https://images.unsplash.com/photo-1464306076886-debca5e8a6b0?w=800" },
+          { name: "Wrap de Roast Beef", description: "Roast beef, vegetales, mostaza", price: 15000, image: "https://images.unsplash.com/photo-1502741338009-cac2772e18bc?w=800" },
+          { name: "Wrap Caprese", description: "Mozzarella, tomate, albahaca", price: 13000, image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800" },
+          { name: "Wrap de Jamón y Queso", description: "Jamón, queso, vegetales", price: 12000, image: "https://images.unsplash.com/photo-1548365328-9c6dbb6b8b76?w=800" }
+        ]
+      },
+      {
+        name: "Bebidas",
+        icon: "🥤",
+        products: [
+          { name: "Jugo de Naranja", description: "Jugo natural de naranja", price: 6000, image: "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?w=800" },
+          { name: "Jugo de Mango", description: "Jugo natural de mango", price: 6000, image: "https://images.unsplash.com/photo-1464306076886-debca5e8a6b0?w=800" },
+          { name: "Jugo de Fresa", description: "Jugo natural de fresa", price: 6000, image: "https://images.unsplash.com/photo-1502741338009-cac2772e18bc?w=800" },
+          { name: "Gaseosa", description: "Gaseosa personal", price: 4000, image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800" },
+          { name: "Agua", description: "Botella de agua", price: 3000, image: "https://images.unsplash.com/photo-1548365328-9c6dbb6b8b76?w=800" },
+          { name: "Té frío", description: "Té frío de durazno", price: 4000, image: "https://images.unsplash.com/photo-1542281286-9e0a16bb7366?w=800" }
+        ]
+      }
+    ]
   },
+  // Sushi
   {
-    name: "Sandwiches Gourmet",
-    description: "Sandwiches gourmet con ingredientes premium",
-    address: "Avenida 68 #45-67, Bogotá",
-    phone: "+57 300 901 2345",
-    email: "sandwiches@gourmet.com",
-    stars: 4.3,
-    reviews: 92,
-    deliveryTime: "20-30 min",
-    deliveryFee: 2000,
-    minOrder: 10000,
-    image: "https://images.unsplash.com/photo-1528735602786-485c5889a1e3?w=400",
-    coverImage: "https://images.unsplash.com/photo-1528735602786-485c5889a1e3?w=800",
-    categories: ["Sandwiches", "Comida Rápida"],
-    isOpen: true,
+    name: "Sushi Master",
+    type: "Sushi Bar",
+    image: "https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=800",
+    coverImage: "https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=1200",
+    address: "Calle 80 #12-34, Bogotá",
+    phone: "+57 300 666 7777",
+    email: "info@sushimaster.com",
+    deliveryFee: 4000,
+    minOrder: 25000,
     isFeatured: false,
     schedule: {
-      monday: { open: "08:00", close: "20:00" },
-      tuesday: { open: "08:00", close: "20:00" },
-      wednesday: { open: "08:00", close: "20:00" },
-      thursday: { open: "08:00", close: "20:00" },
-      friday: { open: "08:00", close: "21:00" },
-      saturday: { open: "09:00", close: "21:00" },
-      sunday: { open: "09:00", close: "19:00" }
-    }
+      monday: { open: "12:00", close: "22:00" },
+      tuesday: { open: "12:00", close: "22:00" },
+      wednesday: { open: "12:00", close: "22:00" },
+      thursday: { open: "12:00", close: "22:00" },
+      friday: { open: "12:00", close: "23:00" },
+      saturday: { open: "12:00", close: "23:00" },
+      sunday: { open: "12:00", close: "21:00" }
+    },
+    specialties: ["Sushi fresco", "Ramen", "Tempura"],
+    categories: [
+      {
+        name: "Sushi Rolls",
+        icon: "🍣",
+        products: [
+          { name: "Roll California", description: "Cangrejo, aguacate, pepino", price: 28000, image: "https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=800" },
+          { name: "Roll Salmón", description: "Salmón fresco, aguacate", price: 32000, image: "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?w=800" },
+          { name: "Roll Tempura", description: "Camarón tempura, aguacate", price: 30000, image: "https://images.unsplash.com/photo-1464306076886-debca5e8a6b0?w=800" },
+          { name: "Roll Veggie", description: "Vegetales frescos", price: 25000, image: "https://images.unsplash.com/photo-1502741338009-cac2772e18bc?w=800" },
+          { name: "Roll Atún", description: "Atún fresco, pepino", price: 31000, image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800" },
+          { name: "Roll Ebi", description: "Camarón, aguacate", price: 29000, image: "https://images.unsplash.com/photo-1548365328-9c6dbb6b8b76?w=800" }
+        ]
+      },
+      {
+        name: "Ramen",
+        icon: "🍜",
+        products: [
+          { name: "Ramen Clásico", description: "Caldo de cerdo, fideos, huevo", price: 27000, image: "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?w=800" },
+          { name: "Ramen Pollo", description: "Caldo de pollo, fideos, vegetales", price: 26000, image: "https://images.unsplash.com/photo-1464306076886-debca5e8a6b0?w=800" },
+          { name: "Ramen Veggie", description: "Caldo de vegetales, tofu", price: 25000, image: "https://images.unsplash.com/photo-1502741338009-cac2772e18bc?w=800" },
+          { name: "Ramen Picante", description: "Caldo picante, cerdo, huevo", price: 28000, image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800" },
+          { name: "Ramen Mariscos", description: "Caldo de mariscos, fideos", price: 30000, image: "https://images.unsplash.com/photo-1548365328-9c6dbb6b8b76?w=800" },
+          { name: "Ramen Miso", description: "Caldo miso, cerdo, vegetales", price: 29000, image: "https://images.unsplash.com/photo-1542281286-9e0a16bb7366?w=800" }
+        ]
+      },
+      {
+        name: "Bebidas",
+        icon: "🥤",
+        products: [
+          { name: "Té Verde", description: "Té verde japonés", price: 6000, image: "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?w=800" },
+          { name: "Sake", description: "Sake tradicional", price: 12000, image: "https://images.unsplash.com/photo-1464306076886-debca5e8a6b0?w=800" },
+          { name: "Agua", description: "Botella de agua", price: 3000, image: "https://images.unsplash.com/photo-1502741338009-cac2772e18bc?w=800" },
+          { name: "Cerveza Japonesa", description: "Cerveza importada", price: 9000, image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800" },
+          { name: "Jugo de Mango", description: "Jugo natural de mango", price: 6000, image: "https://images.unsplash.com/photo-1548365328-9c6dbb6b8b76?w=800" },
+          { name: "Limonada", description: "Limonada natural", price: 5000, image: "https://images.unsplash.com/photo-1542281286-9e0a16bb7366?w=800" }
+        ]
+      }
+    ]
   },
+  // Colombiana
   {
-    name: "Pollo Asado",
-    description: "El mejor pollo asado con papas y ensalada",
-    address: "Calle 78 #12-34, Cali",
-    phone: "+57 300 789 0123",
-    email: "pollo@asado.com",
-    stars: 4.1,
-    reviews: 134,
-    deliveryTime: "30-40 min",
-    deliveryFee: 2500,
+    name: "El Sabor Colombiano",
+    type: "Restaurante Colombiano",
+    image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800",
+    coverImage: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1200",
+    address: "Calle 123 #45-67, Bogotá",
+    phone: "+57 300 777 8888",
+    email: "info@elsaborcolombiano.com",
+    deliveryFee: 3000,
     minOrder: 15000,
-    image: "https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?w=400",
-    coverImage: "https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?w=800",
-    categories: ["Pollo", "Comida Colombiana"],
-    isOpen: true,
+    isFeatured: false,
+    schedule: {
+      monday: { open: "07:00", close: "22:00" },
+      tuesday: { open: "07:00", close: "22:00" },
+      wednesday: { open: "07:00", close: "22:00" },
+      thursday: { open: "07:00", close: "22:00" },
+      friday: { open: "07:00", close: "23:00" },
+      saturday: { open: "08:00", close: "23:00" },
+      sunday: { open: "08:00", close: "21:00" }
+    },
+    specialties: ["Bandeja paisa", "Ajiaco", "Sancocho"],
+    categories: [
+      {
+        name: "Platos Típicos",
+        icon: "🍲",
+        products: [
+          { name: "Bandeja Paisa", description: "Frijoles, arroz, carne, chicharrón, huevo", price: 25000, image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800" },
+          { name: "Ajiaco", description: "Sopa tradicional de Bogotá", price: 18000, image: "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?w=800" },
+          { name: "Sancocho", description: "Sopa de carne, pollo y plátano", price: 20000, image: "https://images.unsplash.com/photo-1464306076886-debca5e8a6b0?w=800" },
+          { name: "Tamales", description: "Tamales tolimenses", price: 12000, image: "https://images.unsplash.com/photo-1502741338009-cac2772e18bc?w=800" },
+          { name: "Lechona", description: "Lechona tolimense", price: 22000, image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800" },
+          { name: "Arepa de Huevo", description: "Arepa rellena de huevo", price: 8000, image: "https://images.unsplash.com/photo-1548365328-9c6dbb6b8b76?w=800" }
+        ]
+      },
+      {
+        name: "Bebidas",
+        icon: "🥤",
+        products: [
+          { name: "Agua de Panela", description: "Bebida tradicional colombiana", price: 4000, image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800" },
+          { name: "Jugo de Lulo", description: "Jugo natural de lulo", price: 6000, image: "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?w=800" },
+          { name: "Jugo de Mora", description: "Jugo natural de mora", price: 6000, image: "https://images.unsplash.com/photo-1464306076886-debca5e8a6b0?w=800" },
+          { name: "Gaseosa", description: "Gaseosa personal", price: 4000, image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800" },
+          { name: "Agua", description: "Botella de agua", price: 3000, image: "https://images.unsplash.com/photo-1548365328-9c6dbb6b8b76?w=800" },
+          { name: "Limonada", description: "Limonada natural", price: 5000, image: "https://images.unsplash.com/photo-1542281286-9e0a16bb7366?w=800" }
+        ]
+      }
+    ]
+  },
+  // Postres
+  {
+    name: "Helados Artesanales",
+    type: "Heladería y Postres",
+    image: "https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=800",
+    coverImage: "https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=1200",
+    address: "Cra 50 #23-45, Barranquilla",
+    phone: "+57 300 890 1234",
+    email: "helados@artesanales.com",
+    deliveryFee: 1500,
+    minOrder: 8000,
+    isFeatured: false,
+    schedule: {
+      monday: { open: "10:00", close: "21:00" },
+      tuesday: { open: "10:00", close: "21:00" },
+      wednesday: { open: "10:00", close: "21:00" },
+      thursday: { open: "10:00", close: "21:00" },
+      friday: { open: "10:00", close: "22:00" },
+      saturday: { open: "11:00", close: "22:00" },
+      sunday: { open: "11:00", close: "20:00" }
+    },
+    specialties: ["Helados artesanales", "Brownies", "Tortas"],
+    categories: [
+      {
+        name: "Helados",
+        icon: "🍦",
+        products: [
+          { name: "Helado de Vainilla", description: "Helado artesanal de vainilla", price: 6000, image: "https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=800" },
+          { name: "Helado de Chocolate", description: "Helado artesanal de chocolate", price: 6000, image: "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?w=800" },
+          { name: "Helado de Fresa", description: "Helado artesanal de fresa", price: 6000, image: "https://images.unsplash.com/photo-1464306076886-debca5e8a6b0?w=800" },
+          { name: "Helado de Café", description: "Helado artesanal de café", price: 6000, image: "https://images.unsplash.com/photo-1502741338009-cac2772e18bc?w=800" },
+          { name: "Helado de Coco", description: "Helado artesanal de coco", price: 6000, image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800" },
+          { name: "Helado de Mango", description: "Helado artesanal de mango", price: 6000, image: "https://images.unsplash.com/photo-1548365328-9c6dbb6b8b76?w=800" }
+        ]
+      },
+      {
+        name: "Tortas",
+        icon: "🍰",
+        products: [
+          { name: "Torta de Chocolate", description: "Torta húmeda de chocolate", price: 9000, image: "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?w=800" },
+          { name: "Torta de Zanahoria", description: "Torta de zanahoria con nueces", price: 9000, image: "https://images.unsplash.com/photo-1464306076886-debca5e8a6b0?w=800" },
+          { name: "Torta de Queso", description: "Cheesecake artesanal", price: 10000, image: "https://images.unsplash.com/photo-1502741338009-cac2772e18bc?w=800" },
+          { name: "Brownie", description: "Brownie de chocolate con nueces", price: 8000, image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800" },
+          { name: "Pie de Limón", description: "Pie de limón artesanal", price: 9000, image: "https://images.unsplash.com/photo-1548365328-9c6dbb6b8b76?w=800" },
+          { name: "Torta de Vainilla", description: "Torta de vainilla con crema", price: 9000, image: "https://images.unsplash.com/photo-1542281286-9e0a16bb7366?w=800" }
+        ]
+      },
+      {
+        name: "Bebidas",
+        icon: "🥤",
+        products: [
+          { name: "Malteada de Vainilla", description: "Malteada con helado de vainilla", price: 7000, image: "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?w=800" },
+          { name: "Malteada de Chocolate", description: "Malteada con helado de chocolate", price: 7000, image: "https://images.unsplash.com/photo-1464306076886-debca5e8a6b0?w=800" },
+          { name: "Jugo de Fresa", description: "Jugo natural de fresa", price: 6000, image: "https://images.unsplash.com/photo-1502741338009-cac2772e18bc?w=800" },
+          { name: "Jugo de Mango", description: "Jugo natural de mango", price: 6000, image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800" },
+          { name: "Gaseosa", description: "Gaseosa personal", price: 4000, image: "https://images.unsplash.com/photo-1548365328-9c6dbb6b8b76?w=800" },
+          { name: "Agua", description: "Botella de agua", price: 3000, image: "https://images.unsplash.com/photo-1542281286-9e0a16bb7366?w=800" }
+        ]
+      }
+    ]
+  },
+  // Vegetariano
+  {
+    name: "Verde Vivo",
+    type: "Restaurante Vegetariano",
+    image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800",
+    coverImage: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200",
+    address: "Cra 15 #93-47, Bogotá",
+    phone: "+57 300 567 8901",
+    email: "info@verdevivo.com",
+    deliveryFee: 2000,
+    minOrder: 12000,
     isFeatured: false,
     schedule: {
       monday: { open: "11:00", close: "21:00" },
@@ -238,569 +508,132 @@ const RESTAURANTS_DATA = [
       friday: { open: "11:00", close: "22:00" },
       saturday: { open: "12:00", close: "22:00" },
       sunday: { open: "12:00", close: "20:00" }
-    }
-  },
-  {
-    name: "Bebidas Refrescantes",
-    description: "Las mejores bebidas naturales y jugos frescos",
-    address: "Calle 90 #12-34, Medellín",
-    phone: "+57 300 012 3456",
-    email: "bebidas@refrescantes.com",
-    stars: 4.0,
-    reviews: 45,
-    deliveryTime: "15-25 min",
-    deliveryFee: 1000,
-    minOrder: 5000,
-    image: "https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=400",
-    coverImage: "https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=800",
-    categories: ["Bebidas", "Jugos"],
-    isOpen: true,
-    isFeatured: false,
-    schedule: {
-      monday: { open: "07:00", close: "19:00" },
-      tuesday: { open: "07:00", close: "19:00" },
-      wednesday: { open: "07:00", close: "19:00" },
-      thursday: { open: "07:00", close: "19:00" },
-      friday: { open: "07:00", close: "20:00" },
-      saturday: { open: "08:00", close: "20:00" },
-      sunday: { open: "08:00", close: "18:00" }
-    }
+    },
+    specialties: ["Comida vegetariana", "Ensaladas", "Jugos naturales"],
+    categories: [
+      {
+        name: "Ensaladas",
+        icon: "🥗",
+        products: [
+          { name: "Ensalada César", description: "Lechuga, crutones, parmesano, aderezo", price: 12000, image: "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?w=800" },
+          { name: "Ensalada Griega", description: "Queso feta, tomate, pepino, aceitunas", price: 13000, image: "https://images.unsplash.com/photo-1464306076886-debca5e8a6b0?w=800" },
+          { name: "Ensalada de Quinoa", description: "Quinoa, vegetales frescos", price: 14000, image: "https://images.unsplash.com/photo-1502741338009-cac2772e18bc?w=800" },
+          { name: "Ensalada de Frutas", description: "Frutas frescas de temporada", price: 10000, image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800" },
+          { name: "Ensalada Caprese", description: "Mozzarella, tomate, albahaca", price: 12000, image: "https://images.unsplash.com/photo-1548365328-9c6dbb6b8b76?w=800" },
+          { name: "Ensalada de Lentejas", description: "Lentejas, vegetales, vinagreta", price: 11000, image: "https://images.unsplash.com/photo-1542281286-9e0a16bb7366?w=800" }
+        ]
+      },
+      {
+        name: "Platos Calientes",
+        icon: "🍲",
+        products: [
+          { name: "Lasaña Veggie", description: "Lasaña de vegetales y queso", price: 15000, image: "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?w=800" },
+          { name: "Hamburguesa Veggie", description: "Hamburguesa de garbanzo y vegetales", price: 16000, image: "https://images.unsplash.com/photo-1464306076886-debca5e8a6b0?w=800" },
+          { name: "Tortilla Española", description: "Tortilla de papa y cebolla", price: 12000, image: "https://images.unsplash.com/photo-1502741338009-cac2772e18bc?w=800" },
+          { name: "Falafel", description: "Falafel de garbanzo con salsa tahini", price: 13000, image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800" },
+          { name: "Curry Vegetariano", description: "Curry de vegetales y arroz", price: 14000, image: "https://images.unsplash.com/photo-1548365328-9c6dbb6b8b76?w=800" },
+          { name: "Arepa Veggie", description: "Arepa rellena de vegetales", price: 10000, image: "https://images.unsplash.com/photo-1542281286-9e0a16bb7366?w=800" }
+        ]
+      },
+      {
+        name: "Bebidas",
+        icon: "🥤",
+        products: [
+          { name: "Jugo Verde", description: "Jugo de espinaca, manzana y piña", price: 7000, image: "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?w=800" },
+          { name: "Jugo de Mango", description: "Jugo natural de mango", price: 6000, image: "https://images.unsplash.com/photo-1464306076886-debca5e8a6b0?w=800" },
+          { name: "Jugo de Fresa", description: "Jugo natural de fresa", price: 6000, image: "https://images.unsplash.com/photo-1502741338009-cac2772e18bc?w=800" },
+          { name: "Gaseosa", description: "Gaseosa personal", price: 4000, image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800" },
+          { name: "Agua", description: "Botella de agua", price: 3000, image: "https://images.unsplash.com/photo-1548365328-9c6dbb6b8b76?w=800" },
+          { name: "Té frío", description: "Té frío de durazno", price: 4000, image: "https://images.unsplash.com/photo-1542281286-9e0a16bb7366?w=800" }
+        ]
+      }
+    ]
   }
 ];
 
-// Datos de categorías
-const CATEGORIES_DATA = [
-  { name: "Burgers", icon: "🍔", description: "Las mejores hamburguesas" },
-  { name: "Pizza", icon: "🍕", description: "Pizzas artesanales" },
-  { name: "Sushi", icon: "🍣", description: "Sushi fresco y auténtico" },
-  { name: "Café", icon: "☕", description: "Café colombiano y pastelería" },
-  { name: "Tacos", icon: "🌮", description: "Tacos mexicanos auténticos" },
-  { name: "Helados", icon: "🍦", description: "Helados artesanales" },
-  { name: "Sandwiches", icon: "🥪", description: "Sandwiches gourmet" },
-  { name: "Pollo", icon: "🍗", description: "Pollo asado tradicional" },
-  { name: "Bebidas", icon: "🥤", description: "Bebidas naturales" },
-  { name: "Comida Colombiana", icon: "🇨🇴", description: "Platos típicos colombianos" }
-];
-
-// Datos de productos por restaurante
-const PRODUCTS_DATA = {
-  "Café del Sol": [
-    {
-      name: "Café Americano",
-      description: "Café negro tradicional",
-      price: 3500,
-      image: "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400",
-      category: "Café",
-      isFeatured: true,
-      stars: 4.5,
-      additions: [
-        { name: "Leche", price: 500 },
-        { name: "Azúcar", price: 0 },
-        { name: "Crema", price: 800 }
-      ]
-    },
-    {
-      name: "Cappuccino",
-      description: "Café con leche espumada",
-      price: 4500,
-      image: "https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=400",
-      category: "Café",
-      isFeatured: true,
-      stars: 4.7,
-      additions: [
-        { name: "Canela", price: 300 },
-        { name: "Chocolate", price: 500 },
-        { name: "Vainilla", price: 400 }
-      ]
-    },
-    {
-      name: "Croissant Clásico",
-      description: "Croissant de mantequilla",
-      price: 2800,
-      image: "https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=400",
-      category: "Pastelería",
-      isFeatured: false,
-      stars: 4.3,
-      additions: [
-        { name: "Mermelada", price: 300 },
-        { name: "Mantequilla", price: 200 }
-      ]
-    }
+const EXTRAS = {
+  porciones: [
+    { name: "Porción extra de papas", price: 3000 },
+    { name: "Porción extra de salsa", price: 2000 }
   ],
-  "Burger House": [
-    {
-      name: "Burger Clásica",
-      description: "Hamburguesa con carne, lechuga, tomate y queso",
-      price: 15000,
-      image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400",
-      category: "Hamburguesas",
-      isFeatured: true,
-      stars: 4.6,
-      additions: [
-        { name: "Bacon", price: 2000 },
-        { name: "Queso extra", price: 1500 },
-        { name: "Salsa especial", price: 800 }
-      ]
-    },
-    {
-      name: "Burger BBQ",
-      description: "Hamburguesa con salsa BBQ y cebolla caramelizada",
-      price: 18000,
-      image: "https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=400",
-      category: "Hamburguesas",
-      isFeatured: true,
-      stars: 4.8,
-      additions: [
-        { name: "Bacon", price: 2000 },
-        { name: "Queso extra", price: 1500 },
-        { name: "Papas fritas", price: 3000 }
-      ]
-    }
-  ],
-  "Pizza Express": [
-    {
-      name: "Pizza Margherita",
-      description: "Pizza con tomate, mozzarella y albahaca",
-      price: 22000,
-      image: "https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=400",
-      category: "Pizza",
-      isFeatured: true,
-      stars: 4.4,
-      additions: [
-        { name: "Pepperoni", price: 3000 },
-        { name: "Champiñones", price: 2000 },
-        { name: "Aceitunas", price: 1500 }
-      ]
-    },
-    {
-      name: "Pizza Hawaiana",
-      description: "Pizza con jamón y piña",
-      price: 25000,
-      image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400",
-      category: "Pizza",
-      isFeatured: false,
-      stars: 4.2,
-      additions: [
-        { name: "Extra queso", price: 2000 },
-        { name: "Bacon", price: 2500 }
-      ]
-    }
-  ],
-  "Sushi Master": [
-    {
-      name: "Roll California",
-      description: "Roll con cangrejo, aguacate y pepino",
-      price: 28000,
-      image: "https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400",
-      category: "Sushi",
-      isFeatured: true,
-      stars: 4.7,
-      additions: [
-        { name: "Salsa de soya", price: 0 },
-        { name: "Wasabi", price: 0 },
-        { name: "Jengibre", price: 0 }
-      ]
-    },
-    {
-      name: "Roll Salmón",
-      description: "Roll con salmón fresco y aguacate",
-      price: 32000,
-      image: "https://images.unsplash.com/photo-1553621042-f6e147245754?w=400",
-      category: "Sushi",
-      isFeatured: true,
-      stars: 4.9,
-      additions: [
-        { name: "Salsa de soya", price: 0 },
-        { name: "Wasabi", price: 0 },
-        { name: "Jengibre", price: 0 }
-      ]
-    }
+  ingredientes: [
+    { name: "Queso extra", price: 2500 },
+    { name: "Jalapeños", price: 1800 }
   ]
 };
 
-// Categorías por tipo de restaurante
-const getCategoriesByRestaurantType = (restaurantName) => {
-  const categories = {
-    "El Sabor Colombiano": [
-      { name: "Desayunos", order: 1 },
-      { name: "Almuerzos", order: 2 },
-      { name: "Platos a la Carta", order: 3 },
-      { name: "Cenas", order: 4 },
-      { name: "Bebidas", order: 5 }
-    ],
-    "Pizza Express": [
-      { name: "Pizzas", order: 1 },
-      { name: "Bebidas", order: 2 },
-      { name: "Postres", order: 3 }
-    ],
-    "Burger House": [
-      { name: "Hamburguesas", order: 1 },
-      { name: "Acompañamientos", order: 2 },
-      { name: "Bebidas", order: 3 },
-      { name: "Postres", order: 4 }
-    ],
-    "Sushi Master": [
-      { name: "Rolls", order: 1 },
-      { name: "Nigiri", order: 2 },
-      { name: "Sashimi", order: 3 },
-      { name: "Bebidas", order: 4 }
-    ],
-    "Café del Sol": [
-      { name: "Cafés", order: 1 },
-      { name: "Tés", order: 2 },
-      { name: "Pastelería", order: 3 },
-      { name: "Desayunos", order: 4 }
-    ],
-    "Tacos Mexicanos": [
-      { name: "Tacos", order: 1 },
-      { name: "Quesadillas", order: 2 },
-      { name: "Bebidas", order: 3 }
-    ],
-    "Pollo Asado": [
-      { name: "Pollo", order: 1 },
-      { name: "Acompañamientos", order: 2 },
-      { name: "Bebidas", order: 3 }
-    ],
-    "Helados Artesanales": [
-      { name: "Helados", order: 1 },
-      { name: "Granizados", order: 2 },
-      { name: "Bebidas", order: 3 }
-    ],
-    "Sandwiches Gourmet": [
-      { name: "Sandwiches", order: 1 },
-      { name: "Ensaladas", order: 2 },
-      { name: "Bebidas", order: 3 }
-    ],
-    "Bebidas Refrescantes": [
-      { name: "Jugos Naturales", order: 1 },
-      { name: "Limonadas", order: 2 },
-      { name: "Smoothies", order: 3 },
-      { name: "Bebidas Gaseosas", order: 4 }
-    ]
-  };
-  
-  return categories[restaurantName] || [];
-};
-
-// Productos por categoría
-const getProductsByCategory = (categoryName, restaurantId) => {
-  const products = {
-    "Desayunos": [
-      {
-        name: "Calentado Colombiano",
-        description: "Arroz, frijoles, huevo, plátano y carne",
-        price: 18000,
-        originalPrice: 20000,
-        image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400",
-        stars: 4.5,
-        reviews: 23,
-        tags: ["típico", "colombiano", "desayuno"],
-        preparationTime: "15 min",
-        hasAdditions: true
-      },
-      {
-        name: "Arepa con Huevo",
-        description: "Arepa de maíz con huevo revuelto y queso",
-        price: 8000,
-        originalPrice: 9000,
-        image: "https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400",
-        stars: 4.3,
-        reviews: 18,
-        tags: ["arepa", "huevo", "desayuno"],
-        preparationTime: "10 min",
-        hasAdditions: false
-      }
-    ],
-    "Pizzas": [
-      {
-        name: "Pizza Margherita",
-        description: "Salsa de tomate, mozzarella y albahaca",
-        price: 25000,
-        originalPrice: 28000,
-        image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400",
-        stars: 4.6,
-        reviews: 45,
-        tags: ["pizza", "margherita", "clásica"],
-        preparationTime: "20 min",
-        hasAdditions: true
-      },
-      {
-        name: "Pizza Hawaiana",
-        description: "Salsa de tomate, mozzarella, jamón y piña",
-        price: 28000,
-        originalPrice: 32000,
-        image: "https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400",
-        stars: 4.4,
-        reviews: 32,
-        tags: ["pizza", "hawaiana", "jamón"],
-        preparationTime: "25 min",
-        hasAdditions: true
-      }
-    ],
-    "Hamburguesas": [
-      {
-        name: "Hamburguesa Clásica",
-        description: "Carne, lechuga, tomate, cebolla y queso",
-        price: 15000,
-        originalPrice: 18000,
-        image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400",
-        stars: 4.7,
-        reviews: 67,
-        tags: ["hamburguesa", "clásica", "carne"],
-        preparationTime: "15 min",
-        hasAdditions: true
-      },
-      {
-        name: "Hamburguesa Todo Terreno",
-        description: "Doble carne, bacon, queso, lechuga, tomate y salsa especial",
-        price: 22000,
-        originalPrice: 25000,
-        image: "https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=400",
-        stars: 4.8,
-        reviews: 89,
-        tags: ["hamburguesa", "doble", "bacon"],
-        preparationTime: "20 min",
-        hasAdditions: true
-      }
-    ],
-    "Bebidas": [
-      {
-        name: "Coca-Cola",
-        description: "Bebida gaseosa Coca-Cola",
-        price: 3000,
-        originalPrice: 3500,
-        image: "https://images.unsplash.com/photo-1629203851122-3726ecdf080e?w=400",
-        stars: 4.2,
-        reviews: 156,
-        tags: ["bebida", "gaseosa", "coca-cola"],
-        preparationTime: "2 min",
-        hasAdditions: true
-      },
-      {
-        name: "Pepsi",
-        description: "Bebida gaseosa Pepsi",
-        price: 2800,
-        originalPrice: 3200,
-        image: "https://images.unsplash.com/photo-1629203851122-3726ecdf080e?w=400",
-        stars: 4.0,
-        reviews: 98,
-        tags: ["bebida", "gaseosa", "pepsi"],
-        preparationTime: "2 min",
-        hasAdditions: true
-      }
-    ]
-  };
-  
-  return products[categoryName] || [];
-};
-
-// Adiciones por producto
-const getAdditionsByProduct = (productName) => {
-  const additions = {
-    "Hamburguesa Todo Terreno": [
-      {
-        name: "Carne Extra",
-        description: "Porción adicional de carne",
-        price: 5000,
-        category: "extra",
-        maxQuantity: 3
-      },
-      {
-        name: "Queso Extra",
-        description: "Porción adicional de queso",
-        price: 2000,
-        category: "extra",
-        maxQuantity: 2
-      },
-      {
-        name: "Bacon Extra",
-        description: "Porción adicional de bacon",
-        price: 3000,
-        category: "extra",
-        maxQuantity: 2
-      }
-    ],
-    "Pizza Margherita": [
-      {
-        name: "Queso Extra",
-        description: "Porción adicional de mozzarella",
-        price: 3000,
-        category: "extra",
-        maxQuantity: 2
-      },
-      {
-        name: "Pepperoni",
-        description: "Agregar pepperoni a la pizza",
-        price: 4000,
-        category: "extra",
-        maxQuantity: 1
-      }
-    ],
-    "Coca-Cola": [
-      {
-        name: "Tamaño Pequeño",
-        description: "350ml",
-        price: 0,
-        category: "size",
-        maxQuantity: 1
-      },
-      {
-        name: "Tamaño Mediano",
-        description: "500ml",
-        price: 500,
-        category: "size",
-        maxQuantity: 1
-      },
-      {
-        name: "Tamaño Grande",
-        description: "1L",
-        price: 1000,
-        category: "size",
-        maxQuantity: 1
-      }
-    ],
-    "Pepsi": [
-      {
-        name: "Tamaño Pequeño",
-        description: "350ml",
-        price: 0,
-        category: "size",
-        maxQuantity: 1
-      },
-      {
-        name: "Tamaño Mediano",
-        description: "500ml",
-        price: 500,
-        category: "size",
-        maxQuantity: 1
-      },
-      {
-        name: "Tamaño Grande",
-        description: "1L",
-        price: 1000,
-        category: "size",
-        maxQuantity: 1
-      }
-    ]
-  };
-  
-  return additions[productName] || [];
-};
-
 async function populateDatabase() {
-  try {
-    console.log('🚀 Iniciando población de base de datos...');
-
-    // 1. Limpiar colecciones existentes (excepto users)
-    console.log('🧹 Limpiando colecciones existentes...');
-    await clearCollections();
-
-    // 2. Crear categorías
-    console.log('📂 Creando categorías...');
-    const categories = await createCategories();
-
-    // 3. Crear restaurantes
-    console.log('🏪 Creando restaurantes...');
-    const restaurants = await createRestaurants();
-
-    // 4. Crear productos para cada restaurante
-    console.log('🍕 Creando productos...');
-    await createProducts(restaurants);
-
-    console.log('✅ Base de datos poblada exitosamente!');
-    console.log(`📊 Estadísticas:`);
-    console.log(`   - ${categories.length} categorías creadas`);
-    console.log(`   - ${restaurants.length} restaurantes creados`);
-    console.log(`   - Productos creados para ${Object.keys(PRODUCTS_DATA).length} restaurantes`);
-
-  } catch (error) {
-    console.error('❌ Error poblando base de datos:', error);
-    throw error;
-  }
-}
-
-async function clearCollections() {
-  const collectionsToClear = ['restaurants', 'categories', 'products', 'additions'];
-  
-  for (const collectionName of collectionsToClear) {
-    try {
-      const snapshot = await db.collection(collectionName).get();
-      const batch = db.batch();
-      
-      snapshot.docs.forEach(doc => {
-        batch.delete(doc.ref);
-      });
-      
-      await batch.commit();
-      console.log(`   ✅ Colección ${collectionName} limpiada`);
-    } catch (error) {
-      console.log(`   ⚠️ Error limpiando ${collectionName}:`, error.message);
+  // Limpiar colecciones
+  const collections = ['products', 'categories', 'restaurants'];
+  for (const col of collections) {
+    const snap = await db.collection(col).get();
+    for (const doc of snap.docs) {
+      await doc.ref.delete();
     }
   }
-}
 
-async function createCategories() {
-  const categories = [];
-  
-  for (const categoryData of CATEGORIES_DATA) {
-    const categoryRef = db.collection('categories').doc();
-    const category = {
-      id: categoryRef.id,
-      ...categoryData,
+  for (const rest of RESTAURANTS) {
+    // Crear restaurante
+    const restRef = await db.collection('restaurants').add({
+      name: rest.name,
+      description: rest.type + ' - ' + rest.specialties.join(', '),
+      image: rest.image,
+      coverImage: rest.coverImage,
+      address: rest.address,
+      phone: rest.phone,
+      email: rest.email,
+      stars: randomStars(),
+      reviews: randomReviews(),
+      deliveryFee: rest.deliveryFee,
+      minOrder: rest.minOrder,
+      isOpen: true,
+      isFeatured: rest.isFeatured,
+      schedule: rest.schedule,
+      specialties: rest.specialties,
       createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    
-    await categoryRef.set(category);
-    categories.push(category);
-  }
-  
-  return categories;
-}
-
-async function createRestaurants() {
-  const restaurants = [];
-  
-  for (const restaurantData of RESTAURANTS_DATA) {
-    const restaurantRef = db.collection('restaurants').doc();
-    const restaurant = {
-      id: restaurantRef.id,
-      ...restaurantData,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    
-    await restaurantRef.set(restaurant);
-    restaurants.push(restaurant);
-  }
-  
-  return restaurants;
-}
-
-async function createProducts(restaurants) {
-  for (const restaurant of restaurants) {
-    const products = PRODUCTS_DATA[restaurant.name] || [];
-    
-    for (const productData of products) {
-      const productRef = db.collection('products').doc();
-      const product = {
-        id: productRef.id,
-        restaurantId: restaurant.id,
-        restaurant: {
-          id: restaurant.id,
-          name: restaurant.name,
-          image: restaurant.image
-        },
-        ...productData,
+      updatedAt: new Date(),
+      location: {
+        lat: 4.65 + Math.random() * 0.1,
+        lng: -74.05 + Math.random() * 0.1
+      }
+    });
+    // Crear categorías y productos
+    for (const cat of rest.categories) {
+      const catRef = await db.collection('categories').add({
+        name: cat.name,
+        icon: cat.icon,
+        restaurantId: restRef.id,
         createdAt: new Date(),
         updatedAt: new Date()
-      };
-      
-      await productRef.set(product);
+      });
+      for (const prod of cat.products) {
+        await db.collection('products').add({
+          name: prod.name,
+          description: prod.description,
+          price: prod.price,
+          image: prod.image,
+          stars: randomStars(),
+          reviews: randomReviews(),
+          category: cat.name,
+          categoryId: catRef.id,
+          restaurant: {
+            id: restRef.id,
+            name: rest.name,
+            image: rest.image
+          },
+          restaurantId: restRef.id,
+          isFeatured: Math.random() > 0.7,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          extras: {
+            porciones: EXTRAS.porciones,
+            ingredientes: EXTRAS.ingredientes
+          }
+        });
+      }
     }
-    
-    console.log(`   ✅ ${products.length} productos creados para ${restaurant.name}`);
   }
+  console.log('✅ Base de datos poblada con restaurantes, categorías, productos y extras.');
 }
 
-module.exports = { populateDatabase }; 
+populateDatabase(); 

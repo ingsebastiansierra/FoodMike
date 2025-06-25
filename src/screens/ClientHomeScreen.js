@@ -234,6 +234,10 @@ const ClientHomeScreen = ({ navigation: propNavigation }) => {
     navigation.navigate('ProductDetail', { product });
   };
 
+  const handleRestaurantPress = (restaurant) => {
+    navigation.navigate('RestaurantDetail', { restaurant });
+  };
+
   React.useEffect(() => {
     setCartCount(getTotalQuantity());
   }, [cartItems]);
@@ -276,15 +280,14 @@ const ClientHomeScreen = ({ navigation: propNavigation }) => {
             <HomeContentComponent
               onAddToCart={handleAddToCart}
               onProductPress={handleProductPress}
+              onRestaurantPress={handleRestaurantPress}
             />
           </ScrollView>
         );
       
       case "Search":
         return (
-          <View style={styles.content}>
-            <SearchContent navigation={navigation} />
-          </View>
+          <SearchScreen navigation={navigation} />
         );
       
       case "Favoritos":

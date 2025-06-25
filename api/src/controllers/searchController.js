@@ -1,5 +1,33 @@
 const { db } = require('../config/firebase');
 
+// Obtener todos los productos (sin filtros)
+const getAllProducts = async (req, res) => {
+  try {
+    const { limit = 1000 } = req.query; // Límite alto por defecto
+    
+    const snapshot = await db.collection('products')
+      .limit(parseInt(limit))
+      .get();
+
+    const products = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+
+    res.json({
+      success: true,
+      data: products,
+      count: products.length
+    });
+  } catch (error) {
+    console.error('Error obteniendo todos los productos:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error interno del servidor'
+    });
+  }
+};
+
 // Obtener productos destacados
 const getFeaturedProducts = async (req, res) => {
   try {
@@ -167,6 +195,7 @@ const getCategories = async (req, res) => {
 };
 
 module.exports = {
+  getAllProducts,
   getFeaturedProducts,
   searchProducts,
   advancedSearch,

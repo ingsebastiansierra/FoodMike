@@ -1,6 +1,16 @@
 import api from '../config/api';
 
 export const searchService = {
+  // Obtener todos los productos (sin filtros)
+  getAllProducts: async (limit = 1000) => {
+    try {
+      const response = await api.get(`/search/all?limit=${limit}`);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.error || 'Error al obtener todos los productos');
+    }
+  },
+
   // Búsqueda básica de productos
   searchProducts: async (query, filters = {}) => {
     try {

@@ -111,7 +111,7 @@ const RestaurantCard = ({ restaurant, onPress }) => {
         <View style={styles.infoRow}>
           <Icon name="clock-o" size={12} color={COLORS.gray} />
           <Text style={styles.schedule}>
-            {restaurant.schedule}
+            {restaurant.deliveryTime || '20-30 min'}
           </Text>
         </View>
         
@@ -132,8 +132,9 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: COLORS.white,
     borderRadius: 16,
-    marginHorizontal: SPACING.md,
-    marginBottom: SPACING.lg,
+    width: '100%',
+    alignSelf: 'center',
+    marginBottom: SPACING.sm,
     elevation: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },

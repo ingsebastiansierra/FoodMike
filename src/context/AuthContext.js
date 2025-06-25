@@ -22,6 +22,18 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     console.log('🔐 AuthContext: Iniciando verificación de autenticación');
     
+    // Limpiar token JWT existente para evitar errores de API
+    const clearExistingToken = async () => {
+      try {
+        await AsyncStorage.removeItem('userToken');
+        console.log('🔐 AuthContext: Token JWT limpiado');
+      } catch (error) {
+        console.log('🔐 AuthContext: Error limpiando token:', error);
+      }
+    };
+    
+    clearExistingToken();
+    
     const unsubscribe = firebase.auth().onAuthStateChanged(async (firebaseUser) => {
       console.log('🔐 AuthContext: Estado de autenticación cambiado', firebaseUser ? 'Usuario autenticado' : 'Usuario no autenticado');
       

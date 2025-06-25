@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,14 +6,32 @@ import {
   StyleSheet,
   ScrollView,
   TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, typography } from '../theme';
-import { CATEGORIES } from '../data/restaurantsData';
+import { searchService } from '../services/searchService';
 
 const SearchFilters = ({ filters, onFiltersChange, onApplyFilters }) => {
   const [tempFilters, setTempFilters] = useState(filters);
+  const [categories, setCategories] = useState([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+
+  useEffect(() => {
+    loadCategories();
+  }, []);
+
+  const loadCategories = async () => {
+    try {
+      const response = await searchService.getCategories();
+      setCategories(response.data || []);
+    } catch (error) {
+      console.error('Error cargando categorías:', error);
+    } finally {
+      setLoadingCategories(false);
+    }
+  };
 
   const handleFilterChange = (key, value) => {
     setTempFilters(prev => ({
@@ -123,30 +141,54 @@ const SearchFilters = ({ filters, onFiltersChange, onApplyFilters }) => {
         {/* Categorías */}
         <View style={styles.filterSection}>
           <Text style={styles.sectionTitle}>Categorías</Text>
-          <View style={styles.categoriesContainer}>
-            {CATEGORIES.map((category) => (
+          {loadingCategories ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color={colors.primary} />
+              <Text style={styles.loadingText}>Cargando categorías...</Text>
+            </View>
+          ) : (
+            <View style={styles.categoriesContainer}>
+              {/* Botón "Todas" */}
               <TouchableOpacity
-                key={category.id}
                 style={[
                   styles.categoryButton,
-                  tempFilters.category === category.id && styles.categoryButtonActive
+                  tempFilters.category === 'all' && styles.categoryButtonActive
                 ]}
-                onPress={() => handleFilterChange('category', category.id)}
+                onPress={() => handleFilterChange('category', 'all')}
               >
                 <Ionicons
-                  name={category.icon}
+                  name="restaurant"
                   size={20}
-                  color={tempFilters.category === category.id ? colors.white : colors.primary}
+                  color={tempFilters.category === 'all' ? colors.white : colors.primary}
                 />
                 <Text style={[
                   styles.categoryText,
-                  tempFilters.category === category.id && styles.categoryTextActive
+                  tempFilters.category === 'all' && styles.categoryTextActive
                 ]}>
-                  {category.name}
+                  Todas
                 </Text>
               </TouchableOpacity>
-            ))}
-          </View>
+              
+              {/* Categorías dinámicas */}
+              {categories.map((category) => (
+                <TouchableOpacity
+                  key={category.id}
+                  style={[
+                    styles.categoryButton,
+                    tempFilters.category === category.id && styles.categoryButtonActive
+                  ]}
+                  onPress={() => handleFilterChange('category', category.id)}
+                >
+                  <Text style={[
+                    styles.categoryText,
+                    tempFilters.category === category.id && styles.categoryTextActive
+                  ]}>
+                    {category.icon} {category.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
         </View>
 
         {/* Rango de precio */}
@@ -316,6 +358,18 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.md,
     fontWeight: '700',
     color: colors.white,
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.md,
+  },
+  loadingText: {
+    fontSize: typography.sizes.md,
+    fontWeight: '600',
+    color: colors.primary,
+    marginLeft: spacing.sm,
   },
 });
 

@@ -3,8 +3,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Configuración base de la API
 const API_BASE_URL = __DEV__ 
-  ? 'http://localhost:3001/api'  // Desarrollo local
-  : 'https://foodmike.onrender.com/api'; // Producción
+  ? 'http://192.168.1.6:3001/api'  // Desarrollo local con IP
+  : 'https://food-mike-api.onrender.com/api'; // Producción
 
 console.log(`🌍 API Base URL: ${API_BASE_URL}`);
 
