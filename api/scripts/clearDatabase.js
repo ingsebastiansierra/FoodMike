@@ -1,4 +1,4 @@
-const { db } = require('../src/config/firebase');
+const { db } = require('../config/firebase');
 
 async function clearDatabase() {
   try {
