@@ -25,8 +25,8 @@ router.get('/category/:category', authenticate, allowRoles('admin', 'user'), get
 // GET /api/restaurants/:id - Obtener restaurante por ID con menú completo
 router.get('/:id', authenticate, allowRoles('admin', 'user'), getRestaurantById);
 
-// GET /api/restaurants/:id/menu - Obtener menú completo de un restaurante
-router.get('/:id/menu', authenticate, allowRoles('admin', 'user'), getRestaurantMenu);
+// GET /api/restaurants/:id/menu - Obtener menú completo de un restaurante (PÚBLICO)
+router.get('/:id/menu', getRestaurantMenu);
 
 // GET /api/restaurants/:id/products - Obtener productos de un restaurante
 router.get('/:id/products', async (req, res) => {
