@@ -1,4 +1,4 @@
-const { db } = require('../src/config/firebase');
+const firebase = require('../src/config/firebase');
 
 async function clearDatabase() {
   try {
@@ -9,10 +9,10 @@ async function clearDatabase() {
     for (const collectionName of collectionsToClear) {
       try {
         console.log(`   Limpiando colección: ${collectionName}`);
-        const snapshot = await db.collection(collectionName).get();
+        const snapshot = await firebase.collection(collectionName).get();
         
         if (!snapshot.empty) {
-          const batch = db.batch();
+          const batch = firebase.batch();
           snapshot.docs.forEach(doc => {
             batch.delete(doc.ref);
           });

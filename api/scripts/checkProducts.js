@@ -1,11 +1,11 @@
-const { db } = require('../src/config/firebase');
+const firebase = require('../src/config/firebase');
 
 async function checkProducts() {
   try {
     console.log('🔍 Verificando productos en Firestore...\n');
     
     // Verificar productos en la colección principal
-    const productsSnapshot = await db.collection('products').get();
+    const productsSnapshot = await firebase.collection('products').get();
     console.log(`📦 Productos en colección 'products': ${productsSnapshot.size}`);
     
     if (productsSnapshot.size > 0) {
@@ -18,12 +18,12 @@ async function checkProducts() {
     
     // Verificar productos en restaurantes
     console.log('\n🏪 Verificando productos en restaurantes...');
-    const restaurantsSnapshot = await db.collection('restaurants').get();
+    const restaurantsSnapshot = await firebase.collection('restaurants').get();
     let totalRestaurantProducts = 0;
     
     for (const restaurantDoc of restaurantsSnapshot.docs) {
       const restaurant = restaurantDoc.data();
-      const menuSnapshot = await db.collection('restaurants').doc(restaurantDoc.id).collection('menu').get();
+      const menuSnapshot = await firebase.collection('restaurants').doc(restaurantDoc.id).collection('menu').get();
       const menuItems = menuSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       
       console.log(`\n📍 ${restaurant.name || '(sin nombre)'}: ${menuItems.length} productos`);

@@ -1,4 +1,5 @@
 const axios = require('axios');
+const firebase = require('../src/config/firebase');
 
 async function testEndpoint() {
   try {
