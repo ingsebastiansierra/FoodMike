@@ -1,4 +1,4 @@
-const Restaurant = require('../models/Restaurant');
+const { db } = require('../config/firebase');
 const Category = require('../models/Category');
 const Product = require('../models/Product');
 const Addition = require('../models/Addition');
@@ -6,78 +6,55 @@ const Addition = require('../models/Addition');
 // Obtener todos los restaurantes
 const getAllRestaurants = async (req, res) => {
   try {
-    const restaurants = await Restaurant.findAll();
+    const snapshot = await db.collection('restaurants').get();
+    
+    const restaurants = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    
     res.json({
       success: true,
       data: restaurants,
-      message: 'Restaurantes obtenidos exitosamente'
+      count: restaurants.length
     });
   } catch (error) {
-    console.error('Error getting restaurants:', error);
+    console.error('Error obteniendo restaurantes:', error);
     res.status(500).json({
       success: false,
-      message: 'Error al obtener restaurantes',
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 };
 
-// Obtener restaurante por ID con su menú completo
+// Obtener restaurante por ID
 const getRestaurantById = async (req, res) => {
   try {
     const { id } = req.params;
     
-    // Obtener restaurante
-    const restaurant = await Restaurant.findById(id);
-    if (!restaurant) {
+    const doc = await db.collection('restaurants').doc(id).get();
+    
+    if (!doc.exists) {
       return res.status(404).json({
         success: false,
-        message: 'Restaurante no encontrado'
+        error: 'Restaurante no encontrado'
       });
     }
-
-    // Obtener categorías del restaurante
-    const categories = await Category.findByRestaurant(id);
     
-    // Obtener productos por categoría
-    const menu = [];
-    for (const category of categories) {
-      const products = await Product.findByCategory(category.id);
-      
-      // Obtener adiciones para cada producto
-      const productsWithAdditions = [];
-      for (const product of products) {
-        let additions = [];
-        if (product.hasAdditions) {
-          additions = await Addition.findByProduct(product.id);
-        }
-        
-        productsWithAdditions.push({
-          ...product,
-          additions
-        });
-      }
-      
-      menu.push({
-        ...category,
-        products: productsWithAdditions
-      });
-    }
-
+    const restaurant = {
+      id: doc.id,
+      ...doc.data()
+    };
+    
     res.json({
       success: true,
-      data: {
-        ...restaurant,
-        menu
-      },
-      message: 'Restaurante obtenido exitosamente'
+      data: restaurant
     });
   } catch (error) {
-    console.error('Error getting restaurant:', error);
+    console.error('Error obteniendo restaurante:', error);
     res.status(500).json({
       success: false,
-      message: 'Error al obtener restaurante',
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 };
@@ -85,18 +62,26 @@ const getRestaurantById = async (req, res) => {
 // Obtener restaurantes abiertos
 const getOpenRestaurants = async (req, res) => {
   try {
-    const restaurants = await Restaurant.findOpen();
+    const snapshot = await db.collection('restaurants')
+      .where('isOpen', '==', true)
+      .get();
+    
+    const restaurants = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    
     res.json({
       success: true,
       data: restaurants,
+      count: restaurants.length,
       message: 'Restaurantes abiertos obtenidos exitosamente'
     });
   } catch (error) {
-    console.error('Error getting open restaurants:', error);
+    console.error('Error obteniendo restaurantes abiertos:', error);
     res.status(500).json({
       success: false,
-      message: 'Error al obtener restaurantes abiertos',
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 };
@@ -105,18 +90,84 @@ const getOpenRestaurants = async (req, res) => {
 const getRestaurantsByCategory = async (req, res) => {
   try {
     const { category } = req.params;
-    const restaurants = await Restaurant.findByCategory(category);
+    
+    const snapshot = await db.collection('restaurants')
+      .where('categories', 'array-contains', category)
+      .get();
+    
+    const restaurants = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    
     res.json({
       success: true,
       data: restaurants,
-      message: `Restaurantes de categoría ${category} obtenidos exitosamente`
+      count: restaurants.length
     });
   } catch (error) {
-    console.error('Error getting restaurants by category:', error);
+    console.error('Error obteniendo restaurantes por categoría:', error);
     res.status(500).json({
       success: false,
-      message: 'Error al obtener restaurantes por categoría',
-      error: error.message
+      error: 'Error interno del servidor'
+    });
+  }
+};
+
+// Obtener menú completo de un restaurante
+const getRestaurantMenu = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Verificar que el restaurante existe
+    const restaurantDoc = await db.collection('restaurants').doc(id).get();
+    
+    if (!restaurantDoc.exists) {
+      return res.status(404).json({
+        success: false,
+        error: 'Restaurante no encontrado'
+      });
+    }
+    
+    const restaurant = {
+      id: restaurantDoc.id,
+      ...restaurantDoc.data()
+    };
+    
+    // Obtener productos del restaurante
+    const productsSnapshot = await db.collection('products')
+      .where('restaurantId', '==', id)
+      .get();
+    
+    const products = productsSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    
+    // Agrupar productos por categoría
+    const productsByCategory = {};
+    products.forEach(product => {
+      const category = product.category || 'Sin categoría';
+      if (!productsByCategory[category]) {
+        productsByCategory[category] = [];
+      }
+      productsByCategory[category].push(product);
+    });
+    
+    res.json({
+      success: true,
+      data: {
+        restaurant,
+        menu: productsByCategory,
+        categories: Object.keys(productsByCategory),
+        totalProducts: products.length
+      }
+    });
+  } catch (error) {
+    console.error('Error obteniendo menú del restaurante:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error interno del servidor'
     });
   }
 };
@@ -125,8 +176,16 @@ const getRestaurantsByCategory = async (req, res) => {
 const createRestaurant = async (req, res) => {
   try {
     const restaurantData = req.body;
-    const restaurant = new Restaurant(restaurantData);
-    await restaurant.save();
+    
+    const restaurantRef = db.collection('restaurants').doc();
+    const restaurant = {
+      id: restaurantRef.id,
+      ...restaurantData,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    
+    await restaurantRef.set(restaurant);
     
     res.status(201).json({
       success: true,
@@ -134,11 +193,10 @@ const createRestaurant = async (req, res) => {
       message: 'Restaurante creado exitosamente'
     });
   } catch (error) {
-    console.error('Error creating restaurant:', error);
+    console.error('Error creando restaurante:', error);
     res.status(500).json({
       success: false,
-      message: 'Error al crear restaurante',
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 };
@@ -149,29 +207,30 @@ const updateRestaurant = async (req, res) => {
     const { id } = req.params;
     const updateData = req.body;
     
-    const restaurant = await Restaurant.findById(id);
-    if (!restaurant) {
+    const restaurantRef = db.collection('restaurants').doc(id);
+    const doc = await restaurantRef.get();
+    
+    if (!doc.exists) {
       return res.status(404).json({
         success: false,
-        message: 'Restaurante no encontrado'
+        error: 'Restaurante no encontrado'
       });
     }
-
-    // Actualizar datos
-    Object.assign(restaurant, updateData);
-    await restaurant.save();
+    
+    await restaurantRef.update({
+      ...updateData,
+      updatedAt: new Date()
+    });
     
     res.json({
       success: true,
-      data: restaurant,
       message: 'Restaurante actualizado exitosamente'
     });
   } catch (error) {
-    console.error('Error updating restaurant:', error);
+    console.error('Error actualizando restaurante:', error);
     res.status(500).json({
       success: false,
-      message: 'Error al actualizar restaurante',
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 };
@@ -181,98 +240,39 @@ const deleteRestaurant = async (req, res) => {
   try {
     const { id } = req.params;
     
-    const restaurant = await Restaurant.findById(id);
-    if (!restaurant) {
+    const restaurantRef = db.collection('restaurants').doc(id);
+    const doc = await restaurantRef.get();
+    
+    if (!doc.exists) {
       return res.status(404).json({
         success: false,
-        message: 'Restaurante no encontrado'
+        error: 'Restaurante no encontrado'
       });
     }
-
-    await restaurant.delete();
+    
+    // Eliminar productos asociados
+    const productsSnapshot = await db.collection('products')
+      .where('restaurantId', '==', id)
+      .get();
+    
+    const batch = db.batch();
+    productsSnapshot.docs.forEach(doc => {
+      batch.delete(doc.ref);
+    });
+    
+    // Eliminar restaurante
+    batch.delete(restaurantRef);
+    await batch.commit();
     
     res.json({
       success: true,
       message: 'Restaurante eliminado exitosamente'
     });
   } catch (error) {
-    console.error('Error deleting restaurant:', error);
+    console.error('Error eliminando restaurante:', error);
     res.status(500).json({
       success: false,
-      message: 'Error al eliminar restaurante',
-      error: error.message
-    });
-  }
-};
-
-// Obtener menú de un restaurante
-const getRestaurantMenu = async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    // Verificar que el restaurante existe
-    const restaurant = await Restaurant.findById(id);
-    if (!restaurant) {
-      return res.status(404).json({
-        success: false,
-        message: 'Restaurante no encontrado'
-      });
-    }
-
-    // Obtener categorías
-    const categories = await Category.findByRestaurant(id);
-    
-    // Obtener productos por categoría
-    const menu = [];
-    for (const category of categories) {
-      const products = await Product.findByCategory(category.id);
-      
-      // Obtener adiciones para productos que las tienen
-      const productsWithAdditions = [];
-      for (const product of products) {
-        let additions = [];
-        if (product.hasAdditions) {
-          additions = await Addition.findByProduct(product.id);
-        }
-        
-        productsWithAdditions.push({
-          ...product,
-          additions
-        });
-      }
-      
-      menu.push({
-        ...category,
-        products: productsWithAdditions
-      });
-    }
-
-    res.json({
-      success: true,
-      data: {
-        restaurant: {
-          id: restaurant.id,
-          name: restaurant.name,
-          description: restaurant.description,
-          image: restaurant.image,
-          stars: restaurant.stars,
-          reviews: restaurant.reviews,
-          deliveryTime: restaurant.deliveryTime,
-          deliveryFee: restaurant.deliveryFee,
-          minOrder: restaurant.minOrder,
-          schedule: restaurant.schedule,
-          isOpen: restaurant.isOpen
-        },
-        menu
-      },
-      message: 'Menú del restaurante obtenido exitosamente'
-    });
-  } catch (error) {
-    console.error('Error getting restaurant menu:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error al obtener menú del restaurante',
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 };
@@ -282,8 +282,8 @@ module.exports = {
   getRestaurantById,
   getOpenRestaurants,
   getRestaurantsByCategory,
+  getRestaurantMenu,
   createRestaurant,
   updateRestaurant,
-  deleteRestaurant,
-  getRestaurantMenu
+  deleteRestaurant
 }; 

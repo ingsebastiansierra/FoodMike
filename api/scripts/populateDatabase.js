@@ -1,59 +1,35 @@
-const { db } = require('../src/config/firebase');
+const { db } = require('../config/firebase');
 const Restaurant = require('../src/models/Restaurant');
 const Category = require('../src/models/Category');
 const Product = require('../src/models/Product');
 const Addition = require('../src/models/Addition');
 
-// Datos de restaurantes con horarios de atención
-const restaurantsData = [
+// Datos de restaurantes con estructura completa
+const RESTAURANTS_DATA = [
   {
-    name: "El Sabor Colombiano",
-    description: "Los mejores platos típicos de Colombia con sabores auténticos",
-    address: "Calle 123 #45-67, Bogotá",
-    phone: "+57 300 123 4567",
-    email: "info@elsaborcolombiano.com",
-    stars: 4.5,
-    reviews: 128,
-    deliveryTime: "30-45 min",
-    deliveryFee: 3000,
-    minOrder: 15000,
-    image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400",
-    coverImage: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800",
-    categories: ["Restaurante Colombiano", "Comida Típica"],
+    name: "Café del Sol",
+    description: "El mejor café colombiano con pastelería artesanal",
+    address: "Carrera 15 #93-47, Bogotá",
+    phone: "+57 300 567 8901",
+    email: "cafe@cafedelsol.com",
+    stars: 4.4,
+    reviews: 203,
+    deliveryTime: "15-25 min",
+    deliveryFee: 1500,
+    minOrder: 8000,
+    image: "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=400",
+    coverImage: "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=800",
+    categories: ["Café", "Pastelería"],
     isOpen: true,
+    isFeatured: true,
     schedule: {
-      monday: { open: "07:00", close: "22:00" },
-      tuesday: { open: "07:00", close: "22:00" },
-      wednesday: { open: "07:00", close: "22:00" },
-      thursday: { open: "07:00", close: "22:00" },
-      friday: { open: "07:00", close: "23:00" },
-      saturday: { open: "08:00", close: "23:00" },
-      sunday: { open: "08:00", close: "21:00" }
-    }
-  },
-  {
-    name: "Pizza Express",
-    description: "Las mejores pizzas artesanales con ingredientes frescos",
-    address: "Carrera 78 #23-45, Medellín",
-    phone: "+57 300 234 5678",
-    email: "pedidos@pizzaexpress.com",
-    stars: 4.3,
-    reviews: 95,
-    deliveryTime: "25-35 min",
-    deliveryFee: 2500,
-    minOrder: 12000,
-    image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400",
-    coverImage: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800",
-    categories: ["Pizza", "Comida Rápida"],
-    isOpen: true,
-    schedule: {
-      monday: { open: "11:00", close: "23:00" },
-      tuesday: { open: "11:00", close: "23:00" },
-      wednesday: { open: "11:00", close: "23:00" },
-      thursday: { open: "11:00", close: "23:00" },
-      friday: { open: "11:00", close: "00:00" },
-      saturday: { open: "12:00", close: "00:00" },
-      sunday: { open: "12:00", close: "22:00" }
+      monday: { open: "06:00", close: "20:00" },
+      tuesday: { open: "06:00", close: "20:00" },
+      wednesday: { open: "06:00", close: "20:00" },
+      thursday: { open: "06:00", close: "20:00" },
+      friday: { open: "06:00", close: "21:00" },
+      saturday: { open: "07:00", close: "21:00" },
+      sunday: { open: "07:00", close: "19:00" }
     }
   },
   {
@@ -71,6 +47,7 @@ const restaurantsData = [
     coverImage: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800",
     categories: ["Hamburguesas", "Comida Rápida"],
     isOpen: true,
+    isFeatured: true,
     schedule: {
       monday: { open: "12:00", close: "22:00" },
       tuesday: { open: "12:00", close: "22:00" },
@@ -79,6 +56,32 @@ const restaurantsData = [
       friday: { open: "12:00", close: "23:00" },
       saturday: { open: "12:00", close: "23:00" },
       sunday: { open: "12:00", close: "21:00" }
+    }
+  },
+  {
+    name: "Pizza Express",
+    description: "Las mejores pizzas artesanales con ingredientes frescos",
+    address: "Carrera 78 #23-45, Medellín",
+    phone: "+57 300 234 5678",
+    email: "pedidos@pizzaexpress.com",
+    stars: 4.3,
+    reviews: 95,
+    deliveryTime: "25-35 min",
+    deliveryFee: 2500,
+    minOrder: 12000,
+    image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400",
+    coverImage: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800",
+    categories: ["Pizza", "Comida Rápida"],
+    isOpen: true,
+    isFeatured: true,
+    schedule: {
+      monday: { open: "11:00", close: "23:00" },
+      tuesday: { open: "11:00", close: "23:00" },
+      wednesday: { open: "11:00", close: "23:00" },
+      thursday: { open: "11:00", close: "23:00" },
+      friday: { open: "11:00", close: "00:00" },
+      saturday: { open: "12:00", close: "00:00" },
+      sunday: { open: "12:00", close: "22:00" }
     }
   },
   {
@@ -96,6 +99,7 @@ const restaurantsData = [
     coverImage: "https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=800",
     categories: ["Sushi", "Comida Japonesa"],
     isOpen: true,
+    isFeatured: true,
     schedule: {
       monday: { open: "12:00", close: "22:00" },
       tuesday: { open: "12:00", close: "22:00" },
@@ -107,28 +111,29 @@ const restaurantsData = [
     }
   },
   {
-    name: "Café del Sol",
-    description: "El mejor café colombiano con pastelería artesanal",
-    address: "Carrera 15 #93-47, Bogotá",
-    phone: "+57 300 567 8901",
-    email: "cafe@cafedelsol.com",
-    stars: 4.4,
-    reviews: 203,
-    deliveryTime: "15-25 min",
-    deliveryFee: 1500,
-    minOrder: 8000,
-    image: "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=400",
-    coverImage: "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=800",
-    categories: ["Café", "Pastelería"],
+    name: "El Sabor Colombiano",
+    description: "Los mejores platos típicos de Colombia con sabores auténticos",
+    address: "Calle 123 #45-67, Bogotá",
+    phone: "+57 300 123 4567",
+    email: "info@elsaborcolombiano.com",
+    stars: 4.5,
+    reviews: 128,
+    deliveryTime: "30-45 min",
+    deliveryFee: 3000,
+    minOrder: 15000,
+    image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400",
+    coverImage: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800",
+    categories: ["Restaurante Colombiano", "Comida Típica"],
     isOpen: true,
+    isFeatured: false,
     schedule: {
-      monday: { open: "06:00", close: "20:00" },
-      tuesday: { open: "06:00", close: "20:00" },
-      wednesday: { open: "06:00", close: "20:00" },
-      thursday: { open: "06:00", close: "20:00" },
-      friday: { open: "06:00", close: "21:00" },
-      saturday: { open: "07:00", close: "21:00" },
-      sunday: { open: "07:00", close: "19:00" }
+      monday: { open: "07:00", close: "22:00" },
+      tuesday: { open: "07:00", close: "22:00" },
+      wednesday: { open: "07:00", close: "22:00" },
+      thursday: { open: "07:00", close: "22:00" },
+      friday: { open: "07:00", close: "23:00" },
+      saturday: { open: "08:00", close: "23:00" },
+      sunday: { open: "08:00", close: "21:00" }
     }
   },
   {
@@ -146,6 +151,7 @@ const restaurantsData = [
     coverImage: "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=800",
     categories: ["Tacos", "Comida Mexicana"],
     isOpen: true,
+    isFeatured: false,
     schedule: {
       monday: { open: "11:00", close: "22:00" },
       tuesday: { open: "11:00", close: "22:00" },
@@ -154,31 +160,6 @@ const restaurantsData = [
       friday: { open: "11:00", close: "23:00" },
       saturday: { open: "12:00", close: "23:00" },
       sunday: { open: "12:00", close: "21:00" }
-    }
-  },
-  {
-    name: "Pollo Asado",
-    description: "El mejor pollo asado con papas y ensalada",
-    address: "Calle 78 #12-34, Cali",
-    phone: "+57 300 789 0123",
-    email: "pollo@asado.com",
-    stars: 4.1,
-    reviews: 134,
-    deliveryTime: "30-40 min",
-    deliveryFee: 2500,
-    minOrder: 15000,
-    image: "https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?w=400",
-    coverImage: "https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?w=800",
-    categories: ["Pollo", "Comida Colombiana"],
-    isOpen: true,
-    schedule: {
-      monday: { open: "11:00", close: "21:00" },
-      tuesday: { open: "11:00", close: "21:00" },
-      wednesday: { open: "11:00", close: "21:00" },
-      thursday: { open: "11:00", close: "21:00" },
-      friday: { open: "11:00", close: "22:00" },
-      saturday: { open: "12:00", close: "22:00" },
-      sunday: { open: "12:00", close: "20:00" }
     }
   },
   {
@@ -196,6 +177,7 @@ const restaurantsData = [
     coverImage: "https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=800",
     categories: ["Helados", "Postres"],
     isOpen: true,
+    isFeatured: false,
     schedule: {
       monday: { open: "10:00", close: "21:00" },
       tuesday: { open: "10:00", close: "21:00" },
@@ -221,6 +203,7 @@ const restaurantsData = [
     coverImage: "https://images.unsplash.com/photo-1528735602786-485c5889a1e3?w=800",
     categories: ["Sandwiches", "Comida Rápida"],
     isOpen: true,
+    isFeatured: false,
     schedule: {
       monday: { open: "08:00", close: "20:00" },
       tuesday: { open: "08:00", close: "20:00" },
@@ -229,6 +212,32 @@ const restaurantsData = [
       friday: { open: "08:00", close: "21:00" },
       saturday: { open: "09:00", close: "21:00" },
       sunday: { open: "09:00", close: "19:00" }
+    }
+  },
+  {
+    name: "Pollo Asado",
+    description: "El mejor pollo asado con papas y ensalada",
+    address: "Calle 78 #12-34, Cali",
+    phone: "+57 300 789 0123",
+    email: "pollo@asado.com",
+    stars: 4.1,
+    reviews: 134,
+    deliveryTime: "30-40 min",
+    deliveryFee: 2500,
+    minOrder: 15000,
+    image: "https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?w=400",
+    coverImage: "https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?w=800",
+    categories: ["Pollo", "Comida Colombiana"],
+    isOpen: true,
+    isFeatured: false,
+    schedule: {
+      monday: { open: "11:00", close: "21:00" },
+      tuesday: { open: "11:00", close: "21:00" },
+      wednesday: { open: "11:00", close: "21:00" },
+      thursday: { open: "11:00", close: "21:00" },
+      friday: { open: "11:00", close: "22:00" },
+      saturday: { open: "12:00", close: "22:00" },
+      sunday: { open: "12:00", close: "20:00" }
     }
   },
   {
@@ -246,6 +255,7 @@ const restaurantsData = [
     coverImage: "https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=800",
     categories: ["Bebidas", "Jugos"],
     isOpen: true,
+    isFeatured: false,
     schedule: {
       monday: { open: "07:00", close: "19:00" },
       tuesday: { open: "07:00", close: "19:00" },
@@ -257,6 +267,156 @@ const restaurantsData = [
     }
   }
 ];
+
+// Datos de categorías
+const CATEGORIES_DATA = [
+  { name: "Burgers", icon: "🍔", description: "Las mejores hamburguesas" },
+  { name: "Pizza", icon: "🍕", description: "Pizzas artesanales" },
+  { name: "Sushi", icon: "🍣", description: "Sushi fresco y auténtico" },
+  { name: "Café", icon: "☕", description: "Café colombiano y pastelería" },
+  { name: "Tacos", icon: "🌮", description: "Tacos mexicanos auténticos" },
+  { name: "Helados", icon: "🍦", description: "Helados artesanales" },
+  { name: "Sandwiches", icon: "🥪", description: "Sandwiches gourmet" },
+  { name: "Pollo", icon: "🍗", description: "Pollo asado tradicional" },
+  { name: "Bebidas", icon: "🥤", description: "Bebidas naturales" },
+  { name: "Comida Colombiana", icon: "🇨🇴", description: "Platos típicos colombianos" }
+];
+
+// Datos de productos por restaurante
+const PRODUCTS_DATA = {
+  "Café del Sol": [
+    {
+      name: "Café Americano",
+      description: "Café negro tradicional",
+      price: 3500,
+      image: "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400",
+      category: "Café",
+      isFeatured: true,
+      stars: 4.5,
+      additions: [
+        { name: "Leche", price: 500 },
+        { name: "Azúcar", price: 0 },
+        { name: "Crema", price: 800 }
+      ]
+    },
+    {
+      name: "Cappuccino",
+      description: "Café con leche espumada",
+      price: 4500,
+      image: "https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=400",
+      category: "Café",
+      isFeatured: true,
+      stars: 4.7,
+      additions: [
+        { name: "Canela", price: 300 },
+        { name: "Chocolate", price: 500 },
+        { name: "Vainilla", price: 400 }
+      ]
+    },
+    {
+      name: "Croissant Clásico",
+      description: "Croissant de mantequilla",
+      price: 2800,
+      image: "https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=400",
+      category: "Pastelería",
+      isFeatured: false,
+      stars: 4.3,
+      additions: [
+        { name: "Mermelada", price: 300 },
+        { name: "Mantequilla", price: 200 }
+      ]
+    }
+  ],
+  "Burger House": [
+    {
+      name: "Burger Clásica",
+      description: "Hamburguesa con carne, lechuga, tomate y queso",
+      price: 15000,
+      image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400",
+      category: "Hamburguesas",
+      isFeatured: true,
+      stars: 4.6,
+      additions: [
+        { name: "Bacon", price: 2000 },
+        { name: "Queso extra", price: 1500 },
+        { name: "Salsa especial", price: 800 }
+      ]
+    },
+    {
+      name: "Burger BBQ",
+      description: "Hamburguesa con salsa BBQ y cebolla caramelizada",
+      price: 18000,
+      image: "https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=400",
+      category: "Hamburguesas",
+      isFeatured: true,
+      stars: 4.8,
+      additions: [
+        { name: "Bacon", price: 2000 },
+        { name: "Queso extra", price: 1500 },
+        { name: "Papas fritas", price: 3000 }
+      ]
+    }
+  ],
+  "Pizza Express": [
+    {
+      name: "Pizza Margherita",
+      description: "Pizza con tomate, mozzarella y albahaca",
+      price: 22000,
+      image: "https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=400",
+      category: "Pizza",
+      isFeatured: true,
+      stars: 4.4,
+      additions: [
+        { name: "Pepperoni", price: 3000 },
+        { name: "Champiñones", price: 2000 },
+        { name: "Aceitunas", price: 1500 }
+      ]
+    },
+    {
+      name: "Pizza Hawaiana",
+      description: "Pizza con jamón y piña",
+      price: 25000,
+      image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400",
+      category: "Pizza",
+      isFeatured: false,
+      stars: 4.2,
+      additions: [
+        { name: "Extra queso", price: 2000 },
+        { name: "Bacon", price: 2500 }
+      ]
+    }
+  ],
+  "Sushi Master": [
+    {
+      name: "Roll California",
+      description: "Roll con cangrejo, aguacate y pepino",
+      price: 28000,
+      image: "https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400",
+      category: "Sushi",
+      isFeatured: true,
+      stars: 4.7,
+      additions: [
+        { name: "Salsa de soya", price: 0 },
+        { name: "Wasabi", price: 0 },
+        { name: "Jengibre", price: 0 }
+      ]
+    },
+    {
+      name: "Roll Salmón",
+      description: "Roll con salmón fresco y aguacate",
+      price: 32000,
+      image: "https://images.unsplash.com/photo-1553621042-f6e147245754?w=400",
+      category: "Sushi",
+      isFeatured: true,
+      stars: 4.9,
+      additions: [
+        { name: "Salsa de soya", price: 0 },
+        { name: "Wasabi", price: 0 },
+        { name: "Jengibre", price: 0 }
+      ]
+    }
+  ]
+};
 
 // Categorías por tipo de restaurante
 const getCategoriesByRestaurantType = (restaurantName) => {
@@ -529,83 +689,118 @@ const getAdditionsByProduct = (productName) => {
 
 async function populateDatabase() {
   try {
-    console.log('🚀 Iniciando población de la base de datos...');
-    
-    // Crear restaurantes
-    const createdRestaurants = [];
-    for (const restaurantData of restaurantsData) {
-      const restaurant = new Restaurant(restaurantData);
-      await restaurant.save();
-      createdRestaurants.push(restaurant);
-      console.log(`✅ Restaurante creado: ${restaurant.name}`);
-    }
-    
-    // Crear categorías y productos para cada restaurante
-    for (const restaurant of createdRestaurants) {
-      const categories = getCategoriesByRestaurantType(restaurant.name);
-      
-      for (const categoryData of categories) {
-        const category = new Category({
-          ...categoryData,
-          restaurantId: restaurant.id
-        });
-        await category.save();
-        console.log(`✅ Categoría creada: ${category.name} para ${restaurant.name}`);
-        
-        // Crear productos para esta categoría
-        const products = getProductsByCategory(category.name, restaurant.id);
-        
-        for (const productData of products) {
-          const product = new Product({
-            ...productData,
-            categoryId: category.id,
-            restaurantId: restaurant.id
-          });
-          await product.save();
-          console.log(`✅ Producto creado: ${product.name} en ${category.name}`);
-          
-          // Crear adiciones para productos que las tienen
-          if (product.hasAdditions) {
-            const additions = getAdditionsByProduct(product.name);
-            
-            for (const additionData of additions) {
-              const addition = new Addition({
-                ...additionData,
-                productId: product.id,
-                restaurantId: restaurant.id
-              });
-              await addition.save();
-              console.log(`✅ Adición creada: ${addition.name} para ${product.name}`);
-            }
-          }
-        }
-      }
-    }
-    
-    console.log('🎉 Base de datos poblada exitosamente!');
-    console.log(`📊 Resumen:`);
-    console.log(`   - ${createdRestaurants.length} restaurantes creados`);
-    console.log(`   - Categorías y productos agregados para cada restaurante`);
-    console.log(`   - Adiciones configuradas para productos seleccionados`);
-    console.log(`   - Horarios de atención configurados para todos los restaurantes`);
-    
+    console.log('🚀 Iniciando población de base de datos...');
+
+    // 1. Limpiar colecciones existentes (excepto users)
+    console.log('🧹 Limpiando colecciones existentes...');
+    await clearCollections();
+
+    // 2. Crear categorías
+    console.log('📂 Creando categorías...');
+    const categories = await createCategories();
+
+    // 3. Crear restaurantes
+    console.log('🏪 Creando restaurantes...');
+    const restaurants = await createRestaurants();
+
+    // 4. Crear productos para cada restaurante
+    console.log('🍕 Creando productos...');
+    await createProducts(restaurants);
+
+    console.log('✅ Base de datos poblada exitosamente!');
+    console.log(`📊 Estadísticas:`);
+    console.log(`   - ${categories.length} categorías creadas`);
+    console.log(`   - ${restaurants.length} restaurantes creados`);
+    console.log(`   - Productos creados para ${Object.keys(PRODUCTS_DATA).length} restaurantes`);
+
   } catch (error) {
-    console.error('❌ Error poblando la base de datos:', error);
+    console.error('❌ Error poblando base de datos:', error);
     throw error;
   }
 }
 
-// Ejecutar si se llama directamente
-if (require.main === module) {
-  populateDatabase()
-    .then(() => {
-      console.log('✅ Script completado exitosamente');
-      process.exit(0);
-    })
-    .catch((error) => {
-      console.error('❌ Error en el script:', error);
-      process.exit(1);
-    });
+async function clearCollections() {
+  const collectionsToClear = ['restaurants', 'categories', 'products', 'additions'];
+  
+  for (const collectionName of collectionsToClear) {
+    try {
+      const snapshot = await db.collection(collectionName).get();
+      const batch = db.batch();
+      
+      snapshot.docs.forEach(doc => {
+        batch.delete(doc.ref);
+      });
+      
+      await batch.commit();
+      console.log(`   ✅ Colección ${collectionName} limpiada`);
+    } catch (error) {
+      console.log(`   ⚠️ Error limpiando ${collectionName}:`, error.message);
+    }
+  }
+}
+
+async function createCategories() {
+  const categories = [];
+  
+  for (const categoryData of CATEGORIES_DATA) {
+    const categoryRef = db.collection('categories').doc();
+    const category = {
+      id: categoryRef.id,
+      ...categoryData,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    
+    await categoryRef.set(category);
+    categories.push(category);
+  }
+  
+  return categories;
+}
+
+async function createRestaurants() {
+  const restaurants = [];
+  
+  for (const restaurantData of RESTAURANTS_DATA) {
+    const restaurantRef = db.collection('restaurants').doc();
+    const restaurant = {
+      id: restaurantRef.id,
+      ...restaurantData,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    
+    await restaurantRef.set(restaurant);
+    restaurants.push(restaurant);
+  }
+  
+  return restaurants;
+}
+
+async function createProducts(restaurants) {
+  for (const restaurant of restaurants) {
+    const products = PRODUCTS_DATA[restaurant.name] || [];
+    
+    for (const productData of products) {
+      const productRef = db.collection('products').doc();
+      const product = {
+        id: productRef.id,
+        restaurantId: restaurant.id,
+        restaurant: {
+          id: restaurant.id,
+          name: restaurant.name,
+          image: restaurant.image
+        },
+        ...productData,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      await productRef.set(product);
+    }
+    
+    console.log(`   ✅ ${products.length} productos creados para ${restaurant.name}`);
+  }
 }
 
 module.exports = { populateDatabase }; 
