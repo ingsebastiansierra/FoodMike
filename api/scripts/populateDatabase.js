@@ -1,4 +1,4 @@
-const firebase = require('../src/config/firebase');
+const { db } = require('../src/config/firebase');
 const Restaurant = require('../src/models/Restaurant');
 const Category = require('../src/models/Category');
 const Product = require('../src/models/Product');
@@ -566,7 +566,7 @@ async function populateDatabase() {
   // Limpiar colecciones
   const collections = ['products', 'categories', 'restaurants'];
   for (const col of collections) {
-    const snap = await firebase.collection(col).get();
+    const snap = await db.collection(col).get();
     for (const doc of snap.docs) {
       await doc.ref.delete();
     }
@@ -574,7 +574,7 @@ async function populateDatabase() {
 
   for (const rest of RESTAURANTS) {
     // Crear restaurante
-    const restRef = await firebase.collection('restaurants').add({
+    const restRef = await db.collection('restaurants').add({
       name: rest.name,
       description: rest.type + ' - ' + rest.specialties.join(', '),
       image: rest.image,
@@ -599,7 +599,7 @@ async function populateDatabase() {
     });
     // Crear categorías y productos
     for (const cat of rest.categories) {
-      const catRef = await firebase.collection('categories').add({
+      const catRef = await db.collection('categories').add({
         name: cat.name,
         icon: cat.icon,
         restaurantId: restRef.id,
@@ -607,7 +607,7 @@ async function populateDatabase() {
         updatedAt: new Date()
       });
       for (const prod of cat.products) {
-        await firebase.collection('products').add({
+        await db.collection('products').add({
           name: prod.name,
           description: prod.description,
           price: prod.price,
