@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { populateDatabase } = require('../scripts/populateDatabase');
+const { populateDatabase } = require('../../scripts/populateDatabase');
 const authenticate = require('../middleware/auth');
 const allowRoles = require('../middleware/roles');
 
