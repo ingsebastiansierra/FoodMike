@@ -25,7 +25,7 @@ if (__DEV__) {
   db.settings({
     cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED,
     ignoreUndefinedProperties: true
-  });
+  }, { merge: true });
 }
 
 export { firebase, db }; 

@@ -1,8 +1,11 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Configuración base de la API para producción en Render
-const API_BASE_URL = 'https://foodmike.onrender.com/api';
+// Configuración base de la API
+// En desarrollo usar IP de la computadora, en producción usar Render
+const API_BASE_URL = __DEV__ 
+  ? 'http://192.168.1.6:3001/api'  // Usar la IP de tu computadora
+  : 'https://foodmike.onrender.com/api';
 
 console.log(`🌍 API Base URL: ${API_BASE_URL}`);
 
@@ -20,7 +23,7 @@ api.interceptors.request.use(
   async (config) => {
     console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`);
     
-    // Agregar token JWT si existe
+    // Agregar token JWT si existe (opcional para endpoints públicos)
     try {
       const token = await AsyncStorage.getItem('userToken');
       if (token) {
@@ -47,10 +50,14 @@ api.interceptors.response.use(
   (error) => {
     console.error('❌ API Response Error:', error.response?.data || error.message);
     
-    // Si el token es inválido, limpiar el storage
+    // Solo limpiar el token si es un error 401 y tenemos un token
     if (error.response?.status === 401) {
-      AsyncStorage.removeItem('userToken');
-      console.log('🔐 Token inválido, limpiando storage');
+      AsyncStorage.getItem('userToken').then(token => {
+        if (token) {
+          AsyncStorage.removeItem('userToken');
+          console.log('🔐 Token inválido, limpiando storage');
+        }
+      });
     }
     
     return Promise.reject(error);

@@ -82,9 +82,41 @@ export const AuthProvider = ({ children }) => {
           }
         } catch (error) {
           console.error('❌ AuthContext: Error al obtener datos del usuario:', error);
-          // En caso de error, usar solo los datos de Firebase Auth
-          setUser(firebaseUser);
-          setUserRole('cliente');
+          
+          // Si hay error de permisos, intentar obtener el rol desde la API
+          if (error.code === 'permission-denied') {
+            console.log('🔐 AuthContext: Error de permisos, intentando obtener rol desde API');
+            try {
+              const response = await api.get('/auth/me', {
+                headers: {
+                  'Authorization': `Bearer ${await AsyncStorage.getItem('userToken')}`
+                }
+              });
+              
+              if (response.data.success) {
+                const apiUser = response.data.data.user;
+                setUser({
+                  ...firebaseUser,
+                  ...apiUser
+                });
+                setUserRole(apiUser.role || 'cliente');
+                console.log('🔐 AuthContext: Rol obtenido desde API:', apiUser.role);
+              } else {
+                // Fallback: usar solo datos de Firebase Auth
+                setUser(firebaseUser);
+                setUserRole('cliente');
+              }
+            } catch (apiError) {
+              console.error('❌ AuthContext: Error obteniendo rol desde API:', apiError);
+              // Fallback: usar solo datos de Firebase Auth
+              setUser(firebaseUser);
+              setUserRole('cliente');
+            }
+          } else {
+            // En caso de error, usar solo los datos de Firebase Auth
+            setUser(firebaseUser);
+            setUserRole('cliente');
+          }
         }
       } else {
         console.log('🔐 AuthContext: No hay usuario autenticado');
@@ -101,20 +133,12 @@ export const AuthProvider = ({ children }) => {
   const registerUser = async (email, password, name, role = 'cliente') => {
     console.log('🔐 AuthContext: Registrando usuario:', { email, name, role });
     try {
-      // Primero registrar en la API (que crea en Firebase Auth y Firestore y devuelve JWT)
-      try {
-        const response = await api.post('/auth/register', { email, password, name, role });
-        const { token, user: apiUser } = response.data.data;
-        // Guardar token en AsyncStorage
-        await AsyncStorage.setItem('userToken', token);
-        console.log('🔐 AuthContext: Usuario registrado y JWT guardado');
-        return { success: true, user: apiUser, token };
-      } catch (apiError) {
-        console.error('❌ AuthContext: Error en registro vía API:', apiError);
-        // Fallback: registrar solo en Firebase Auth
-        const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
-        return { success: true, user: userCredential.user };
-      }
+      // Solo llamar a la API para registrar el usuario
+      const response = await api.post('/auth/register', { email, password, name, role });
+      const { token, user: apiUser } = response.data.data;
+      await AsyncStorage.setItem('userToken', token);
+      console.log('🔐 AuthContext: Usuario registrado vía API y JWT guardado');
+      return { success: true, user: apiUser, token };
     } catch (error) {
       console.error('❌ AuthContext: Error al registrar usuario:', error);
       throw error;
@@ -126,25 +150,64 @@ export const AuthProvider = ({ children }) => {
     console.log('🔐 AuthContext: Iniciando sesión para:', email);
     
     try {
-      // Primero autenticar con Firebase Auth
+      // Autenticar con Firebase Auth
       const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+      const firebaseUser = userCredential.user;
       console.log('🔐 AuthContext: Login exitoso con Firebase para:', email);
       
-      // Luego obtener JWT de la API
+      // Obtener datos del usuario desde Firestore
       try {
-        const response = await api.post('/auth/login', { email, password });
-        const { token, user: apiUser } = response.data.data;
-        
-        // Guardar token en AsyncStorage
-        await AsyncStorage.setItem('userToken', token);
-        console.log('🔐 AuthContext: JWT obtenido y guardado');
-        
-        return { success: true, user: userCredential.user, token, apiUser };
-      } catch (apiError) {
-        console.error('❌ AuthContext: Error obteniendo JWT:', apiError);
-        // Si falla la API, continuar solo con Firebase Auth
-        return { success: true, user: userCredential.user };
+        const userDoc = await firebase.firestore()
+          .collection('users')
+          .doc(firebaseUser.uid)
+          .get();
+
+        if (userDoc.exists) {
+          const userData = userDoc.data();
+          console.log('🔐 AuthContext: Datos de usuario obtenidos de Firestore:', userData);
+          
+          // Actualizar estado local
+          setUser({
+            ...firebaseUser,
+            ...userData
+          });
+          setUserRole(userData.role || 'cliente');
+        } else {
+          console.log('🔐 AuthContext: Usuario no encontrado en Firestore, creando documento por defecto');
+          
+          // Crear documento por defecto
+          const defaultUserData = {
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            role: 'cliente',
+            name: firebaseUser.displayName || '',
+            createdAt: new Date(),
+            isActive: true
+          };
+          
+          await firebase.firestore()
+            .collection('users')
+            .doc(firebaseUser.uid)
+            .set(defaultUserData);
+
+          setUser({
+            ...firebaseUser,
+            ...defaultUserData
+          });
+          setUserRole('cliente');
+        }
+      } catch (firestoreError) {
+        console.error('❌ AuthContext: Error obteniendo datos de Firestore:', firestoreError);
+        // En caso de error, usar solo datos de Firebase Auth
+        setUser(firebaseUser);
+        setUserRole('cliente');
       }
+      
+      // No necesitamos obtener JWT de la API ya que Firebase Auth es suficiente
+      // para la autenticación en el frontend
+      console.log('🔐 AuthContext: Login completado exitosamente');
+      
+      return { success: true, user: firebaseUser };
     } catch (error) {
       console.error('❌ AuthContext: Error al iniciar sesión:', error);
       throw error;

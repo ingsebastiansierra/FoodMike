@@ -22,6 +22,7 @@ import {
   BotonEstandar
 } from '../components';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { checkUserRole, fixUserRole, listAllUsers } from '../utils/debugAuth';
 
 const AdminScreen = ({ navigation }) => {
   const { user, logoutUser, getAllUsers, changeUserRole } = useAuth();
@@ -104,6 +105,62 @@ const AdminScreen = ({ navigation }) => {
         }
       ]
     );
+  };
+
+  // Funciones de depuración
+  const debugCheckUserRole = async () => {
+    try {
+      const email = user?.email;
+      if (!email) {
+        Alert.alert('Error', 'No se puede obtener el email del usuario actual');
+        return;
+      }
+      
+      const userData = await checkUserRole(email);
+      if (userData) {
+        Alert.alert(
+          'Información del Usuario',
+          `Email: ${userData.email}\nNombre: ${userData.name}\nRol: ${userData.role}\nUID: ${userData.uid}`
+        );
+      } else {
+        Alert.alert('Error', 'No se pudo obtener información del usuario');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Error al verificar rol del usuario');
+    }
+  };
+
+  const debugListAllUsers = async () => {
+    try {
+      const users = await listAllUsers();
+      if (users.length > 0) {
+        const userList = users.map(u => `${u.name} (${u.email}) - ${u.role}`).join('\n');
+        Alert.alert('Todos los Usuarios', userList);
+      } else {
+        Alert.alert('Info', 'No hay usuarios registrados');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Error al listar usuarios');
+    }
+  };
+
+  const debugFixCurrentUserRole = async () => {
+    try {
+      const email = user?.email;
+      if (!email) {
+        Alert.alert('Error', 'No se puede obtener el email del usuario actual');
+        return;
+      }
+      
+      const success = await fixUserRole(email, 'administrador');
+      if (success) {
+        Alert.alert('Éxito', 'Rol corregido. Reinicia la app para ver los cambios.');
+      } else {
+        Alert.alert('Error', 'No se pudo corregir el rol');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Error al corregir rol del usuario');
+    }
   };
 
   const quickActions = [
@@ -203,6 +260,24 @@ const AdminScreen = ({ navigation }) => {
             title="Resetear Onboarding"
             onPress={resetOnboarding}
             style={[styles.actionButton, { backgroundColor: '#FF5722' }]}
+          />
+          
+          {/* Botones de depuración */}
+          <Text style={[styles.sectionTitle, { marginTop: SPACING.xl, color: '#FF5722' }]}>🔧 Depuración</Text>
+          <BotonEstandar
+            title="Verificar Mi Rol"
+            onPress={debugCheckUserRole}
+            style={[styles.actionButton, { backgroundColor: '#2196F3' }]}
+          />
+          <BotonEstandar
+            title="Listar Todos los Usuarios"
+            onPress={debugListAllUsers}
+            style={[styles.actionButton, { backgroundColor: '#4CAF50' }]}
+          />
+          <BotonEstandar
+            title="Corregir Mi Rol a Admin"
+            onPress={debugFixCurrentUserRole}
+            style={[styles.actionButton, { backgroundColor: '#FF9800' }]}
           />
         </View>
 

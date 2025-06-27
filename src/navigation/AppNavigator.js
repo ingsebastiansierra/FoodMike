@@ -43,6 +43,15 @@ const MainNavigator = () => {
   const [forceUpdate, setForceUpdate] = useState(0);
   const { user, userRole, loading } = useAuth();
 
+  // Logs de depuración
+  console.log('🔍 AppNavigator - Estado actual:', {
+    user: user ? { uid: user.uid, email: user.email, name: user.name } : null,
+    userRole,
+    loading,
+    isOnboardingCompleted,
+    isInitializing
+  });
+
   useEffect(() => {
     const checkOnboardingStatus = async () => {
       try {
@@ -66,32 +75,38 @@ const MainNavigator = () => {
 
   // Mostrar pantalla de carga mientras se verifica la autenticación y onboarding
   if (loading || isInitializing) {
+    console.log('🔍 AppNavigator - Mostrando pantalla de carga');
     return <LoadingScreen />;
   }
 
   // Si el usuario está autenticado, NO mostrar onboarding, ir directamente a las pantallas principales
   if (user) {
-    return (
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {userRole === 'administrador' ? (
-          // Pantallas para administradores
+    console.log('🔍 AppNavigator - Usuario autenticado, rol:', userRole);
+    
+    if (userRole === 'administrador') {
+      console.log('🔍 AppNavigator - Redirigiendo a AdminDashboard');
+      return (
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="AdminDashboard" component={AdminScreen} />
-        ) : (
-          // Pantallas para clientes usando ClientHomeScreen directamente
-          <>
-            <Stack.Screen name="ClientDashboard" component={ClientHomeScreen} />
-            <Stack.Screen name="Carrito" component={CarritoComponent} />
-            <Stack.Screen name="Search" component={SearchScreen} />
-            <Stack.Screen name="RestaurantDetail" component={RestaurantDetailScreen} />
-            <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
-          </>
-        )}
-      </Stack.Navigator>
-    );
+        </Stack.Navigator>
+      );
+    } else {
+      console.log('🔍 AppNavigator - Redirigiendo a ClientDashboard');
+      return (
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="ClientDashboard" component={ClientHomeScreen} />
+          <Stack.Screen name="Carrito" component={CarritoComponent} />
+          <Stack.Screen name="Search" component={SearchScreen} />
+          <Stack.Screen name="RestaurantDetail" component={RestaurantDetailScreen} />
+          <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
+        </Stack.Navigator>
+      );
+    }
   }
 
   // Si el usuario NO está autenticado y NO ha completado el onboarding, mostrar onboarding
   if (!isOnboardingCompleted) {
+    console.log('🔍 AppNavigator - Mostrando onboarding');
     return (
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Splash" component={SplashScreen} />
@@ -105,6 +120,7 @@ const MainNavigator = () => {
   }
 
   // Si el usuario NO está autenticado pero YA completó el onboarding, mostrar pantallas de autenticación
+  console.log('🔍 AppNavigator - Mostrando pantallas de autenticación');
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen

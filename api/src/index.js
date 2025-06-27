@@ -16,7 +16,7 @@ const adminRoutes = require('./routes/admin');
 
 // Importar middleware
 const corsMiddleware = require('./middleware/cors');
-const rateLimitMiddleware = require('./middleware/rateLimit');
+const { apiLimiter, authLimiter } = require('./middleware/rateLimit');
 
 // Importar `db` para el health check
 const { db } = require('./config/firebase');
@@ -36,7 +36,7 @@ app.use(morgan('combined'));
 app.use(corsMiddleware);
 
 // Rate limiting
-app.use(rateLimitMiddleware);
+app.use(apiLimiter);
 
 // Middleware para parsing JSON
 app.use(express.json({ limit: '10mb' }));
@@ -52,7 +52,7 @@ app.get('/health', (req, res) => {
 });
 
 // Rutas de la API
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/restaurants', restaurantsRoutes);
 app.use('/api/products', productsRoutes);
 app.use('/api/search', searchRoutes);
