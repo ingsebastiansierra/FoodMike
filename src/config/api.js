@@ -1,11 +1,8 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Configuración base de la API
-// En desarrollo usar IP de la computadora, en producción usar Render
-const API_BASE_URL = __DEV__ 
-  ? 'http://192.168.1.6:3001/api'  // Usar la IP de tu computadora
-  : 'https://foodmike.onrender.com/api';
+// Forzar siempre la URL de producción
+const API_BASE_URL = 'https://foodmike.onrender.com/api';
 
 console.log(`🌍 API Base URL: ${API_BASE_URL}`);
 
