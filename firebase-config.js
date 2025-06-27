@@ -17,6 +17,9 @@ if (!firebase.apps.length) {
   firebase.initializeApp(firebaseConfig);
 }
 
+// Configurar persistencia de autenticación en memoria (evita problemas con AsyncStorage)
+firebase.auth().setPersistence(firebase.auth.Auth.Persistence.NONE);
+
 // Configurar Firestore
 const db = firebase.firestore();
 

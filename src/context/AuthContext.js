@@ -13,6 +13,15 @@ export const useAuth = () => {
   return context;
 };
 
+// Función helper para verificar si AsyncStorage está disponible
+const isAsyncStorageAvailable = () => {
+  try {
+    return typeof AsyncStorage !== 'undefined' && AsyncStorage !== null;
+  } catch (error) {
+    return false;
+  }
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [userRole, setUserRole] = useState(null);
@@ -21,18 +30,6 @@ export const AuthProvider = ({ children }) => {
   // Verificar si el usuario está autenticado al cargar la app
   useEffect(() => {
     console.log('🔐 AuthContext: Iniciando verificación de autenticación');
-    
-    // Limpiar token JWT existente para evitar errores de API
-    const clearExistingToken = async () => {
-      try {
-        await AsyncStorage.removeItem('userToken');
-        console.log('🔐 AuthContext: Token JWT limpiado');
-      } catch (error) {
-        console.log('🔐 AuthContext: Error limpiando token:', error);
-      }
-    };
-    
-    clearExistingToken();
     
     const unsubscribe = firebase.auth().onAuthStateChanged(async (firebaseUser) => {
       console.log('🔐 AuthContext: Estado de autenticación cambiado', firebaseUser ? 'Usuario autenticado' : 'Usuario no autenticado');
@@ -83,40 +80,9 @@ export const AuthProvider = ({ children }) => {
         } catch (error) {
           console.error('❌ AuthContext: Error al obtener datos del usuario:', error);
           
-          // Si hay error de permisos, intentar obtener el rol desde la API
-          if (error.code === 'permission-denied') {
-            console.log('🔐 AuthContext: Error de permisos, intentando obtener rol desde API');
-            try {
-              const response = await api.get('/auth/me', {
-                headers: {
-                  'Authorization': `Bearer ${await AsyncStorage.getItem('userToken')}`
-                }
-              });
-              
-              if (response.data.success) {
-                const apiUser = response.data.data.user;
-                setUser({
-                  ...firebaseUser,
-                  ...apiUser
-                });
-                setUserRole(apiUser.role || 'cliente');
-                console.log('🔐 AuthContext: Rol obtenido desde API:', apiUser.role);
-              } else {
-                // Fallback: usar solo datos de Firebase Auth
-                setUser(firebaseUser);
-                setUserRole('cliente');
-              }
-            } catch (apiError) {
-              console.error('❌ AuthContext: Error obteniendo rol desde API:', apiError);
-              // Fallback: usar solo datos de Firebase Auth
-              setUser(firebaseUser);
-              setUserRole('cliente');
-            }
-          } else {
-            // En caso de error, usar solo los datos de Firebase Auth
-            setUser(firebaseUser);
-            setUserRole('cliente');
-          }
+          // En caso de error, usar solo los datos de Firebase Auth
+          setUser(firebaseUser);
+          setUserRole('cliente');
         }
       } else {
         console.log('🔐 AuthContext: No hay usuario autenticado');
@@ -136,8 +102,18 @@ export const AuthProvider = ({ children }) => {
       // Solo llamar a la API para registrar el usuario
       const response = await api.post('/auth/register', { email, password, name, role });
       const { token, user: apiUser } = response.data.data;
-      await AsyncStorage.setItem('userToken', token);
-      console.log('🔐 AuthContext: Usuario registrado vía API y JWT guardado');
+      
+      // Guardar token solo si AsyncStorage está disponible
+      if (isAsyncStorageAvailable()) {
+        try {
+          await AsyncStorage.setItem('userToken', token);
+          console.log('🔐 AuthContext: Token JWT guardado exitosamente');
+        } catch (storageError) {
+          console.warn('⚠️ AuthContext: Error guardando token JWT:', storageError);
+        }
+      }
+      
+      console.log('🔐 AuthContext: Usuario registrado vía API');
       return { success: true, user: apiUser, token };
     } catch (error) {
       console.error('❌ AuthContext: Error al registrar usuario:', error);
@@ -203,8 +179,6 @@ export const AuthProvider = ({ children }) => {
         setUserRole('cliente');
       }
       
-      // No necesitamos obtener JWT de la API ya que Firebase Auth es suficiente
-      // para la autenticación en el frontend
       console.log('🔐 AuthContext: Login completado exitosamente');
       
       return { success: true, user: firebaseUser };
@@ -220,7 +194,17 @@ export const AuthProvider = ({ children }) => {
     
     try {
       await firebase.auth().signOut();
-      await AsyncStorage.removeItem('userToken');
+      
+      // Limpiar token solo si AsyncStorage está disponible
+      if (isAsyncStorageAvailable()) {
+        try {
+          await AsyncStorage.removeItem('userToken');
+          console.log('🔐 AuthContext: Token JWT removido exitosamente');
+        } catch (storageError) {
+          console.warn('⚠️ AuthContext: Error removiendo token JWT:', storageError);
+        }
+      }
+      
       setUser(null);
       setUserRole(null);
       console.log('🔐 AuthContext: Sesión cerrada exitosamente');

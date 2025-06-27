@@ -81,10 +81,15 @@ const LoginRegisterScreen = ({ navigation }) => {
     setError('');
     try {
       await registerUser(email, password, name, selectedRole);
+      
+      // Login automático tras registro exitoso
+      await loginUser(email, password);
+      
       showAlert(
         'Registro exitoso',
         'Tu cuenta ha sido creada correctamente.'
       );
+      
       // La navegación se manejará automáticamente en el AuthContext
     } catch (err) {
       console.error('Error de registro:', err);
