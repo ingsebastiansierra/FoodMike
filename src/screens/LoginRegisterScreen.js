@@ -44,7 +44,6 @@ const LoginRegisterScreen = ({ navigation }) => {
   useEffect(() => {
     const fetchRestaurants = async () => {
       try {
-        // 1. Obtén todos los usuarios admin y sus restaurantId válidos
         const usersSnapshot = await firebase.firestore()
           .collection('users')
           .where('role', '==', 'administrador')
@@ -53,7 +52,6 @@ const LoginRegisterScreen = ({ navigation }) => {
           .map(doc => doc.data().restaurantId)
           .filter(id => typeof id === 'string' && id.length > 0);
 
-        // 2. Obtén todos los restaurantes
         const restaurantsSnapshot = await firebase.firestore()
           .collection('restaurants')
           .get();
@@ -62,14 +60,18 @@ const LoginRegisterScreen = ({ navigation }) => {
             id: doc.id,
             name: doc.data().name,
           }))
-          // 3. Filtra los que ya están tomados
           .filter(r => !takenRestaurantIds.includes(r.id));
+
+        console.log('Restaurantes en Firestore:', restaurantsSnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name })));
+        console.log('IDs tomados:', takenRestaurantIds);
+        console.log('Restaurantes libres:', data);
 
         setRestaurants(data);
         setNoRestaurants(data.length === 0);
       } catch (err) {
         setRestaurants([]);
         setNoRestaurants(true);
+        console.log('Error al cargar restaurantes:', err);
       }
     };
     if (!isLogin && selectedRole === 'administrador') {
@@ -239,7 +241,7 @@ const LoginRegisterScreen = ({ navigation }) => {
                     icon="user"
                     color="#4CAF50"
                   />
-                  {!noRestaurants && (
+                  {restaurants.length > 0 && (
                     <RoleButton
                       role="administrador"
                       title="Administrador"
