@@ -37,26 +37,52 @@ const LoginRegisterScreen = ({ navigation }) => {
   const [error, setError] = useState('');
   const [restaurants, setRestaurants] = useState([]);
   const [selectedRestaurant, setSelectedRestaurant] = useState('');
+  const [noRestaurants, setNoRestaurants] = useState(false);
 
   const { registerUser, loginUser } = useAuth();
 
   useEffect(() => {
     const fetchRestaurants = async () => {
       try {
-        const snapshot = await firebase.firestore().collection('restaurants').get();
-        const data = snapshot.docs.map(doc => ({
-          id: doc.id,
-          name: doc.data().name,
-        }));
+        // 1. Obtén todos los usuarios admin y sus restaurantId válidos
+        const usersSnapshot = await firebase.firestore()
+          .collection('users')
+          .where('role', '==', 'administrador')
+          .get();
+        const takenRestaurantIds = usersSnapshot.docs
+          .map(doc => doc.data().restaurantId)
+          .filter(id => typeof id === 'string' && id.length > 0);
+
+        // 2. Obtén todos los restaurantes
+        const restaurantsSnapshot = await firebase.firestore()
+          .collection('restaurants')
+          .get();
+        const data = restaurantsSnapshot.docs
+          .map(doc => ({
+            id: doc.id,
+            name: doc.data().name,
+          }))
+          // 3. Filtra los que ya están tomados
+          .filter(r => !takenRestaurantIds.includes(r.id));
+
         setRestaurants(data);
+        setNoRestaurants(data.length === 0);
       } catch (err) {
         setRestaurants([]);
+        setNoRestaurants(true);
       }
     };
     if (!isLogin && selectedRole === 'administrador') {
       fetchRestaurants();
     }
   }, [isLogin, selectedRole]);
+
+  useEffect(() => {
+    if (!isLogin && selectedRole === 'administrador' && noRestaurants) {
+      setSelectedRole('cliente');
+      setSelectedRestaurant('');
+    }
+  }, [noRestaurants, isLogin, selectedRole]);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -213,30 +239,45 @@ const LoginRegisterScreen = ({ navigation }) => {
                     icon="user"
                     color="#4CAF50"
                   />
-                  <RoleButton
-                    role="administrador"
-                    title="Administrador"
-                    description="Gestiona restaurantes y usuarios"
-                    icon="cog"
-                    color="#2196F3"
-                  />
+                  {!noRestaurants && (
+                    <RoleButton
+                      role="administrador"
+                      title="Administrador"
+                      description="Gestiona restaurantes y usuarios"
+                      icon="cog"
+                      color="#2196F3"
+                    />
+                  )}
                 </View>
+
+                {noRestaurants && (
+                  <Text style={{ color: '#FF5722', marginBottom: 16, textAlign: 'center', fontWeight: 'bold' }}>
+                    No hay restaurantes disponibles para asignar. Por favor, contacta al administrador o crea un restaurante primero.
+                  </Text>
+                )}
 
                 {!isLogin && selectedRole === 'administrador' && (
                   <>
                     <Text style={styles.sectionTitle}>Selecciona el restaurante que administrarás:</Text>
-                    <View style={{ backgroundColor: '#fff', borderRadius: 8, marginBottom: 16 }}>
-                      <Picker
-                        selectedValue={selectedRestaurant}
-                        onValueChange={setSelectedRestaurant}
-                        style={{ height: 50, width: '100%' }}
-                      >
-                        <Picker.Item label="Selecciona un restaurante" value="" />
-                        {restaurants.map(r => (
-                          <Picker.Item key={r.id} label={r.name} value={r.id} />
-                        ))}
-                      </Picker>
-                    </View>
+                    {noRestaurants ? (
+                      <Text style={{ color: '#FF5722', marginBottom: 16, textAlign: 'center', fontWeight: 'bold' }}>
+                        No hay restaurantes disponibles para asignar. Por favor, contacta al administrador o crea un restaurante primero.
+                      </Text>
+                    ) : (
+                      <View style={{ backgroundColor: '#fff', borderRadius: 8, marginBottom: 16, overflow: 'hidden', borderWidth: 1, borderColor: '#eee' }}>
+                        <Picker
+                          selectedValue={selectedRestaurant}
+                          onValueChange={setSelectedRestaurant}
+                          style={{ height: 48, width: '100%' }}
+                          itemStyle={{ fontSize: 16 }}
+                        >
+                          <Picker.Item label="Selecciona un restaurante" value="" />
+                          {restaurants.map(r => (
+                            <Picker.Item key={r.id} label={r.name} value={r.id} />
+                          ))}
+                        </Picker>
+                      </View>
+                    )}
                   </>
                 )}
               </>
