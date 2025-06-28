@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -10,7 +10,7 @@ import {
   Dimensions,
   StatusBar,
   KeyboardAvoidingView,
-  Platform
+  Platform,
 } from 'react-native';
 import { COLORS } from '../theme/colors';
 import { SPACING } from '../theme/spacing';
@@ -20,6 +20,9 @@ import Input from '../components/Input';
 import { useAuth } from '../context/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { showAlert } from '../utils';
+import api from '../config/api';
+import { firebase } from '../../firebase-config';
+import { Picker } from '@react-native-picker/picker';
 
 const { width, height } = Dimensions.get('window');
 
@@ -32,8 +35,28 @@ const LoginRegisterScreen = ({ navigation }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [restaurants, setRestaurants] = useState([]);
+  const [selectedRestaurant, setSelectedRestaurant] = useState('');
 
   const { registerUser, loginUser } = useAuth();
+
+  useEffect(() => {
+    const fetchRestaurants = async () => {
+      try {
+        const snapshot = await firebase.firestore().collection('restaurants').get();
+        const data = snapshot.docs.map(doc => ({
+          id: doc.id,
+          name: doc.data().name,
+        }));
+        setRestaurants(data);
+      } catch (err) {
+        setRestaurants([]);
+      }
+    };
+    if (!isLogin && selectedRole === 'administrador') {
+      fetchRestaurants();
+    }
+  }, [isLogin, selectedRole]);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -66,42 +89,34 @@ const LoginRegisterScreen = ({ navigation }) => {
       setError('Por favor completa todos los campos.');
       return;
     }
-
     if (password !== confirmPassword) {
       setError('Las contraseñas no coinciden.');
       return;
     }
-
     if (password.length < 6) {
       setError('La contraseña debe tener al menos 6 caracteres.');
       return;
     }
-
+    if (selectedRole === 'administrador' && !selectedRestaurant) {
+      setError('Debes seleccionar un restaurante.');
+      return;
+    }
+    const payload = {
+      email,
+      password,
+      name,
+      role: selectedRole,
+      restaurantId: selectedRole === 'administrador' ? selectedRestaurant : undefined,
+    };
+    console.log('Datos enviados al backend:', payload);
     setLoading(true);
     setError('');
     try {
-      await registerUser(email, password, name, selectedRole);
-      
-      // Login automático tras registro exitoso
+      await api.post('/auth/register', payload);
       await loginUser(email, password);
-      
-      showAlert(
-        'Registro exitoso',
-        'Tu cuenta ha sido creada correctamente.'
-      );
-      
-      // La navegación se manejará automáticamente en el AuthContext
+      showAlert('Registro exitoso', 'Tu cuenta ha sido creada correctamente.');
     } catch (err) {
-      console.error('Error de registro:', err);
-      if (err.code === 'auth/email-already-in-use') {
-        setError('Este correo ya está registrado.');
-      } else if (err.code === 'auth/invalid-email') {
-        setError('Formato de correo inválido.');
-      } else if (err.code === 'auth/weak-password') {
-        setError('La contraseña es muy débil.');
-      } else {
-        setError('Error al registrar. Intenta de nuevo.');
-      }
+      setError(err.response?.data?.message || 'Error al registrar. Intenta de nuevo.');
     }
     setLoading(false);
   };
@@ -206,6 +221,24 @@ const LoginRegisterScreen = ({ navigation }) => {
                     color="#2196F3"
                   />
                 </View>
+
+                {!isLogin && selectedRole === 'administrador' && (
+                  <>
+                    <Text style={styles.sectionTitle}>Selecciona el restaurante que administrarás:</Text>
+                    <View style={{ backgroundColor: '#fff', borderRadius: 8, marginBottom: 16 }}>
+                      <Picker
+                        selectedValue={selectedRestaurant}
+                        onValueChange={setSelectedRestaurant}
+                        style={{ height: 50, width: '100%' }}
+                      >
+                        <Picker.Item label="Selecciona un restaurante" value="" />
+                        {restaurants.map(r => (
+                          <Picker.Item key={r.id} label={r.name} value={r.id} />
+                        ))}
+                      </Picker>
+                    </View>
+                  </>
+                )}
               </>
             )}
 

@@ -201,12 +201,18 @@ const getCurrentUser = async (req, res) => {
 // Registro y generación de JWT
 const register = async (req, res) => {
   try {
-    const { email, password, name, phone, role = 'cliente', profilePhoto } = req.body;
+    const { email, password, name, phone, role = 'cliente', profilePhoto, restaurantId } = req.body;
     // Validaciones mejoradas
     if (!email || !password || !name) {
       return res.status(400).json({
         success: false,
         error: 'Email, contraseña y nombre son requeridos'
+      });
+    }
+    if (role === 'administrador' && !restaurantId) {
+      return res.status(400).json({
+        success: false,
+        error: 'restaurantId es requerido para administradores'
       });
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -290,6 +296,11 @@ const register = async (req, res) => {
         address: '',
       }
     };
+    if (role && role.toLowerCase() === 'administrador') {
+      userData.restaurantId = restaurantId;
+    }
+    // Log para depuración
+    console.log('userData a guardar:', userData);
     // Guardar usuario en Firestore con el mismo UID
     try {
       await db.collection('users').doc(uid).set(userData);

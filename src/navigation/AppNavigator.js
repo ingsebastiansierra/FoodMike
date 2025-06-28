@@ -18,7 +18,7 @@ import LocationScreen from "../screens/LocationScreen";
 import SplashScreen from "../screens/splash/SplashScreen";
 
 // Nuevas pantallas por roles
-import AdminScreen from "../screens/AdminScreen";
+import AdminDashboardScreen from "../screens/AdminDashboardScreen";
 import ClientHomeScreen from "../screens/ClientHomeScreen";
 import CarritoComponent from '../components/CarritoComponent';
 
@@ -87,7 +87,7 @@ const MainNavigator = () => {
       console.log('🔍 AppNavigator - Redirigiendo a AdminDashboard');
       return (
         <Stack.Navigator screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="AdminDashboard" component={AdminScreen} />
+          <Stack.Screen name="AdminDashboard" component={AdminDashboardScreen} />
         </Stack.Navigator>
       );
     } else {
