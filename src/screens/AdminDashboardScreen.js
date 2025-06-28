@@ -1,7 +1,8 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { useAuth } from '../context/AuthContext';
+import { firebase } from '../../firebase-config';
 
 // Componente resumen de órdenes
 const SummaryCard = ({ label, value }) => (
@@ -73,8 +74,24 @@ const BottomTabBar = () => (
 
 const AdminDashboardScreen = () => {
   const { user } = useAuth();
-  // Si tienes restaurantName en el usuario, úsalo. Si no, muestra 'Mi Restaurante'.
-  const restaurantName = user?.restaurantName || 'Mi Restaurante';
+  const [restaurant, setRestaurant] = useState(null);
+
+  useEffect(() => {
+    const fetchRestaurant = async () => {
+      if (user?.restaurantId) {
+        const doc = await firebase.firestore()
+          .collection('restaurants')
+          .doc(user.restaurantId)
+          .get();
+        if (doc.exists) {
+          setRestaurant(doc.data());
+        }
+      }
+    };
+    fetchRestaurant();
+  }, [user?.restaurantId]);
+
+  const restaurantName = restaurant?.name || 'Mi Restaurante';
 
   return (
     <View style={styles.container}>
