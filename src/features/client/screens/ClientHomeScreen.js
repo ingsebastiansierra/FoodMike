@@ -202,17 +202,9 @@ const SearchContent = ({ navigation }) => {
 };
 
 
-const ClientHomeScreen = ({ navigation: propNavigation }) => {
-  const [activeTab, setActiveTab] = useState("Inicio");
-  const { user, logout } = useAuth();
+const ClientHomeScreen = ({ navigation }) => {
+  const { user } = useAuth();
   const { addToCart } = useCart();
-  const [refreshing, setRefreshing] = useState(false);
-  const navigation = useNavigation();
-
-
-  const handleAddToCart = (food) => {
-    addToCart(food);
-  };
 
   const handleProductPress = (product) => {
     navigation.navigate('ProductDetail', { product });
@@ -222,158 +214,23 @@ const ClientHomeScreen = ({ navigation: propNavigation }) => {
     navigation.navigate('RestaurantDetail', { restaurant });
   };
 
-  // Simulación de datos
-  const userData = {
-    name: user?.displayName || 'Invitado',
-    email: user?.email,
-    avatar: user?.photoURL || 'https://i.pravatar.cc/150?u=a042581f4e29026704d',
-    stats: { orders: 12, favorites: 5, reviews: 3 },
-  };
-
-  const onRefresh = React.useCallback(() => {
-    setRefreshing(true);
-    // Lógica para recargar datos de la pestaña activa
-    setTimeout(() => setRefreshing(false), 1500);
-  }, []);
-
-  const handleLogout = async () => {
-    showConfirmAlert(
-      'Cerrar Sesión',
-      '¿Estás seguro de que quieres cerrar sesión?',
-      () => logout()
-    );
-  };
-
-  const handleResetOnboarding = async () => {
-    await resetOnboarding();
-    showAlert('Onboarding Reseteado', 'La próxima vez que inicies la app, verás la pantalla de bienvenida.');
-  };
-
-  const tabs = [
-    { name: "Inicio", icon: "home" },
-    { name: "Buscar", icon: "search" },
-    { name: "Pedidos", icon: "file-text" },
-    { name: "Favoritos", icon: "heart" },
-    { name: "Perfil", icon: "user" },
-  ];
-
-  const renderContent = () => {
-    switch (activeTab) {
-      case "Inicio":
-        return (
-          <HomeContentComponent
-            navigation={navigation}
-            onProductPress={handleProductPress}
-            onRestaurantPress={handleRestaurantPress}
-            onAddToCart={handleAddToCart}
-          />
-        );
-      case "Buscar":
-        return <SearchContent navigation={navigation} />;
-      case "Pedidos":
-        return <ConfirmarOrdenComponente navigation={navigation} />;
-      case "Favoritos":
-        return <FavoritosComponent navigation={navigation} />;
-      case "Perfil":
-        return (
-          <ScrollView style={styles.profileContainer}>
-            {/* Card de Perfil */}
-            <Card style={styles.profileCard}>
-              <View style={styles.profileHeader}>
-                <View style={styles.profileAvatar}>
-                  <Icon name="user-circle" size={80} color={COLORS.primary} />
-                  <TouchableOpacity style={styles.editAvatarButton}>
-                    <Icon name="pencil" size={15} color={COLORS.white} />
-                  </TouchableOpacity>
-                </View>
-                <View style={styles.profileInfo}>
-                  <Text style={styles.profileName}>{userData.name}</Text>
-                  <Text style={styles.profileEmail}>{userData.email}</Text>
-                  <View style={styles.roleBadge}>
-                    <Icon name="star" size={12} color={COLORS.white} />
-                    <Text style={styles.roleText}>CLIENTE</Text>
-                  </View>
-                </View>
-              </View>
-            </Card>
-
-            {/* Card de Estadísticas */}
-            <Card style={styles.statsCard}>
-              <Text style={styles.statsTitle}>Tus Estadísticas</Text>
-              <View style={styles.statsGrid}>
-                <View style={styles.statItem}>
-                  <Icon name="shopping-basket" size={30} color={COLORS.primary} />
-                  <Text style={styles.statNumber}>{userData.stats.orders}</Text>
-                  <Text style={styles.statLabel}>Pedidos</Text>
-                </View>
-                <View style={styles.statItem}>
-                  <Icon name="heart" size={30} color={COLORS.primary} />
-                  <Text style={styles.statNumber}>{userData.stats.favorites}</Text>
-                  <Text style={styles.statLabel}>Favoritos</Text>
-                </View>
-                <View style={styles.statItem}>
-                  <Icon name="star" size={30} color={COLORS.primary} />
-                  <Text style={styles.statNumber}>{userData.stats.reviews}</Text>
-                  <Text style={styles.statLabel}>Reseñas</Text>
-                </View>
-              </View>
-            </Card>
-
-            {/* Card de Acciones */}
-            <Card style={styles.actionsCard}>
-              <Text style={styles.actionsTitle}>Configuración</Text>
-              <TouchableOpacity style={styles.actionItem}>
-                <Icon name="user" size={20} color={COLORS.primary} />
-                <Text style={styles.actionText}>Editar Perfil</Text>
-                <Icon name="chevron-right" size={16} color={COLORS.gray} />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.actionItem}>
-                <Icon name="map-marker" size={20} color={COLORS.primary} />
-                <Text style={styles.actionText}>Mis Direcciones</Text>
-                <Icon name="chevron-right" size={16} color={COLORS.gray} />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.actionItem}>
-                <Icon name="bell" size={20} color={COLORS.primary} />
-                <Text style={styles.actionText}>Notificaciones</Text>
-                <Icon name="chevron-right" size={16} color={COLORS.gray} />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.actionItem} onPress={handleResetOnboarding}>
-                <Icon name="info-circle" size={20} color={COLORS.primary} />
-                <Text style={styles.actionText}>Ver Onboarding de Nuevo</Text>
-                <Icon name="chevron-right" size={16} color={COLORS.gray} />
-              </TouchableOpacity>
-            </Card>
-
-            <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-              <Icon name="sign-out" size={20} color="#FF5722" />
-              <Text style={styles.logoutText}>Cerrar Sesión</Text>
-            </TouchableOpacity>
-          </ScrollView>
-        );
-      default:
-        return null;
-    }
+  const handleAddToCart = (food) => {
+    addToCart(food);
   };
 
   return (
     <View style={styles.container}>
       <Header
-        title={activeTab}
+        title="Bienvenido"
         user={user}
-        onCartPress={() => setActiveTab("Pedidos")}
+        // El onCartPress ahora puede navegar a la pestaña Pedidos
+        onCartPress={() => navigation.navigate('Pedidos')}
       />
-      <ScrollView
-        style={styles.content}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />
-        }
-      >
-        {renderContent()}
-      </ScrollView>
-      <TabNavigator
-        tabs={tabs}
-        activeTab={activeTab}
-        onTabPress={(tab) => setActiveTab(tab)}
+      <HomeContentComponent
+        navigation={navigation}
+        onProductPress={handleProductPress}
+        onRestaurantPress={handleRestaurantPress}
+        onAddToCart={handleAddToCart}
       />
     </View>
   );

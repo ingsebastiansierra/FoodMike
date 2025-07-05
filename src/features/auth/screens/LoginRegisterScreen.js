@@ -18,7 +18,7 @@ import BotonEstandar from '../../../components/BotonEstandar';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Input from '../../../components/Input';
 import { useAuth } from '../../../context/AuthContext';
-import { LinearGradient } from 'expo-linear-gradient';
+import GradientBackground from '../../../components/GradientBackground';
 import { showAlert } from '../../core/utils/alert';
 import api from '../../../config/api';
 import { firebase } from '../../../../firebase-config';
@@ -94,13 +94,10 @@ const LoginRegisterScreen = ({ navigation }) => {
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={{ flex: 1 }} 
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
-      <LinearGradient
-        colors={[COLORS.primary, COLORS.secondary]}
-        style={styles.container}
+    <GradientBackground>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === "ios" ? "padding" : "height"} 
+        style={{ flex: 1 }}
       >
         <StatusBar barStyle="light-content" />
         <View style={styles.header}>
@@ -211,8 +208,8 @@ const LoginRegisterScreen = ({ navigation }) => {
             </View>
           </View>
         </ScrollView>
-      </LinearGradient>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </GradientBackground>
   );
 };
 
