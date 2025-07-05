@@ -1,4 +1,4 @@
-import { firebase } from '../../firebase-config';
+import { firebase } from '../../../../firebase-config';
 
 // Función para verificar el rol de un usuario en Firestore
 export const checkUserRole = async (email) => {
@@ -118,4 +118,4 @@ export const createTestAdmin = async (email, password, name) => {
     console.error('❌ Error creando usuario administrador:', error);
     return { success: false, error: error.message };
   }
-}; 
+};

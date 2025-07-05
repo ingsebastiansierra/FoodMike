@@ -17,7 +17,7 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../theme/colors';
 import { SPACING } from '../theme/spacing';
-import { showAlert, showConfirmAlert } from '../utils';
+import { showAlert, showConfirmAlert } from '../features/core/utils/alert';
 
 const { width, height } = Dimensions.get('window');
 

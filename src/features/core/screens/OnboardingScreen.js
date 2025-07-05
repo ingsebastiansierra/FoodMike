@@ -1,8 +1,8 @@
 import React from "react";
 import { View, Text, StyleSheet, Image, TouchableOpacity, StatusBar } from "react-native";
-import BotonEstandar from "../components/BotonEstandar";
-import { COLORS } from "../theme/colors";
-import { SPACING } from "../theme/spacing";
+import BotonEstandar from "../../../components/BotonEstandar";
+import { COLORS } from "../../../theme/colors";
+import { SPACING } from "../../../theme/spacing";
 
 const OnboardingScreen = ({
   imageSource,

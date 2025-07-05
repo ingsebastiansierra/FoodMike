@@ -4,8 +4,8 @@ import { CartContext } from "../context/CartContext";
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { COLORS } from '../theme/colors';
 import { SPACING } from '../theme/spacing';
-import { showConfirmAlert } from '../utils';
-import { normalizeImageSource } from '../utils/imageUtils';
+import { showConfirmAlert } from '../features/core/utils/alert';
+import { normalizeImageSource } from '../shared/utils/imageUtils';
 
 const CartItemCard = ({ item, index }) => {
   const { increaseQuantity, decreaseQuantity, removeFromCart } = useContext(CartContext);

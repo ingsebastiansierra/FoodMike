@@ -4,7 +4,7 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../theme/colors';
 import { SPACING } from '../theme/spacing';
-import { normalizeImageSource } from '../utils/imageUtils';
+import { normalizeImageSource } from '../shared/utils/imageUtils';
 
 const { width } = Dimensions.get('window');
 

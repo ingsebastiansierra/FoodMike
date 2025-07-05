@@ -10,9 +10,9 @@ import {
   RefreshControl
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { COLORS } from '../theme/colors';
-import { SPACING } from '../theme/spacing';
-import { useAuth } from '../context/AuthContext';
+import { COLORS } from '../../../theme/colors';
+import { SPACING } from '../../../theme/spacing';
+import { useAuth } from '../../../context/AuthContext';
 import { 
   Header, 
   Card, 
@@ -20,7 +20,7 @@ import {
   QuickActions, 
   UserProfile,
   BotonEstandar
-} from '../components';
+} from '../../../components';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { checkUserRole, fixUserRole, listAllUsers } from '../utils/debugAuth';
 
@@ -137,10 +137,10 @@ const AdminScreen = ({ navigation }) => {
         const userList = users.map(u => `${u.name} (${u.email}) - ${u.role}`).join('\n');
         Alert.alert('Todos los Usuarios', userList);
       } else {
-        Alert.alert('Info', 'No hay usuarios registrados');
+        Alert.alert('Info', 'No hay usuarios para listar');
       }
     } catch (error) {
-      Alert.alert('Error', 'Error al listar usuarios');
+      Alert.alert('Error', 'No se pudo listar los usuarios');
     }
   };
 
@@ -151,111 +151,41 @@ const AdminScreen = ({ navigation }) => {
         Alert.alert('Error', 'No se puede obtener el email del usuario actual');
         return;
       }
-      
-      const success = await fixUserRole(email, 'administrador');
-      if (success) {
-        Alert.alert('Éxito', 'Rol corregido. Reinicia la app para ver los cambios.');
-      } else {
-        Alert.alert('Error', 'No se pudo corregir el rol');
-      }
+      await fixUserRole(email);
+      Alert.alert('Éxito', 'Se intentó corregir el rol a administrador. Por favor, reinicia sesión para ver los cambios.');
     } catch (error) {
-      Alert.alert('Error', 'Error al corregir rol del usuario');
+      Alert.alert('Error', 'No se pudo corregir el rol');
     }
   };
 
-  const quickActions = [
-    {
-      key: 'restaurants',
-      icon: 'cutlery',
-      label: 'Restaurantes',
-      color: '#4CAF50',
-      onPress: () => Alert.alert('Funcionalidad', 'Gestión de restaurantes próximamente')
-    },
-    {
-      key: 'orders',
-      icon: 'list-alt',
-      label: 'Órdenes',
-      color: '#2196F3',
-      onPress: () => Alert.alert('Funcionalidad', 'Gestión de órdenes próximamente')
-    },
-    {
-      key: 'analytics',
-      icon: 'bar-chart',
-      label: 'Analíticas',
-      color: '#FF9800',
-      onPress: () => Alert.alert('Funcionalidad', 'Analíticas próximamente')
-    },
-    {
-      key: 'settings',
-      icon: 'cog',
-      label: 'Configuración',
-      color: '#9C27B0',
-      onPress: () => Alert.alert('Funcionalidad', 'Configuración próximamente')
-    }
-  ];
-
-  const totalUsers = users.length;
-  const adminUsers = users.filter(u => u.role === 'administrador').length;
-  const clientUsers = users.filter(u => u.role === 'cliente').length;
-
   return (
     <View style={styles.container}>
-      <Header
-        title="Panel de Administración"
-        subtitle={`Bienvenido, ${user?.name || 'Administrador'}`}
-        onLogout={handleLogout}
-        gradientColors={[COLORS.primary, COLORS.primary + 'DD']}
-      />
-      
+      <Header title="Panel de Administrador" onLogout={handleLogout} />
       <ScrollView
         style={styles.content}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
-        <Text style={styles.sectionTitle}>Estadísticas</Text>
+        <UserProfile user={user} />
         
+        <Text style={styles.sectionTitle}>Estadísticas Rápidas</Text>
         <View style={styles.statsContainer}>
-          <StatsCard
-            icon="users"
-            value={totalUsers}
-            label="Total Usuarios"
-            color="#4CAF50"
-          />
-          <StatsCard
-            icon="cog"
-            value={adminUsers}
-            label="Administradores"
-            color="#2196F3"
-          />
-          <StatsCard
-            icon="user"
-            value={clientUsers}
-            label="Clientes"
-            color="#FF9800"
-          />
+          <StatsCard icon="users" value={users.length} label="Usuarios Totales" />
+          <StatsCard icon="cutlery" value="125" label="Productos" />
+          <StatsCard icon="money" value="$1,250" label="Ventas Hoy" />
         </View>
 
         <Text style={styles.sectionTitle}>Acciones Rápidas</Text>
-        <QuickActions actions={quickActions} columns={2} />
-
-        <Text style={styles.sectionTitle}>Acciones del Sistema</Text>
+        <QuickActions
+          actions={[
+            { title: 'Gestionar Productos', icon: 'list', onPress: () => {} },
+            { title: 'Ver Pedidos', icon: 'truck', onPress: () => {} },
+            { title: 'Reportes', icon: 'bar-chart', onPress: () => {} },
+            { title: 'Configuración', icon: 'gear', onPress: () => {} },
+          ]}
+        />
+        
         <View style={styles.actionsContainer}>
-          <BotonEstandar
-            title="Gestionar Restaurantes"
-            onPress={() => Alert.alert('Funcionalidad', 'Gestión de restaurantes próximamente')}
-            style={styles.actionButton}
-          />
-          <BotonEstandar
-            title="Ver Todas las Órdenes"
-            onPress={() => Alert.alert('Funcionalidad', 'Ver todas las órdenes próximamente')}
-            style={styles.actionButton}
-          />
-          <BotonEstandar
-            title="Generar Reportes"
-            onPress={() => Alert.alert('Funcionalidad', 'Generar reportes próximamente')}
-            style={styles.actionButton}
-          />
+          <Text style={[styles.sectionTitle, { marginTop: SPACING.xl }]}>Otras Acciones</Text>
           <BotonEstandar
             title="Resetear Onboarding"
             onPress={resetOnboarding}
@@ -395,4 +325,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AdminScreen; 
+export default AdminScreen;

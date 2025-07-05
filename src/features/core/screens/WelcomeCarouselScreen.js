@@ -10,9 +10,9 @@ import {
   StatusBar,
   Animated,
 } from "react-native";
-import { COLORS } from "../theme/colors";
-import { SPACING } from "../theme/spacing";
-import { completeOnboarding } from "../utils";
+import { COLORS } from "../../../theme/colors";
+import { SPACING } from "../../../theme/spacing";
+import { completeOnboarding } from "../utils/onboarding";
 import Icon from "react-native-vector-icons/FontAwesome";
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -28,7 +28,7 @@ const WelcomeCarouselScreen = ({ navigation, route }) => {
   const data = [
     {
       id: "1",
-      imageSource: require("../assets/Onbornig_1.jpeg"),
+      imageSource: require("../../../assets/Onbornig_1.jpeg"),
       titleText: "¡Bienvenido a Food Mike!",
       subtitleText: "Descubre la mejor experiencia gastronómica en tu ciudad. Ordena, disfruta y repite con la mejor calidad.",
       icon: "cutlery",
@@ -37,7 +37,7 @@ const WelcomeCarouselScreen = ({ navigation, route }) => {
     },
     {
       id: "2",
-      imageSource: require("../assets/Onbornig_2.jpeg"),
+      imageSource: require("../../../assets/Onbornig_2.jpeg"),
       titleText: "Entrega Rápida y Segura",
       subtitleText: "Recibe tus pedidos en tiempo récord con seguimiento en tiempo real. Nuestros repartidores están listos para ti.",
       icon: "truck",
@@ -46,7 +46,7 @@ const WelcomeCarouselScreen = ({ navigation, route }) => {
     },
     {
       id: "3",
-      imageSource: require("../assets/Onbornig_3.jpeg"),
+      imageSource: require("../../../assets/Onbornig_3.jpeg"),
       titleText: "Variedad Sin Límites",
       subtitleText: "Desde comida local hasta internacional. Tenemos todo lo que tu paladar desee con los mejores restaurantes.",
       icon: "globe",
@@ -143,37 +143,26 @@ const WelcomeCarouselScreen = ({ navigation, route }) => {
               }
             ]}
           >
-            <Icon name={item.icon} size={45} color={item.color} />
+            <Icon name={item.icon} size={36} color={item.color} />
           </Animated.View>
-          
-          <Animated.View
-            style={{
-              opacity: fadeAnim,
-              transform: [{
-                translateY: fadeAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [20, 0]
-                })
-              }]
-            }}
-          >
-            <Image source={item.imageSource} style={styles.image} />
-          </Animated.View>
-          
-          <Animated.View 
+
+          <Animated.Image 
+            source={item.imageSource} 
             style={[
-              styles.textContainer,
+              styles.image, 
               {
                 opacity: fadeAnim,
                 transform: [{
                   translateY: fadeAnim.interpolate({
                     inputRange: [0, 1],
-                    outputRange: [30, 0]
+                    outputRange: [50, 0]
                   })
                 }]
               }
-            ]}
-          >
+            ]} 
+          />
+
+          <Animated.View style={[styles.textContainer, { opacity: fadeAnim }]}>
             <Text style={styles.title}>{item.titleText}</Text>
             <Text style={styles.subtitle}>{item.subtitleText}</Text>
           </Animated.View>
@@ -185,28 +174,23 @@ const WelcomeCarouselScreen = ({ navigation, route }) => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
-      
       <ScrollView
         ref={scrollViewRef}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
-        scrollEnabled={true}
-        onMomentumScrollEnd={(event) => {
-          const newIndex = Math.round(
-            event.nativeEvent.contentOffset.x / width
-          );
-          setCurrentIndex(newIndex);
-        }}
-        contentContainerStyle={{ width: width * data.length }}
-        style={{ flexGrow: 1 }}
+        scrollEventThrottle={16}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { x: new Animated.Value(0) } } }],
+          { useNativeDriver: false }
+        )}
+        style={{ flex: 1 }}
       >
-        {data.map((item, index) => renderSlide(item, index))}
+        {data.map(renderSlide)}
       </ScrollView>
 
       <View style={styles.bottomContainer}>
         {renderDots()}
-        
         <View style={styles.buttonsContainer}>
           <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
             <Text style={styles.skipButtonText}>Omitir</Text>

@@ -10,14 +10,14 @@ import {
   Platform,
   ScrollView
 } from 'react-native';
-import { COLORS } from '../theme/colors';
-import { SPACING } from '../theme/spacing';
-import BotonEstandar from '../components/BotonEstandar';
-import Input from '../components/Input';
+import { COLORS } from '../../../theme/colors';
+import { SPACING } from '../../../theme/spacing';
+import BotonEstandar from '../../../components/BotonEstandar';
+import Input from '../../../components/Input';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { firebase } from '../../firebase-config';
+import { firebase } from '../../../../firebase-config';
 import { LinearGradient } from 'expo-linear-gradient';
-import { showAlert } from '../utils';
+import { showAlert } from '../../core/utils/alert';
 
 const ForgotPasswordScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -108,63 +108,59 @@ const ForgotPasswordScreen = ({ navigation }) => {
 
               {error ? (
                 <View style={styles.errorContainer}>
-                  <Icon name="exclamation-triangle" size={16} color="#FF5722" />
+                  <Icon name="exclamation-circle" size={20} color="#FF5722" />
                   <Text style={styles.errorText}>{error}</Text>
                 </View>
               ) : null}
 
               {success ? (
                 <View style={styles.successContainer}>
-                  <Icon name="check-circle" size={16} color="#4CAF50" />
+                  <Icon name="check-circle" size={20} color="#4CAF50" />
                   <Text style={styles.successText}>{success}</Text>
                 </View>
               ) : null}
 
-              <Input
-                label="Correo Electrónico"
-                placeholder="tu@email.com"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                leftIcon={<Icon name="envelope" size={20} color={COLORS.primary} />}
-                containerStyle={styles.inputContainer}
-              />
+              <View style={styles.inputContainer}>
+                <Input
+                  icon="envelope"
+                  placeholder="Correo Electrónico"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+              </View>
 
-              <BotonEstandar 
-                title="Enviar Enlace de Recuperación" 
-                onPress={handleResetPassword} 
-                disabled={loading}
-                icon="paper-plane"
-                style={styles.mainButton}
-              />
-
-              {loading && (
+              {loading ? (
                 <View style={styles.loadingContainer}>
                   <ActivityIndicator size="large" color={COLORS.primary} />
                   <Text style={styles.loadingText}>Enviando correo...</Text>
                 </View>
+              ) : (
+                <BotonEstandar
+                  texto="Enviar Enlace de Recuperación"
+                  onPress={handleResetPassword}
+                  style={styles.mainButton}
+                  colorFondo={COLORS.primary}
+                />
               )}
 
               <TouchableOpacity 
-                onPress={() => navigation.goBack()}
                 style={styles.backToLoginButton}
+                onPress={() => navigation.goBack()}
               >
                 <Icon name="arrow-left" size={16} color={COLORS.primary} />
-                <Text style={styles.backToLoginText}>Volver al Inicio de Sesión</Text>
+                <Text style={styles.backToLoginText}>Volver a Iniciar Sesión</Text>
               </TouchableOpacity>
             </View>
 
-            {/* Información adicional */}
             <View style={styles.infoCard}>
               <View style={styles.infoHeader}>
                 <Icon name="info-circle" size={20} color={COLORS.primary} />
-                <Text style={styles.infoTitle}>¿No recibiste el correo?</Text>
+                <Text style={styles.infoTitle}>¿Cómo funciona?</Text>
               </View>
               <Text style={styles.infoText}>
-                • Verifica que el correo esté escrito correctamente{'\n'}
-                • Revisa tu carpeta de spam{'\n'}
-                • Espera unos minutos antes de intentar de nuevo
+                Recibirás un correo con un enlace seguro. Haz clic en él para crear una nueva contraseña para tu cuenta. Si no lo ves, revisa tu carpeta de spam.
               </Text>
             </View>
           </ScrollView>

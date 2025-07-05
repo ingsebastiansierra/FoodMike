@@ -13,11 +13,11 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing, typography } from '../theme';
-import ProductCard from '../components/ProductCard';
-import { searchService } from '../services/searchService';
-import { useCart } from '../context/CartContext';
-import { showAlert } from '../utils';
+import { colors, spacing, typography } from '../../../theme';
+import ProductCard from '../../../components/ProductCard';
+import { searchService } from '../../../services/searchService';
+import { useCart } from '../../../context/CartContext';
+import { showAlert } from '../../core/utils/alert';
 
 const { width } = Dimensions.get('window');
 
@@ -111,43 +111,30 @@ const RestaurantDetailScreen = ({ route, navigation }) => {
               <Ionicons name="location" size={18} color={colors.primary} style={{ marginLeft: 16 }} />
               <Text style={styles.locationText}>{restaurant.address || 'Ubicación desconocida'}</Text>
             </View>
-            <Text style={styles.description}>{restaurant.description || ''}</Text>
+            <Text style={styles.description} numberOfLines={2}>
+              {restaurant.description || 'Deliciosa comida te espera.'}
+            </Text>
           </View>
         </View>
 
-        {/* Carrusel de categorías */}
+        {/* Categorías */}
         <View style={styles.categoriesSection}>
           <FlatList
-            data={["all", ...categories]}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={[
-                  styles.categoryButton,
-                  selectedCategory === item && styles.categoryButtonActive
-                ]}
-                onPress={() => setSelectedCategory(item)}
-              >
-                <Text style={[
-                  styles.categoryText,
-                  selectedCategory === item && styles.categoryTextActive
-                ]}>
-                  {item === 'all' ? 'Todas' : item}
-                </Text>
-              </TouchableOpacity>
-            )}
-            keyExtractor={item => item}
             horizontal
+            data={['all', ...categories]}
+            renderItem={renderCategory}
+            keyExtractor={item => item}
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.categoriesList}
           />
         </View>
 
-        {/* Lista de productos */}
+        {/* Productos */}
         <View style={styles.productsSection}>
           {loading ? (
-            <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 32 }} />
+            <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
           ) : filteredProducts.length === 0 ? (
-            <Text style={styles.emptyText}>No hay productos en esta categoría</Text>
+            <Text style={styles.emptyText}>No hay productos en esta categoría.</Text>
           ) : (
             <FlatList
               data={filteredProducts}
@@ -323,4 +310,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default RestaurantDetailScreen; 
+export default RestaurantDetailScreen;

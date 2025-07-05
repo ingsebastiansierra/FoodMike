@@ -4,7 +4,7 @@ import Icon from "react-native-vector-icons/MaterialIcons";
 import { COLORS } from "../theme/colors";
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, typography } from '../theme';
-import { normalizeImageSource } from '../utils/imageUtils';
+import { normalizeImageSource } from '../shared/utils/imageUtils';
 
 const FoodCard = ({ image, name, price, stars, onPress, onAddPress }) => {
   const imageSource = normalizeImageSource(image);

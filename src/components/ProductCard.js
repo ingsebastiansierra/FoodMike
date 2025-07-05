@@ -10,7 +10,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, typography } from '../theme';
-import { normalizeImageSource } from '../utils/imageUtils';
+import { normalizeImageSource } from '../shared/utils/imageUtils';
 
 const { width } = Dimensions.get('window');
 

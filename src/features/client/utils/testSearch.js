@@ -1,5 +1,5 @@
 // Archivo de prueba para el motor de búsqueda
-import { searchProducts, CATEGORIES } from '../data/restaurantsData';
+import { searchProducts, CATEGORIES } from '../../../data/restaurantsData';
 
 // Función para probar el motor de búsqueda
 export const testSearchEngine = () => {
@@ -41,4 +41,4 @@ export const showCategories = () => {
   CATEGORIES.forEach(cat => {
     console.log(`  - ${cat.name} (${cat.id})`);
   });
-}; 
+};

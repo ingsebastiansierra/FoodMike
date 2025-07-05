@@ -8,11 +8,11 @@ import {
   RefreshControl,
   ActivityIndicator
 } from "react-native";
-import { COLORS } from "../theme/colors";
-import { SPACING } from "../theme/spacing";
+import { COLORS } from "../../../theme/colors";
+import { SPACING } from "../../../theme/spacing";
 import Icon from "react-native-vector-icons/FontAwesome";
-import { useAuth } from "../context/AuthContext";
-import { useCart } from "../context/CartContext";
+import { useAuth } from "../../../context/AuthContext";
+import { useCart } from "../../../context/CartContext";
 import { 
   Header, 
   TabNavigator, 
@@ -23,16 +23,17 @@ import {
   SearchFilters,
   ProductCard,
   CartHeaderButton
-} from "../components";
-import { showAlert, showConfirmAlert, resetOnboarding } from "../utils";
-import CarritoComponent from "../components/CarritoComponent";
-import FavoritosComponent from "../components/FavoritosComponent";
-import HomeContentComponent from "../components/HomeContentComponent";
-import ConfirmarOrdenComponente from "../components/ConfirmarOrdenComponente";
+} from "../../../components";
+import { showAlert, showConfirmAlert } from '../../core/utils/alert';
+import { resetOnboarding } from '../../core/utils/onboarding';
+import CarritoComponent from "../../../components/CarritoComponent";
+import FavoritosComponent from "../../../components/FavoritosComponent";
+import HomeContentComponent from "../../../components/HomeContentComponent";
+import ConfirmarOrdenComponente from "../../../components/ConfirmarOrdenComponente";
 import SearchScreen from "./SearchScreen";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
-import { searchService } from '../services/searchService';
+import { searchService } from '../../../services/searchService';
 
 // Componente SearchContent que funciona sin navegación propia
 const SearchContent = ({ navigation }) => {
@@ -121,29 +122,21 @@ const SearchContent = ({ navigation }) => {
 
   // Función para agregar al carrito
   const handleAddToCart = (product) => {
-    if (!product.restaurant) {
-      showAlert('Error', 'Este producto no tiene restaurante asociado.');
-      return;
-    }
-    
-    addToCart({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      image: product.image,
-      restaurantId: product.restaurant.id,
-      restaurantName: product.restaurant.name,
-    });
-    showAlert('Éxito', `${product.name} agregado al carrito`);
+    addToCart(product);
+    showAlert(
+      '¡Agregado!',
+      `${product.name} ha sido agregado a tu carrito.`,
+      'success'
+    );
   };
 
   // Función para navegar al carrito
   const handleCartPress = () => {
-    if (getTotalQuantity() > 0) {
-      navigation.navigate('Carrito');
-    } else {
-      showAlert('Carrito', 'Tu carrito está vacío. Agrega algunos productos primero.');
-    }
+    // Esta función ahora es manejada por el TabNavigator principal,
+    // pero la dejamos por si se necesita en un futuro.
+    // El componente CartHeaderButton ya tiene su propia lógica.
+    console.log("Navegando al carrito desde SearchContent...");
+    // navigation.navigate('Carrito'); // Esto podría causar problemas si SearchContent no está en un Stack
   };
 
   // Función para navegar al restaurante
@@ -152,82 +145,73 @@ const SearchContent = ({ navigation }) => {
   };
 
   return (
-    <View style={{ flex: 1 }}>
-      {/* Contenido de búsqueda */}
-      <View style={styles.searchContent}>
-        {/* Barra de búsqueda */}
-        <View style={styles.searchBarContainer}>
-          <SearchBar
-            value={searchTerm}
-            onChangeText={setSearchTerm}
-            onSearch={handleManualSearch}
-            onSubmitEditing={handleManualSearch}
-            placeholder="Buscar productos, restaurantes..."
-            showFilterButton={true}
-            onFilterPress={() => setShowFilters(!showFilters)}
+    <View style={styles.searchContent}>
+      <View style={styles.searchBarContainer}>
+        <SearchBar
+          value={searchTerm}
+          onChangeText={setSearchTerm}
+          onSearch={handleManualSearch}
+          onFilterPress={() => setShowFilters(!showFilters)}
+        />
+      </View>
+
+      {showFilters && (
+        <View style={styles.filtersContainer}>
+          <SearchFilters
+            filters={filters}
+            onFiltersChange={handleFiltersChange}
+            onApplyFilters={handleApplyFilters}
           />
         </View>
+      )}
 
-        {/* Filtros */}
-        {showFilters && (
-          <View style={styles.filtersContainer}>
-            <SearchFilters
-              filters={filters}
-              onFiltersChange={handleFiltersChange}
-              onApplyFilters={handleApplyFilters}
-            />
+      <ScrollView
+        style={styles.resultsContainer}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />
+        }
+      >
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={COLORS.primary} />
+            <Text style={styles.loadingText}>Buscando...</Text>
           </View>
-        )}
-
-        {/* Resultados */}
-        <ScrollView 
-          style={styles.resultsContainer}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
-          showsVerticalScrollIndicator={false}
-        >
-          <Text style={styles.resultsCount}>
-            {loading ? 'Buscando...' : 
-             searchTerm.trim() ? `${searchResults.length} resultados encontrados` : 
-             'Los mejores productos por calidad y precio'}
-          </Text>
-          
-          {loading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={COLORS.primary} />
-              <Text style={styles.loadingText}>Buscando productos...</Text>
-            </View>
-          ) : (
+        ) : (
+          <>
+            <Text style={styles.resultsCount}>
+              {searchResults.length} {searchResults.length === 1 ? 'resultado' : 'resultados'}
+            </Text>
             <View style={styles.productsGrid}>
-              {searchResults.map((product) => (
+              {searchResults.map((item) => (
                 <ProductCard
-                  key={product.id}
-                  product={product}
-                  onPress={() => handleProductPress(product)}
-                  onAddToCart={() => handleAddToCart(product)}
+                  key={item.id}
+                  product={item}
+                  onPress={() => handleProductPress(item)}
+                  onAddToCart={() => handleAddToCart(item)}
                 />
               ))}
             </View>
-          )}
-        </ScrollView>
-      </View>
+          </>
+        )}
+      </ScrollView>
+
+      <CartHeaderButton navigation={navigation} />
     </View>
   );
 };
 
+
 const ClientHomeScreen = ({ navigation: propNavigation }) => {
-  const { user, logoutUser } = useAuth();
-  const [activeTab, setActiveTab] = useState("Home");
-  const { addToCart, getTotalQuantity, cartItems } = useCart();
-  const [cartCount, setCartCount] = useState(0);
-  const [showConfirmarOrden, setShowConfirmarOrden] = useState(false);
+  const [activeTab, setActiveTab] = useState("Inicio");
+  const { user, logout } = useAuth();
+  const { addToCart } = useCart();
   const [refreshing, setRefreshing] = useState(false);
   const navigation = useNavigation();
 
+
   const handleAddToCart = (food) => {
     addToCart(food);
-    console.log("Adding to cart:", food);
   };
 
   const handleProductPress = (product) => {
@@ -238,216 +222,134 @@ const ClientHomeScreen = ({ navigation: propNavigation }) => {
     navigation.navigate('RestaurantDetail', { restaurant });
   };
 
-  React.useEffect(() => {
-    setCartCount(getTotalQuantity());
-  }, [cartItems]);
-
-  const onRefresh = async () => {
-    setRefreshing(true);
-    // Aquí podrías recargar datos
-    setTimeout(() => setRefreshing(false), 1000);
+  // Simulación de datos
+  const userData = {
+    name: user?.displayName || 'Invitado',
+    email: user?.email,
+    avatar: user?.photoURL || 'https://i.pravatar.cc/150?u=a042581f4e29026704d',
+    stats: { orders: 12, favorites: 5, reviews: 3 },
   };
 
-  const handleLogout = () => {
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    // Lógica para recargar datos de la pestaña activa
+    setTimeout(() => setRefreshing(false), 1500);
+  }, []);
+
+  const handleLogout = async () => {
     showConfirmAlert(
       'Cerrar Sesión',
       '¿Estás seguro de que quieres cerrar sesión?',
-      logoutUser
+      () => logout()
     );
   };
 
-  // Nuevas pestañas sin carrito (queda solo en el header)
-  const tabs = [
-    { key: "Home", label: "Inicio", icon: "home" },
-    { key: "Search", label: "Buscar", icon: "search" },
-    { key: "Favoritos", label: "Favoritos", icon: "heart" },
-    { key: "Ubicacion", label: "Ubicación", icon: "map-marker" },
-    { key: "Perfil", label: "Perfil", icon: "user" },
-  ];
+  const handleResetOnboarding = async () => {
+    await resetOnboarding();
+    showAlert('Onboarding Reseteado', 'La próxima vez que inicies la app, verás la pantalla de bienvenida.');
+  };
 
-  const quickActions = [];
+  const tabs = [
+    { name: "Inicio", icon: "home" },
+    { name: "Buscar", icon: "search" },
+    { name: "Pedidos", icon: "file-text" },
+    { name: "Favoritos", icon: "heart" },
+    { name: "Perfil", icon: "user" },
+  ];
 
   const renderContent = () => {
     switch (activeTab) {
-      case "Home":
+      case "Inicio":
         return (
-          <ScrollView 
-            style={styles.content}
-            refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-            }
-          >
-            <HomeContentComponent
-              onAddToCart={handleAddToCart}
-              onProductPress={handleProductPress}
-              onRestaurantPress={handleRestaurantPress}
-            />
-          </ScrollView>
+          <HomeContentComponent
+            navigation={navigation}
+            onProductPress={handleProductPress}
+            onRestaurantPress={handleRestaurantPress}
+            onAddToCart={handleAddToCart}
+          />
         );
-      
-      case "Search":
-        return (
-          <SearchScreen navigation={navigation} />
-        );
-      
+      case "Buscar":
+        return <SearchContent navigation={navigation} />;
+      case "Pedidos":
+        return <ConfirmarOrdenComponente navigation={navigation} />;
       case "Favoritos":
-        return (
-          <ScrollView style={styles.content}>
-            <Text style={styles.sectionTitle}>Mis Favoritos</Text>
-            <FavoritosComponent />
-          </ScrollView>
-        );
-      
-      case "Ubicacion":
-        return (
-          <ScrollView style={styles.content}>
-            <Text style={styles.sectionTitle}>Mi Ubicación</Text>
-            <Card style={styles.locationCard} elevation={2}>
-              <View style={styles.locationHeader}>
-                <Icon name="map-marker" size={40} color={COLORS.primary} />
-                <View style={styles.locationInfo}>
-                  <Text style={styles.locationTitle}>Ubicación Actual</Text>
-                  <Text style={styles.locationAddress}>Ciudad de México, México</Text>
-                </View>
-              </View>
-              
-              <View style={styles.locationActions}>
-                <BotonEstandar
-                  title="Cambiar Ubicación"
-                  onPress={() => showAlert('Funcionalidad', 'Cambiar ubicación próximamente')}
-                  style={styles.locationButton}
-                />
-                <BotonEstandar
-                  title="Restaurantes Cercanos"
-                  onPress={() => showAlert('Funcionalidad', 'Ver restaurantes cercanos próximamente')}
-                  style={styles.locationButton}
-                />
-              </View>
-            </Card>
-          </ScrollView>
-        );
-      
+        return <FavoritosComponent navigation={navigation} />;
       case "Perfil":
         return (
-          <ScrollView style={styles.content}>
-            {/* Tarjeta de perfil principal */}
-            <Card style={styles.profileCard} elevation={2}>
+          <ScrollView style={styles.profileContainer}>
+            {/* Card de Perfil */}
+            <Card style={styles.profileCard}>
               <View style={styles.profileHeader}>
                 <View style={styles.profileAvatar}>
                   <Icon name="user-circle" size={80} color={COLORS.primary} />
                   <TouchableOpacity style={styles.editAvatarButton}>
-                    <Icon name="camera" size={20} color={COLORS.white} />
+                    <Icon name="pencil" size={15} color={COLORS.white} />
                   </TouchableOpacity>
                 </View>
                 <View style={styles.profileInfo}>
-                  <Text style={styles.profileName}>{user?.name || 'Sin nombre'}</Text>
-                  <Text style={styles.profileEmail}>{user?.email}</Text>
+                  <Text style={styles.profileName}>{userData.name}</Text>
+                  <Text style={styles.profileEmail}>{userData.email}</Text>
                   <View style={styles.roleBadge}>
                     <Icon name="star" size={12} color={COLORS.white} />
-                    <Text style={styles.roleText}>Cliente Premium</Text>
+                    <Text style={styles.roleText}>CLIENTE</Text>
                   </View>
                 </View>
               </View>
             </Card>
 
-            {/* Estadísticas del usuario */}
-            <Card style={styles.statsCard} elevation={2}>
-              <Text style={styles.statsTitle}>Mis Estadísticas</Text>
+            {/* Card de Estadísticas */}
+            <Card style={styles.statsCard}>
+              <Text style={styles.statsTitle}>Tus Estadísticas</Text>
               <View style={styles.statsGrid}>
                 <View style={styles.statItem}>
-                  <Icon name="shopping-cart" size={24} color="#4CAF50" />
-                  <Text style={styles.statNumber}>12</Text>
+                  <Icon name="shopping-basket" size={30} color={COLORS.primary} />
+                  <Text style={styles.statNumber}>{userData.stats.orders}</Text>
                   <Text style={styles.statLabel}>Pedidos</Text>
                 </View>
                 <View style={styles.statItem}>
-                  <Icon name="star" size={24} color="#FFD700" />
-                  <Text style={styles.statNumber}>150</Text>
-                  <Text style={styles.statLabel}>Puntos</Text>
-                </View>
-                <View style={styles.statItem}>
-                  <Icon name="heart" size={24} color="#E91E63" />
-                  <Text style={styles.statNumber}>8</Text>
+                  <Icon name="heart" size={30} color={COLORS.primary} />
+                  <Text style={styles.statNumber}>{userData.stats.favorites}</Text>
                   <Text style={styles.statLabel}>Favoritos</Text>
                 </View>
                 <View style={styles.statItem}>
-                  <Icon name="trophy" size={24} color="#FF9800" />
-                  <Text style={styles.statNumber}>3</Text>
-                  <Text style={styles.statLabel}>Logros</Text>
+                  <Icon name="star" size={30} color={COLORS.primary} />
+                  <Text style={styles.statNumber}>{userData.stats.reviews}</Text>
+                  <Text style={styles.statLabel}>Reseñas</Text>
                 </View>
               </View>
             </Card>
 
-            {/* Acciones del perfil */}
-            <Card style={styles.actionsCard} elevation={2}>
-              <Text style={styles.actionsTitle}>Mi Cuenta</Text>
-              
+            {/* Card de Acciones */}
+            <Card style={styles.actionsCard}>
+              <Text style={styles.actionsTitle}>Configuración</Text>
               <TouchableOpacity style={styles.actionItem}>
                 <Icon name="user" size={20} color={COLORS.primary} />
                 <Text style={styles.actionText}>Editar Perfil</Text>
                 <Icon name="chevron-right" size={16} color={COLORS.gray} />
               </TouchableOpacity>
-              
-              <TouchableOpacity style={styles.actionItem}>
-                <Icon name="history" size={20} color={COLORS.primary} />
-                <Text style={styles.actionText}>Historial de Pedidos</Text>
-                <Icon name="chevron-right" size={16} color={COLORS.gray} />
-              </TouchableOpacity>
-              
               <TouchableOpacity style={styles.actionItem}>
                 <Icon name="map-marker" size={20} color={COLORS.primary} />
                 <Text style={styles.actionText}>Mis Direcciones</Text>
                 <Icon name="chevron-right" size={16} color={COLORS.gray} />
               </TouchableOpacity>
-              
-              <TouchableOpacity style={styles.actionItem}>
-                <Icon name="credit-card" size={20} color={COLORS.primary} />
-                <Text style={styles.actionText}>Métodos de Pago</Text>
-                <Icon name="chevron-right" size={16} color={COLORS.gray} />
-              </TouchableOpacity>
-              
               <TouchableOpacity style={styles.actionItem}>
                 <Icon name="bell" size={20} color={COLORS.primary} />
                 <Text style={styles.actionText}>Notificaciones</Text>
                 <Icon name="chevron-right" size={16} color={COLORS.gray} />
               </TouchableOpacity>
-              
-              <TouchableOpacity style={styles.actionItem}>
-                <Icon name="cog" size={20} color={COLORS.primary} />
-                <Text style={styles.actionText}>Configuración</Text>
-                <Icon name="chevron-right" size={16} color={COLORS.gray} />
-              </TouchableOpacity>
-              
-              <TouchableOpacity style={styles.actionItem}>
-                <Icon name="question-circle" size={20} color={COLORS.primary} />
-                <Text style={styles.actionText}>Ayuda y Soporte</Text>
+              <TouchableOpacity style={styles.actionItem} onPress={handleResetOnboarding}>
+                <Icon name="info-circle" size={20} color={COLORS.primary} />
+                <Text style={styles.actionText}>Ver Onboarding de Nuevo</Text>
                 <Icon name="chevron-right" size={16} color={COLORS.gray} />
               </TouchableOpacity>
             </Card>
 
-            {/* Botón de cerrar sesión */}
             <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
               <Icon name="sign-out" size={20} color="#FF5722" />
               <Text style={styles.logoutText}>Cerrar Sesión</Text>
             </TouchableOpacity>
-
-            {/* Botón temporal para resetear onboarding */}
-            <TouchableOpacity 
-              style={[styles.logoutButton, { backgroundColor: '#E3F2FD', borderColor: '#2196F3' }]} 
-              onPress={() => {
-                showConfirmAlert(
-                  'Resetear Onboarding',
-                  '¿Estás seguro de que quieres resetear el onboarding? Esto te permitirá ver las pantallas de bienvenida nuevamente.',
-                  () => resetOnboarding(),
-                  () => {}
-                );
-              }}
-            >
-              <Icon name="refresh" size={20} color="#2196F3" />
-              <Text style={[styles.logoutText, { color: '#2196F3' }]}>Resetear Onboarding</Text>
-            </TouchableOpacity>
           </ScrollView>
         );
-      
       default:
         return null;
     }
@@ -456,22 +358,22 @@ const ClientHomeScreen = ({ navigation: propNavigation }) => {
   return (
     <View style={styles.container}>
       <Header
-        title="FoodMike"
-        subtitle={`¡Hola, ${user?.name || 'Cliente'}!`}
-        onLogout={handleLogout}
-        onCartPress={() => navigation.navigate('Carrito')}
-        cartCount={cartCount}
-        showCart={true}
-        gradientColors={[COLORS.primary, COLORS.primary + 'DD']}
+        title={activeTab}
+        user={user}
+        onCartPress={() => setActiveTab("Pedidos")}
       />
-      
-      {renderContent()}
-      
+      <ScrollView
+        style={styles.content}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />
+        }
+      >
+        {renderContent()}
+      </ScrollView>
       <TabNavigator
         tabs={tabs}
         activeTab={activeTab}
-        onTabPress={setActiveTab}
-        showBadge={false}
+        onTabPress={(tab) => setActiveTab(tab)}
       />
     </View>
   );
@@ -480,15 +382,28 @@ const ClientHomeScreen = ({ navigation: propNavigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.lightGray,
   },
   content: {
     flex: 1,
-    padding: SPACING.lg,
+  },
+  profileContainer: {
+    padding: SPACING.md,
+  },
+  card: {
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    padding: SPACING.md,
+    marginBottom: SPACING.md,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   sectionTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: COLORS.primary,
     marginBottom: SPACING.md,
     marginTop: SPACING.lg,
@@ -682,4 +597,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ClientHomeScreen; 
+export default ClientHomeScreen;

@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../theme/colors';
 import { SPACING, BORDER_RADIUS } from '../theme/spacing';
 import { FONT_SIZES, FONT_WEIGHTS } from '../theme/typography';
-import { normalizeImageSource } from '../utils/imageUtils';
+import { normalizeImageSource } from '../shared/utils/imageUtils';
 
 const { width } = Dimensions.get('window');
 const ITEM_WIDTH = width - 40; // 20px padding on each side

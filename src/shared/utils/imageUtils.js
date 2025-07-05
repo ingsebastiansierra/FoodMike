@@ -17,7 +17,7 @@ export const normalizeImageSource = (image) => {
   }
 
   // En todos los demás casos (null, undefined, string vacío, objeto malformado), retornar una imagen local por defecto
-  return require('../assets/logos/food_logo_1.png');
+  return require('../../assets/logos/food_logo_1.png');
 };
 
 /**
@@ -44,4 +44,4 @@ export const isValidImageUrl = (url) => {
 export const getDefaultImage = () => {
   // Puedes cambiar esto por una imagen local si tienes una
   return { uri: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400' };
-}; 
+};

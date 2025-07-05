@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, StatusBar } from 'react-native';
-import ProductImage from '../components/ProductImage';
-import ProductInfoRow from '../components/ProductInfoRow';
-import ProductQuantitySelector from '../components/ProductQuantitySelector';
+import ProductImage from '../../../components/ProductImage';
+import ProductInfoRow from '../../../components/ProductInfoRow';
+import ProductQuantitySelector from '../../../components/ProductQuantitySelector';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, SPACING, typography } from '../theme';
-import { STRINGS, ICONS } from '../constants/strings';
-import { useCart } from '../context/CartContext';
-import { getRestaurantById } from '../data/restaurantsData';
-import { restaurantsService } from '../services/restaurantsService';
+import { COLORS, SPACING, typography } from '../../../theme';
+import { STRINGS, ICONS } from '../../../constants/strings';
+import { useCart } from '../../../context/CartContext';
+import { getRestaurantById } from '../../../data/restaurantsData';
+import { restaurantsService } from '../../../services/restaurantsService';
 
 const ProductDetailScreen = ({ route, navigation }) => {
   const { product } = route.params;
@@ -98,34 +98,27 @@ const ProductDetailScreen = ({ route, navigation }) => {
           <Text style={styles.title}>
             {typeof product.name === 'string' ? product.name : 'Producto'}
           </Text>
-          
+
           <Text style={styles.description}>
-            {typeof product.description === 'string' ? product.description : 'Descripción del producto no disponible'}
+            {typeof product.description === 'string' ? product.description : 'Descripción no disponible'}
           </Text>
-          
+
           <View style={styles.infoRow}>
-            <ProductInfoRow icon="star" text={`${typeof product.stars === 'number' && !isNaN(product.stars) ? product.stars : 4.5} ⭐`} />
+            <ProductInfoRow icon="star" text={`${product.stars} (${product.reviews} reviews)`} />
             <ProductInfoRow icon="time" text={time} />
-            <ProductInfoRow icon="car" text={delivery} />
+            <ProductInfoRow icon="bicycle" text={delivery} />
           </View>
 
-          {/* Tamaños */}
           <View style={styles.sizesRow}>
             <Text style={styles.sizeTitle}>Tamaño</Text>
             <View style={styles.sizesBtnRow}>
               {sizes.map((size) => (
                 <TouchableOpacity
                   key={size}
-                  style={[
-                    styles.sizeBtn,
-                    selectedSize === size && styles.sizeBtnActive
-                  ]}
+                  style={[styles.sizeBtn, selectedSize === size && styles.sizeBtnActive]}
                   onPress={() => setSelectedSize(size)}
                 >
-                  <Text style={[
-                    styles.sizeText,
-                    selectedSize === size && styles.sizeTextActive
-                  ]}>
+                  <Text style={[styles.sizeText, selectedSize === size && styles.sizeTextActive]}>
                     {size}
                   </Text>
                 </TouchableOpacity>
@@ -133,64 +126,47 @@ const ProductDetailScreen = ({ route, navigation }) => {
             </View>
           </View>
 
-          {/* Ingredientes */}
           <View style={styles.ingredientsRow}>
             <Text style={styles.ingredientsTitle}>Ingredientes</Text>
             <View style={styles.ingredientsList}>
-              {ingredients.map((ingredient, index) => (
+              {ingredients.map((item, index) => (
                 <View key={index} style={styles.ingredientIcon}>
-                  <Ionicons name={ingredient.icon} size={24} color="#ff6b35" />
+                  <Ionicons name={item.icon} size={24} color={COLORS.primary} />
                 </View>
               ))}
             </View>
           </View>
 
-          {/* Precio y Cantidad */}
           <View style={styles.priceQtyBox}>
             <View>
-              <Text style={styles.priceUnit}>
-                ${typeof product.price === 'number' && !isNaN(product.price) 
-                  ? product.price.toLocaleString('es-CO') 
-                  : '0'} c/u
-              </Text>
+              <Text style={styles.priceUnit}>Precio Total</Text>
               <Text style={styles.priceTotal}>
-                ${typeof product.price === 'number' && !isNaN(product.price) 
-                  ? (product.price * quantity).toLocaleString('es-CO') 
-                  : '0'} total
+                ${(product.price * quantity).toLocaleString('es-CO')}
               </Text>
             </View>
             <View style={styles.qtySelectorBox}>
-              <ProductQuantitySelector
-                quantity={quantity}
-                setQuantity={setQuantity}
-                min={1}
-                max={10}
-                dark={true}
-              />
+              <ProductQuantitySelector quantity={quantity} setQuantity={setQuantity} />
             </View>
           </View>
         </ScrollView>
 
-        {/* Botón flotante del carrito */}
+        {/* Botón flotante para el carrito */}
         <TouchableOpacity style={styles.cartFloatingBtn} onPress={handleCartPress}>
           <View style={styles.cartBtn}>
-            <Ionicons name="cart" size={28} color="#222" />
+            <Ionicons name="cart-outline" size={28} color={COLORS.primary} />
             {getTotalQuantity() > 0 && (
-              <View style={[styles.cartBadge, { minWidth: getBadgeWidth(getTotalQuantity()) }]}>
+              <View style={[styles.cartBadge, { width: getBadgeWidth(getTotalQuantity()) }]}>
                 <Text style={styles.cartBadgeText}>{getTotalQuantity()}</Text>
               </View>
             )}
           </View>
         </TouchableOpacity>
 
-        {/* Botón de agregar al carrito */}
-        <View style={styles.addToCartContainer}>
+        {/* Botón principal de agregar al carrito */}
+        <View style={styles.addToCartBtnWrapper}>
           <TouchableOpacity style={styles.addToCartBtn} onPress={handleAddToCart}>
-            <Text style={styles.addToCartText}>
-              Agregar al carrito - ${typeof product.price === 'number' && !isNaN(product.price) 
-                ? (product.price * quantity).toLocaleString('es-CO') 
-                : '0'}
-            </Text>
+            <Text style={styles.addToCartText}>Agregar al Carrito</Text>
+            <Ionicons name="add-circle" size={24} color="#fff" />
           </TouchableOpacity>
         </View>
       </View>
@@ -201,67 +177,54 @@ const ProductDetailScreen = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: COLORS.white,
+    backgroundColor: '#fff',
   },
   container: {
     flex: 1,
-    backgroundColor: COLORS.white,
-    position: 'relative',
+    backgroundColor: '#fff',
   },
   scrollContent: {
+    paddingHorizontal: SPACING.md,
+    paddingBottom: 80, // Espacio para el botón de agregar
     alignItems: 'center',
-    padding: SPACING.lg,
-    paddingTop: 80,
-    paddingBottom: 40,
   },
-  addToCartContainer: {
+  addToCartBtnWrapper: {
     position: 'absolute',
+    bottom: 0,
     left: 0,
     right: 0,
-    bottom: 0,
-    backgroundColor: COLORS.white,
-    paddingHorizontal: 20,
-    paddingBottom: 16,
-    paddingTop: 8,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.07,
-    shadowRadius: 8,
-    elevation: 8,
-    alignItems: 'center',
-    zIndex: 10,
+    padding: SPACING.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
   },
   addToCartBtn: {
-    width: '100%',
     backgroundColor: COLORS.primary,
-    borderRadius: 12,
-    paddingVertical: 16,
+    borderRadius: 30,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
   },
   addToCartText: {
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
-    letterSpacing: 1,
+    marginRight: 8,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    width: '100%',
-    marginBottom: 20,
-    paddingTop: 10,
-    paddingHorizontal: 20,
-    position: 'absolute',
-    top: 30,
-    left: 0,
-    right: 0,
-    zIndex: 100,
-    backgroundColor: 'rgba(255, 255, 255, 0.98)',
-    paddingBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0, 0, 0, 0.05)',
+    justifyContent: 'space-between',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    backgroundColor: '#fff',
+    zIndex: 10,
   },
   backBtn: {
     width: 40,
@@ -462,4 +425,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ProductDetailScreen; 
+export default ProductDetailScreen;

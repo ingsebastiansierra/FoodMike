@@ -11,12 +11,12 @@ import {
   TextInput,
   Animated
 } from 'react-native';
-import { COLORS } from '../theme/colors';
-import { SPACING } from '../theme/spacing';
-import BotonEstandar from '../components/BotonEstandar';
+import { COLORS } from '../../../theme/colors';
+import { SPACING } from '../../../theme/spacing';
+import BotonEstandar from '../../../components/BotonEstandar';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { LinearGradient } from 'expo-linear-gradient';
-import { showAlert } from '../utils';
+import { showAlert } from '../../core/utils/alert';
 
 const VerifyCodeScreen = ({ navigation }) => {
   const [code, setCode] = useState(['', '', '', '', '', '']);
@@ -138,110 +138,88 @@ const VerifyCodeScreen = ({ navigation }) => {
           </View>
         </View>
 
-        <ScrollView 
-          contentContainerStyle={styles.scrollContainer}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
+        <KeyboardAvoidingView 
+          style={{ flex: 1 }} 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
-          <Animated.View 
-            style={[
-              styles.mainCard,
-              { opacity: fadeAnim }
-            ]}
+          <ScrollView 
+            contentContainerStyle={styles.scrollContainer}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
           >
-            <View style={styles.illustrationContainer}>
-              <View style={styles.illustrationCircle}>
-                <Icon name="mobile" size={50} color={COLORS.primary} />
+            <Animated.View style={[styles.mainCard, { opacity: fadeAnim }]}>
+              <View style={styles.illustrationContainer}>
+                <View style={styles.illustrationCircle}>
+                  <Icon name="key" size={50} color={COLORS.primary} />
+                </View>
               </View>
-            </View>
 
-            <Text style={styles.title}>Código de Verificación</Text>
-            <Text style={styles.subtitle}>
-              Hemos enviado un código de 6 dígitos a tu correo electrónico. 
-              Ingresa el código para verificar tu cuenta.
-            </Text>
-
-            {error ? (
-              <View style={styles.errorContainer}>
-                <Icon name="exclamation-triangle" size={16} color="#FF5722" />
-                <Text style={styles.errorText}>{error}</Text>
-              </View>
-            ) : null}
-
-            {/* Código de verificación */}
-            <View style={styles.codeContainer}>
-              {code.map((digit, index) => (
-                <TextInput
-                  key={index}
-                  ref={ref => inputRefs.current[index] = ref}
-                  style={[
-                    styles.codeInput,
-                    digit && styles.codeInputFilled
-                  ]}
-                  value={digit}
-                  onChangeText={(text) => handleCodeChange(text, index)}
-                  onKeyPress={(e) => handleKeyPress(e, index)}
-                  keyboardType="number-pad"
-                  maxLength={1}
-                  selectTextOnFocus
-                  selectionColor={COLORS.primary}
-                />
-              ))}
-            </View>
-
-            <BotonEstandar 
-              title="Verificar Código" 
-              onPress={handleVerifyCode}
-              disabled={!isCodeComplete || loading}
-              icon="check"
-              style={styles.mainButton}
-            />
-
-            {loading && (
-              <View style={styles.loadingContainer}>
-                <Text style={styles.loadingText}>Verificando código...</Text>
-              </View>
-            )}
-
-            <TouchableOpacity 
-              onPress={handleResendCode}
-              disabled={resendTimer > 0}
-              style={[
-                styles.resendButton,
-                resendTimer > 0 && styles.resendButtonDisabled
-              ]}
-            >
-              <Icon 
-                name="refresh" 
-                size={16} 
-                color={resendTimer > 0 ? COLORS.gray : COLORS.primary} 
-              />
-              <Text style={[
-                styles.resendText,
-                resendTimer > 0 && styles.resendTextDisabled
-              ]}>
-                {resendTimer > 0 
-                  ? `Reenviar en ${resendTimer}s` 
-                  : 'Reenviar Código'
-                }
+              <Text style={styles.title}>Ingresa tu código</Text>
+              <Text style={styles.subtitle}>
+                Hemos enviado un código de 6 dígitos a tu correo electrónico. Por favor, ingrésalo a continuación.
               </Text>
-            </TouchableOpacity>
-          </Animated.View>
 
-          {/* Información adicional */}
-          <View style={styles.infoCard}>
-            <View style={styles.infoHeader}>
-              <Icon name="info-circle" size={20} color={COLORS.primary} />
-              <Text style={styles.infoTitle}>¿No recibiste el código?</Text>
+              {error ? (
+                <View style={styles.errorContainer}>
+                  <Icon name="exclamation-circle" size={20} color="#FF5722" />
+                  <Text style={styles.errorText}>{error}</Text>
+                </View>
+              ) : null}
+
+              <View style={styles.codeContainer}>
+                {code.map((digit, index) => (
+                  <TextInput
+                    key={index}
+                    ref={ref => inputRefs.current[index] = ref}
+                    style={[styles.codeInput, digit ? styles.codeInputFilled : null]}
+                    value={digit}
+                    onChangeText={(text) => handleCodeChange(text, index)}
+                    onKeyPress={(e) => handleKeyPress(e, index)}
+                    keyboardType="number-pad"
+                    maxLength={1}
+                    selectTextOnFocus
+                  />
+                ))}
+              </View>
+
+              {loading ? (
+                <View style={styles.loadingContainer}>
+                  <BotonEstandar texto="Verificando..." onPress={() => {}} disabled={true} />
+                  <Text style={styles.loadingText}>Un momento por favor</Text>
+                </View>
+              ) : (
+                <BotonEstandar
+                  texto="Verificar Código"
+                  onPress={handleVerifyCode}
+                  style={styles.mainButton}
+                  colorFondo={isCodeComplete ? COLORS.primary : COLORS.lightGray}
+                  disabled={!isCodeComplete}
+                />
+              )}
+
+              <TouchableOpacity 
+                style={[styles.resendButton, resendTimer > 0 && styles.resendButtonDisabled]}
+                onPress={handleResendCode}
+                disabled={resendTimer > 0}
+              >
+                <Icon name="paper-plane" size={16} color={resendTimer > 0 ? COLORS.gray : COLORS.primary} />
+                <Text style={[styles.resendText, resendTimer > 0 && styles.resendTextDisabled]}>
+                  {resendTimer > 0 ? `Reenviar en ${resendTimer}s` : 'Reenviar código'}
+                </Text>
+              </TouchableOpacity>
+            </Animated.View>
+
+            <View style={styles.infoCard}>
+              <View style={styles.infoHeader}>
+                <Icon name="info-circle" size={20} color={COLORS.primary} />
+                <Text style={styles.infoTitle}>¿No recibiste el código?</Text>
+              </View>
+              <Text style={styles.infoText}>
+                Asegúrate de revisar tu carpeta de spam o correo no deseado. Si aún no lo encuentras, puedes solicitar uno nuevo.
+              </Text>
             </View>
-            <Text style={styles.infoText}>
-              • Verifica tu bandeja de entrada{'\n'}
-              • Revisa tu carpeta de spam{'\n'}
-              • Asegúrate de que el correo esté correcto{'\n'}
-              • Espera unos minutos antes de reenviar
-            </Text>
-          </View>
-        </ScrollView>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </LinearGradient>
     </View>
   );

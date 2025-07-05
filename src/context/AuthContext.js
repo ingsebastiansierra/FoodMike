@@ -95,14 +95,15 @@ export const AuthProvider = ({ children }) => {
     return unsubscribe;
   }, []);
 
-  // Función para registrar usuario con rol
-  const registerUser = async (email, password, name, role = 'cliente') => {
-    console.log('🔐 AuthContext: Registrando usuario:', { email, name, role });
+  // Función para registrar un nuevo cliente
+  const registerUser = async (email, password, name) => {
+    const role = 'cliente'; // Forzar rol de cliente
+    console.log('🔐 AuthContext: Registrando nuevo cliente:', { email, name });
     try {
-      // Solo llamar a la API para registrar el usuario
+      // Llamar a la API para registrar el usuario con el rol de cliente
       const response = await api.post('/auth/register', { email, password, name, role });
       const { token, user: apiUser } = response.data.data;
-      
+
       // Guardar token solo si AsyncStorage está disponible
       if (isAsyncStorageAvailable()) {
         try {
@@ -112,11 +113,16 @@ export const AuthProvider = ({ children }) => {
           console.warn('⚠️ AuthContext: Error guardando token JWT:', storageError);
         }
       }
-      
-      console.log('🔐 AuthContext: Usuario registrado vía API');
-      return { success: true, user: apiUser, token };
+
+      // Actualizar el estado local
+      setUser(apiUser);
+      setUserRole(apiUser.role);
+
+      console.log('🔐 AuthContext: Registro de cliente completado exitosamente');
+
+      return { success: true, user: apiUser };
     } catch (error) {
-      console.error('❌ AuthContext: Error al registrar usuario:', error);
+      console.error('❌ AuthContext: Error al registrar cliente:', error);
       throw error;
     }
   };

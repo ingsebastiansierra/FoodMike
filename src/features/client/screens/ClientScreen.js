@@ -9,10 +9,10 @@ import {
   RefreshControl
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { COLORS } from '../theme/colors';
-import { SPACING } from '../theme/spacing';
-import { useAuth } from '../context/AuthContext';
-import BotonEstandar from '../components/BotonEstandar';
+import { COLORS } from '../../../theme/colors';
+import { SPACING } from '../../../theme/spacing';
+import { useAuth } from '../../../context/AuthContext';
+import BotonEstandar from '../../../components/BotonEstandar';
 import { LinearGradient } from 'expo-linear-gradient';
 
 const ClientScreen = ({ navigation }) => {
@@ -114,57 +114,41 @@ const ClientScreen = ({ navigation }) => {
             description="Ordena tu comida favorita y recíbela en casa"
             icon="truck"
             color="#2196F3"
-            onPress={() => Alert.alert('Próximamente', 'Sistema de delivery')}
+            onPress={() => navigation.navigate('ClientHome')}
           />
           <ClientCard
-            title="Reservas"
-            description="Reserva mesa en tu restaurante preferido"
+            title="Reservar Mesa"
+            description="Asegura tu lugar en tu restaurante preferido"
             icon="calendar"
             color="#FF9800"
             onPress={() => Alert.alert('Próximamente', 'Sistema de reservas')}
           />
-          <ClientCard
-            title="Soporte"
-            description="Contacta con nuestro equipo de soporte"
-            icon="headphones"
-            color="#9C27B0"
-            onPress={() => Alert.alert('Próximamente', 'Chat de soporte')}
-          />
         </View>
 
+        <Text style={styles.sectionTitle}>Mi Perfil</Text>
+
         <View style={styles.profileSection}>
-          <Text style={styles.sectionTitle}>Mi Perfil</Text>
-          
           <View style={styles.profileCard}>
             <View style={styles.profileHeader}>
               <Icon name="user-circle" size={60} color={COLORS.primary} />
               <View style={styles.profileInfo}>
-                <Text style={styles.profileName}>{user?.name || 'Sin nombre'}</Text>
+                <Text style={styles.profileName}>{user?.name || 'Nombre Apellido'}</Text>
                 <Text style={styles.profileEmail}>{user?.email}</Text>
                 <View style={styles.roleBadge}>
                   <Text style={styles.roleText}>Cliente</Text>
                 </View>
               </View>
             </View>
-            
             <View style={styles.profileActions}>
-              <BotonEstandar
-                title="Editar Perfil"
-                icon="edit"
-                onPress={() => Alert.alert('Próximamente', 'Editor de perfil')}
-              />
-              <BotonEstandar
-                title="Configuración"
-                icon="cog"
-                onPress={() => Alert.alert('Próximamente', 'Configuración de cuenta')}
-              />
+              <BotonEstandar texto="Editar Perfil" onPress={() => {}} />
+              <BotonEstandar texto="Ver Actividad" onPress={() => {}} colorFondo={COLORS.secondary} />
             </View>
           </View>
         </View>
 
+        <Text style={styles.sectionTitle}>Mis Estadísticas</Text>
+
         <View style={styles.statsSection}>
-          <Text style={styles.sectionTitle}>Mis Estadísticas</Text>
-          
           <View style={styles.statsContainer}>
             <View style={styles.statCard}>
               <Icon name="shopping-cart" size={24} color="#4CAF50" />
@@ -348,4 +332,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ClientScreen; 
+export default ClientScreen;

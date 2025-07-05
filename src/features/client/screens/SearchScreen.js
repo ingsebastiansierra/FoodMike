@@ -14,12 +14,12 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing, typography } from '../theme';
-import { searchService } from '../services/searchService';
-import ProductCard from '../components/ProductCard';
-import CartHeaderButton from '../components/CartHeaderButton';
-import { useCart } from '../context/CartContext';
-import { showAlert } from '../utils';
+import { colors, spacing, typography } from '../../../theme';
+import { searchService } from '../../../services/searchService';
+import ProductCard from '../../../components/ProductCard';
+import CartHeaderButton from '../../../components/CartHeaderButton';
+import { useCart } from '../../../context/CartContext';
+import { showAlert } from '../../core/utils/alert';
 
 const { width, height } = Dimensions.get('window');
 
@@ -113,27 +113,31 @@ const SearchScreen = ({ navigation }) => {
     setSearchResults(filtered);
   }, [searchTerm, selectedCategory, allProducts, categories, priceRange, minStars]);
 
-  // Ejecutar filtrado cuando cambie búsqueda o categoría
+  // Aplicar filtros cuando cambien las dependencias
   useEffect(() => {
     filterProducts();
   }, [filterProducts]);
 
   // Función para refrescar
-  const handleRefresh = async () => {
+  const handleRefresh = useCallback(() => {
     setRefreshing(true);
-    await loadInitialData();
-    setRefreshing(false);
-  };
+    loadInitialData().finally(() => setRefreshing(false));
+  }, []);
 
   // Función para limpiar filtro
   const clearFilter = () => {
     setSelectedCategory('all');
+    setSearchTerm('');
+    setPriceRange({ min: '', max: '' });
+    setMinStars(0);
+    setShowFilters(false);
+    Keyboard.dismiss();
   };
 
   // Función para navegar al detalle del producto
   const handleProductPress = (product) => {
-    navigation.navigate('ProductDetail', { 
-      product
+    navigation.navigate('ProductDetail', {
+      product: product,
     });
   };
 
@@ -148,15 +152,15 @@ const SearchScreen = ({ navigation }) => {
     <TouchableOpacity
       style={[
         styles.categoryButton,
-        selectedCategory === item.id && styles.categoryButtonActive
+        selectedCategory === item.id && styles.categoryButtonActive,
       ]}
-      onPress={() => setSelectedCategory(item.id)}
+      onPress={() => {
+        setSelectedCategory(item.id);
+        Keyboard.dismiss();
+      }}
     >
-      <Text style={[
-        styles.categoryText,
-        selectedCategory === item.id && styles.categoryTextActive
-      ]}>
-        {item.icon} {item.name}
+      <Text style={[styles.categoryText, selectedCategory === item.id && styles.categoryTextActive]}>
+        {item.name}
       </Text>
     </TouchableOpacity>
   );
@@ -171,54 +175,35 @@ const SearchScreen = ({ navigation }) => {
   );
 
   // Renderizar header de resultados
-  const renderResultsHeader = () => {
-    const hasFilter = selectedCategory !== 'all';
-    
-    return (
-      <View style={styles.resultsHeader}>
-        <Text style={styles.resultsCount}>
-          {hasFilter 
-            ? `${searchResults.length} productos en ${categories.find(cat => cat.id === selectedCategory)?.name || 'categoría'}` 
-            : `${searchResults.length} productos disponibles`}
-        </Text>
-        {hasFilter && (
-          <TouchableOpacity onPress={clearFilter} style={styles.clearFiltersButton}>
-            <Ionicons name="close-circle" size={20} color={colors.primary} />
-          </TouchableOpacity>
-        )}
-      </View>
-    );
-  };
+  const renderResultsHeader = () => (
+    <View style={styles.resultsHeader}>
+      <Text style={styles.resultsCount}>
+        {searchResults.length} {searchResults.length === 1 ? 'resultado' : 'resultados'}
+      </Text>
+      {(selectedCategory !== 'all' || searchTerm || priceRange.min || priceRange.max || minStars > 0) && (
+        <TouchableOpacity style={styles.clearFiltersButton} onPress={clearFilter}>
+          <Text style={{ color: colors.primary, fontWeight: '600' }}>Limpiar filtros</Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
 
   // Renderizar estado vacío
-  const renderEmptyState = () => {
-    if (loading) return null;
-
-    if (searchResults.length === 0) {
-      return (
-        <View style={styles.emptyState}>
-          <Ionicons 
-            name={selectedCategory !== 'all' ? "restaurant-outline" : "restaurant"} 
-            size={80} 
-            color={colors.lightGray} 
-          />
-          <Text style={styles.emptyTitle}>
-            {selectedCategory !== 'all' 
-              ? 'No hay productos en esta categoría' 
-              : 'No hay productos disponibles'}
-          </Text>
-          <Text style={styles.emptySubtitle}>
-            {selectedCategory !== 'all'
-              ? 'Prueba seleccionando otra categoría'
-              : 'Prueba recargando la página'
-            }
-          </Text>
-        </View>
-      );
-    }
-
-    return null;
-  };
+  const renderEmptyState = () => (
+    <View style={styles.emptyState}>
+      <Ionicons name="search-circle-outline" size={80} color={colors.gray} />
+      <Text style={styles.emptyTitle}>No se encontraron resultados</Text>
+      <Text style={styles.emptySubtitle}>
+        Intenta ajustar tu búsqueda o filtros para encontrar lo que buscas.
+      </Text>
+      <TouchableOpacity 
+        style={{marginTop: spacing.lg, padding: spacing.md, backgroundColor: colors.primary, borderRadius: 20}}
+        onPress={clearFilter}
+      >
+        <Text style={{color: colors.white, fontWeight: 'bold'}}>Ver todos los productos</Text>
+      </TouchableOpacity>
+    </View>
+  );
 
   // Renderizar input de búsqueda y botón de filtros
   const renderSearchInput = () => (
@@ -228,184 +213,153 @@ const SearchScreen = ({ navigation }) => {
         <TextInput
           ref={searchInputRef}
           style={styles.searchInput}
-          placeholder="Buscar por nombre, descripción o categoría..."
+          placeholder="Buscar comida, bebida..."
           placeholderTextColor={colors.gray}
           value={searchTerm}
           onChangeText={setSearchTerm}
           returnKeyType="search"
-          autoCorrect={false}
-          autoCapitalize="none"
+          onSubmitEditing={() => Keyboard.dismiss()}
         />
-        {searchTerm.length > 0 && (
+        {searchTerm ? (
           <TouchableOpacity onPress={() => setSearchTerm('')} style={styles.clearButton}>
             <Ionicons name="close-circle" size={20} color={colors.gray} />
           </TouchableOpacity>
-        )}
+        ) : null}
+        <TouchableOpacity style={styles.filterButton} onPress={() => setShowFilters(!showFilters)}>
+          <Ionicons name="options-outline" size={20} color={colors.white} />
+        </TouchableOpacity>
       </View>
-      <TouchableOpacity
-        style={styles.filterButton}
-        onPress={() => setShowFilters(!showFilters)}
-        activeOpacity={0.8}
-      >
-        <Ionicons name="filter" size={20} color={colors.white} />
-        <Text style={styles.filterButtonText}>Filtros</Text>
-      </TouchableOpacity>
     </View>
   );
 
   // Renderizar filtros avanzados
   const renderFilters = () => (
-    <View style={styles.filtersContainer}>
-      <View style={styles.filterSection}>
-        <Text style={styles.filterLabel}>Precio</Text>
-        <View style={styles.priceInputs}>
-          <TextInput
-            style={styles.priceInput}
-            placeholder="Mínimo"
-            keyboardType="numeric"
-            value={priceRange.min}
-            onChangeText={text => setPriceRange(prev => ({ ...prev, min: text }))}
-          />
-          <Text style={styles.priceSeparator}>-</Text>
-          <TextInput
-            style={styles.priceInput}
-            placeholder="Máximo"
-            keyboardType="numeric"
-            value={priceRange.max}
-            onChangeText={text => setPriceRange(prev => ({ ...prev, max: text }))}
-          />
+    showFilters && (
+      <View style={styles.filtersContainer}>
+        {/* Filtro por precio */}
+        <View style={styles.filterSection}>
+          <Text style={styles.filterLabel}>Rango de Precio</Text>
+          <View style={styles.priceInputs}>
+            <TextInput
+              style={styles.priceInput}
+              placeholder="Mín"
+              placeholderTextColor={colors.gray}
+              keyboardType="numeric"
+              value={priceRange.min}
+              onChangeText={(text) => setPriceRange(prev => ({ ...prev, min: text }))}
+            />
+            <Text style={styles.priceSeparator}>-</Text>
+            <TextInput
+              style={styles.priceInput}
+              placeholder="Máx"
+              placeholderTextColor={colors.gray}
+              keyboardType="numeric"
+              value={priceRange.max}
+              onChangeText={(text) => setPriceRange(prev => ({ ...prev, max: text }))}
+            />
+          </View>
+        </View>
+
+        {/* Filtro por calificación */}
+        <View style={styles.filterSection}>
+          <Text style={styles.filterLabel}>Calificación Mínima</Text>
+          <View style={styles.ratingButtons}>
+            {[1, 2, 3, 4, 5].map(star => (
+              <TouchableOpacity
+                key={star}
+                style={[styles.ratingButton, minStars === star && styles.ratingButtonActive]}
+                onPress={() => setMinStars(star === minStars ? 0 : star)}
+              >
+                <Text style={[styles.ratingButtonText, minStars === star && styles.ratingButtonTextActive]}>
+                  {star}★+
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
       </View>
-      <View style={styles.filterSection}>
-        <Text style={styles.filterLabel}>Estrellas mínimas</Text>
-        <View style={styles.ratingButtons}>
-          {[0, 3, 4, 4.5, 5].map((rating) => (
-            <TouchableOpacity
-              key={rating}
-              style={[styles.ratingButton, minStars === rating && styles.ratingButtonActive]}
-              onPress={() => setMinStars(rating)}
-            >
-              <Text style={[styles.ratingButtonText, minStars === rating && styles.ratingButtonTextActive]}>
-                {rating === 0 ? 'Todas' : `${rating}+`}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-    </View>
+    )
   );
 
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.loadingText}>Cargando productos...</Text>
-      </View>
-    );
-  }
-
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
-      {/* Espacio para el header principal */}
-      <View style={{ height: 20 }} />
+    <LinearGradient colors={[colors.primary, colors.secondary]} style={styles.container}>
+      <StatusBar barStyle="light-content" />
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Descubrir</Text>
+        <CartHeaderButton navigation={navigation} />
+      </View>
+
       {renderSearchInput()}
-      {showFilters && renderFilters()}
+      {renderFilters()}
+
       {/* Categorías */}
       <View style={styles.categoriesSection}>
         <FlatList
-          data={[{ id: 'all', name: 'Todas', icon: '🍽️' }, ...categories]}
-          renderItem={renderCategory}
-          keyExtractor={(item) => item.id}
           horizontal
+          data={[{ id: 'all', name: 'Todo' }, ...categories]}
+          renderItem={renderCategory}
+          keyExtractor={item => item.id}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.categoriesList}
         />
       </View>
 
-      {/* Lista de productos */}
-      <FlatList
-        data={searchResults}
-        renderItem={renderProduct}
-        keyExtractor={(item) => item.id}
-        numColumns={2}
-        columnWrapperStyle={styles.productRow}
-        contentContainerStyle={styles.productList}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            colors={[colors.primary]}
-          />
-        }
-        ListHeaderComponent={renderResultsHeader}
-        ListEmptyComponent={renderEmptyState}
-        onScrollBeginDrag={() => Keyboard.dismiss()}
-      />
-    </View>
+      {/* Resultados */}
+      {loading ? (
+        <ActivityIndicator size="large" color={colors.white} style={{ flex: 1 }} />
+      ) : (
+        <FlatList
+          data={searchResults}
+          renderItem={renderProduct}
+          keyExtractor={item => item.id}
+          numColumns={2}
+          contentContainerStyle={styles.productList}
+          columnWrapperStyle={styles.productRow}
+          ListHeaderComponent={renderResultsHeader}
+          ListEmptyComponent={renderEmptyState}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={colors.white}
+            />
+          }
+        />
+      )}
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.white,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.white,
-  },
-  loadingText: {
-    fontSize: typography.sizes.lg,
-    color: colors.gray,
-    marginTop: spacing.md,
   },
   header: {
-    paddingTop: StatusBar.currentHeight || 44,
-    paddingBottom: spacing.lg,
-  },
-  headerContent: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
-  },
-  backButton: {
-    padding: spacing.sm,
-    marginRight: spacing.sm,
-  },
-  titleContainer: {
-    flex: 1,
-    alignItems: 'center',
+    paddingTop: StatusBar.currentHeight || 40,
+    paddingBottom: spacing.md,
   },
   headerTitle: {
     fontSize: typography.sizes.xl,
     fontWeight: 'bold',
     color: colors.white,
   },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  cartButton: {
-    marginLeft: spacing.sm,
-  },
   categoriesSection: {
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.lightGray,
+    marginBottom: spacing.md,
   },
   categoriesList: {
     paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
   },
   categoryButton: {
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
     marginRight: spacing.md,
     borderRadius: 20,
-    backgroundColor: colors.lightGray,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
   },
   categoryButtonActive: {
     backgroundColor: colors.primary,
@@ -578,4 +532,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SearchScreen; 
+export default SearchScreen;

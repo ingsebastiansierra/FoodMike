@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
-import { COLORS } from '../theme/colors';
-import { SPACING } from '../theme/spacing';
-import BotonEstandar from '../components/BotonEstandar';
+import { COLORS } from '../../../theme/colors';
+import { SPACING } from '../../../theme/spacing';
+import BotonEstandar from '../../../components/BotonEstandar';
 import * as Location from 'expo-location';
 import { LinearGradient } from 'expo-linear-gradient';
 
