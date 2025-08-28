@@ -78,6 +78,7 @@ const FavoritesStack = () => (
 const ProfileStack = () => (
   <Stack.Navigator screenOptions={commonStackScreenOptions}>
     <Stack.Screen name="ProfileInitial" component={ProfileScreen} />
+    <Stack.Screen name="Carrito" component={CarritoComponent} />
   </Stack.Navigator>
 );
 

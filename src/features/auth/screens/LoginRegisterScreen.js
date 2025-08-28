@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   View, 
   Text, 
@@ -6,7 +6,6 @@ import {
   TouchableOpacity, 
   ActivityIndicator, 
   ScrollView, 
-  Alert,
   Dimensions,
   StatusBar,
   KeyboardAvoidingView,
@@ -20,11 +19,8 @@ import Input from '../../../components/Input';
 import { useAuth } from '../../../context/AuthContext';
 import GradientBackground from '../../../components/GradientBackground';
 import { showAlert } from '../../core/utils/alert';
-import api from '../../../config/api';
-import { firebase } from '../../../../firebase-config';
-import { Picker } from '@react-native-picker/picker';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 const LoginRegisterScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -35,7 +31,8 @@ const LoginRegisterScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const { registerUser, loginUser } = useAuth();
+  // 👇 Traemos los métodos del AuthContext que usan Supabase
+  const { login, register } = useAuth();
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -46,21 +43,20 @@ const LoginRegisterScreen = ({ navigation }) => {
     setLoading(true);
     setError('');
     try {
-      await loginUser(email, password);
-      // La navegación se manejará automáticamente en el AuthContext
+      await login(email, password);
+      // La navegación la maneja AuthContext al detectar sesión
     } catch (err) {
-      console.error('Error de login:', err);
-      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+      console.error('Error de login:', err.message);
+      if (err.message.includes('Invalid login credentials')) {
         setError('Correo o contraseña incorrectos.');
-      } else if (err.code === 'auth/invalid-email') {
-        setError('Formato de correo inválido.');
-      } else if (err.code === 'auth/too-many-requests') {
-        setError('Demasiados intentos fallidos. Intenta más tarde.');
+      } else if (err.message.includes('Email not confirmed')) {
+        setError('Por favor verifica tu correo electrónico para activar tu cuenta.');
       } else {
         setError('Error al iniciar sesión. Intenta de nuevo.');
       }
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleRegister = async () => {
@@ -72,25 +68,32 @@ const LoginRegisterScreen = ({ navigation }) => {
       setError('Las contraseñas no coinciden.');
       return;
     }
+    if (password.length < 6) {
+      setError('La contraseña debe tener al menos 6 caracteres.');
+      return;
+    }
 
     setLoading(true);
     setError('');
     try {
-      await registerUser(email, password, name);
-      // La navegación se manejará automáticamente
+      await register(email, password, { fullName: name });
+      showAlert(
+        '¡Registro exitoso!',
+        'Por favor revisa tu correo electrónico para verificar tu cuenta.'
+      );
+      setIsLogin(true);
     } catch (err) {
-      console.error('Error de registro:', err);
-      if (err.code === 'auth/email-already-in-use') {
+      console.error('Error de registro:', err.message);
+      if (err.message.includes('already registered')) {
         setError('Este correo ya está en uso.');
-      } else if (err.code === 'auth/invalid-email') {
+      } else if (err.message.includes('invalid format')) {
         setError('Formato de correo inválido.');
-      } else if (err.code === 'auth/weak-password') {
-        setError('La contraseña debe tener al menos 6 caracteres.');
       } else {
         setError('Error al registrarse. Intenta de nuevo.');
       }
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
@@ -156,7 +159,9 @@ const LoginRegisterScreen = ({ navigation }) => {
             {loading ? (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color={COLORS.primary} />
-                <Text style={styles.loadingText}>{isLogin ? 'Iniciando sesión...' : 'Registrando...'}</Text>
+                <Text style={styles.loadingText}>
+                  {isLogin ? 'Iniciando sesión...' : 'Registrando...'}
+                </Text>
               </View>
             ) : (
               <BotonEstandar
@@ -176,7 +181,11 @@ const LoginRegisterScreen = ({ navigation }) => {
               <Text style={styles.switchModeText}>
                 {isLogin ? '¿No tienes cuenta?' : '¿Ya tienes cuenta?'}
               </Text>
-              <Icon name={isLogin ? "arrow-right" : "arrow-left"} size={16} color={COLORS.primary} />
+              <Icon 
+                name={isLogin ? "arrow-right" : "arrow-left"} 
+                size={16} 
+                color={COLORS.primary} 
+              />
             </TouchableOpacity>
 
             {isLogin && (
@@ -189,6 +198,7 @@ const LoginRegisterScreen = ({ navigation }) => {
             )}
           </View>
 
+          {/* SOCIALS */}
           <View style={styles.socialContainer}>
             <View style={styles.dividerContainer}>
               <View style={styles.divider} />
@@ -213,9 +223,6 @@ const LoginRegisterScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   header: {
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight + 20 : 60,
     paddingHorizontal: SPACING.lg,
@@ -274,60 +281,6 @@ const styles = StyleSheet.create({
     marginLeft: SPACING.sm,
     fontWeight: '600',
     flex: 1,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.primary,
-    marginTop: SPACING.md,
-    marginBottom: SPACING.md,
-    textAlign: 'center',
-  },
-  roleContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: SPACING.lg,
-  },
-  roleButton: {
-    flex: 1,
-    backgroundColor: COLORS.white,
-    padding: SPACING.lg,
-    borderRadius: 16,
-    marginHorizontal: SPACING.xs,
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: COLORS.lightGray,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  roleButtonSelected: {
-    backgroundColor: COLORS.white,
-    borderWidth: 3,
-    elevation: 4,
-    shadowOpacity: 0.15,
-  },
-  roleIconContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: SPACING.sm,
-  },
-  roleButtonTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-    marginBottom: SPACING.xs,
-  },
-  roleButtonDescription: {
-    fontSize: 12,
-    color: COLORS.gray,
-    textAlign: 'center',
-    lineHeight: 16,
   },
   inputContainer: {
     marginBottom: SPACING.md,
