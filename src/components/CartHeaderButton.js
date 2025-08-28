@@ -5,91 +5,69 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing, typography } from '../theme';
+import { useNavigation } from '@react-navigation/native';
 import { useCart } from '../context/CartContext';
+import { COLORS } from '../theme';
 
-const CartHeaderButton = ({ onPress, style }) => {
-  const { getTotalQuantity, getTotalPrice } = useCart();
-  const itemCount = getTotalQuantity();
-  const totalPrice = getTotalPrice();
+const CartHeaderButton = () => {
+  const { totalQuantity } = useCart();
+  const navigation = useNavigation();
+
+  const handleCartPress = () => {
+    navigation.navigate('Carrito');
+  };
 
   return (
-    <TouchableOpacity
-      style={[styles.container, style]}
-      onPress={onPress}
-      activeOpacity={0.8}
-    >
-      <LinearGradient
-        colors={[colors.accent, colors.primary]}
-        style={styles.button}
-      >
-        <Ionicons name="cart" size={20} color={colors.white} />
-        
-        {/* Contador de items */}
-        {itemCount > 0 && (
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>{itemCount}</Text>
+    <TouchableOpacity style={styles.container} onPress={handleCartPress}>
+      <View style={styles.cartBtn}>
+        <Ionicons name="cart-outline" size={28} color={COLORS.primary} />
+        {totalQuantity > 0 && (
+          <View style={styles.cartBadge}>
+            <Text style={styles.cartBadgeText}>{totalQuantity}</Text>
           </View>
         )}
-      </LinearGradient>
-      
-      {/* Precio total */}
-      {itemCount > 0 && (
-        <View style={styles.priceContainer}>
-          <Text style={styles.priceText}>${totalPrice.toFixed(2)}</Text>
-        </View>
-      )}
+      </View>
     </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    alignItems: 'center',
+    marginRight: 16,
   },
-  button: {
-    flexDirection: 'row',
+  cartBtn: {
+    backgroundColor: '#fff',
+    borderRadius: 22, // circular
+    padding: 8,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
     alignItems: 'center',
     justifyContent: 'center',
     width: 44,
     height: 44,
-    borderRadius: 22,
-    position: 'relative',
   },
-  badge: {
+  cartBadge: {
     position: 'absolute',
-    top: -5,
-    right: -5,
-    backgroundColor: colors.white,
-    borderRadius: 10,
-    minWidth: 20,
-    height: 20,
-    justifyContent: 'center',
+    top: -4,
+    right: -4,
+    backgroundColor: COLORS.accent, // Red color for the badge
+    borderRadius: 12,
+    height: 24,
+    minWidth: 24,
     alignItems: 'center',
-    paddingHorizontal: 4,
+    justifyContent: 'center',
+    paddingHorizontal: 6,
     borderWidth: 2,
-    borderColor: colors.primary,
+    borderColor: '#fff',
   },
-  badgeText: {
-    color: colors.primary,
+  cartBadgeText: {
+    color: '#fff',
     fontSize: 12,
-    fontWeight: '700',
-  },
-  priceContainer: {
-    marginTop: 4,
-    backgroundColor: colors.white,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.lightGray,
-  },
-  priceText: {
-    fontSize: typography.sizes.xs,
-    fontWeight: '700',
-    color: colors.primary,
+    fontWeight: 'bold',
   },
 });
 

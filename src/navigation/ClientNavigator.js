@@ -1,7 +1,9 @@
 import React from 'react';
+import { TouchableOpacity } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import CartHeaderButton from '../components/CartHeaderButton';
 import { COLORS } from '../theme/colors';
 
 // Pantallas del Cliente
@@ -14,17 +16,68 @@ import ProfileScreen from '../features/client/screens/ProfileScreen';
 // Pantallas de detalle (para el Stack)
 import RestaurantDetailScreen from '../features/client/screens/RestaurantDetailScreen';
 import ProductDetailScreen from '../features/client/screens/ProductDetailScreen';
+import CarritoComponent from '../components/CarritoComponent';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
-// Creamos un Stack para el flujo principal que inicia en Home
-// Esto permite navegar a detalles (Producto, Restaurante) desde la pestaña Inicio
+// Opciones comunes para el encabezado de los Stacks
+const commonStackScreenOptions = ({ navigation }) => ({
+  headerTitle: 'FoodMike',
+  headerTitleAlign: 'center',
+  headerStyle: {
+    backgroundColor: COLORS.white,
+    elevation: 1,
+    shadowOpacity: 0.1,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.lightGray,
+  },
+  headerTitleStyle: {
+    fontWeight: 'bold',
+    fontSize: 20,
+    color: COLORS.darkGray,
+  },
+  headerRight: () => <CartHeaderButton />,
+});
+
+// Stacks para cada pestaña
 const HomeStack = () => (
-  <Stack.Navigator screenOptions={{ headerShown: false }}>
+  <Stack.Navigator screenOptions={commonStackScreenOptions}>
     <Stack.Screen name="HomeInitial" component={ClientHomeScreen} />
     <Stack.Screen name="RestaurantDetail" component={RestaurantDetailScreen} />
     <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
+    <Stack.Screen name="Carrito" component={CarritoComponent} />
+  </Stack.Navigator>
+);
+
+const SearchStack = () => (
+  <Stack.Navigator screenOptions={commonStackScreenOptions}>
+    <Stack.Screen name="SearchInitial" component={SearchScreen} />
+    <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
+    <Stack.Screen name="RestaurantDetail" component={RestaurantDetailScreen} />
+    <Stack.Screen name="Carrito" component={CarritoComponent} />
+  </Stack.Navigator>
+);
+
+const OrdersStack = () => (
+  <Stack.Navigator screenOptions={commonStackScreenOptions}>
+    <Stack.Screen
+      name="OrdersInitial"
+      component={OrdersScreen}
+      options={{ headerRight: () => null }} // No mostrar el carrito en la pantalla del carrito
+    />
+  </Stack.Navigator>
+);
+
+const FavoritesStack = () => (
+  <Stack.Navigator screenOptions={commonStackScreenOptions}>
+    <Stack.Screen name="FavoritesInitial" component={FavoritesScreen} />
+  </Stack.Navigator>
+);
+
+const ProfileStack = () => (
+  <Stack.Navigator screenOptions={commonStackScreenOptions}>
+    <Stack.Screen name="ProfileInitial" component={ProfileScreen} />
   </Stack.Navigator>
 );
 
@@ -32,7 +85,7 @@ const ClientNavigator = () => {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
-        headerShown: false,
+        headerShown: false, // Los encabezados son manejados por los Stacks internos
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;
           if (route.name === 'Inicio') iconName = 'home';
@@ -48,10 +101,10 @@ const ClientNavigator = () => {
       })}
     >
       <Tab.Screen name="Inicio" component={HomeStack} />
-      <Tab.Screen name="Buscar" component={SearchScreen} />
-      <Tab.Screen name="Pedidos" component={OrdersScreen} />
-      <Tab.Screen name="Favoritos" component={FavoritesScreen} />
-      <Tab.Screen name="Perfil" component={ProfileScreen} />
+      <Tab.Screen name="Buscar" component={SearchStack} />
+      <Tab.Screen name="Pedidos" component={OrdersStack} />
+      <Tab.Screen name="Favoritos" component={FavoritesStack} />
+      <Tab.Screen name="Perfil" component={ProfileStack} />
     </Tab.Navigator>
   );
 };

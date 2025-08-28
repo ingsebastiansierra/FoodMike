@@ -35,173 +35,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { searchService } from '../../../services/searchService';
 
-// Componente SearchContent que funciona sin navegación propia
-const SearchContent = ({ navigation }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
-  const [filters, setFilters] = useState({
-    category: 'all',
-    minPrice: undefined,
-    maxPrice: undefined,
-    minStars: undefined,
-  });
-  const { addToCart, getTotalQuantity } = useCart();
-
-  // Cargar productos destacados al inicio
-  React.useEffect(() => {
-    loadTopProducts();
-  }, []);
-
-  // Función para cargar los mejores productos por calidad y precio
-  const loadTopProducts = React.useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await searchService.getFeaturedProducts(12);
-      setSearchResults(response.data || []);
-    } catch (error) {
-      console.error('Error cargando productos:', error);
-      showAlert('Error', 'No se pudieron cargar los productos. Inténtalo de nuevo.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Función para realizar búsqueda con filtros
-  const performSearch = React.useCallback(async (term = searchTerm, currentFilters = filters) => {
-    if (!term.trim() && currentFilters.category === 'all' && 
-        !currentFilters.minPrice && !currentFilters.maxPrice && !currentFilters.minStars) {
-      // Si no hay búsqueda ni filtros, mostrar productos destacados
-      loadTopProducts();
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const response = await searchService.advancedSearch(term, currentFilters);
-      setSearchResults(response.data || []);
-    } catch (error) {
-      console.error('Error en búsqueda:', error);
-      showAlert('Error', 'No se pudo realizar la búsqueda. Inténtalo de nuevo.');
-    } finally {
-      setLoading(false);
-    }
-  }, [searchTerm, filters, loadTopProducts]);
-
-  // Función para búsqueda manual (botón buscar)
-  const handleManualSearch = () => {
-    if (searchTerm.trim()) {
-      performSearch();
-    } else {
-      showAlert('Búsqueda', 'Escribe algo para buscar');
-    }
-  };
-
-  // Función para refrescar
-  const onRefresh = React.useCallback(async () => {
-    setRefreshing(true);
-    if (searchTerm.trim()) {
-      await performSearch();
-    } else {
-      await loadTopProducts();
-    }
-    setRefreshing(false);
-  }, [performSearch, loadTopProducts, searchTerm]);
-
-  // Función para manejar filtros
-  const handleFiltersChange = (newFilters) => {
-    setFilters(newFilters);
-  };
-
-  const handleApplyFilters = (newFilters) => {
-    setFilters(newFilters);
-    performSearch(searchTerm, newFilters);
-  };
-
-  // Función para agregar al carrito
-  const handleAddToCart = (product) => {
-    addToCart(product);
-    showAlert(
-      '¡Agregado!',
-      `${product.name} ha sido agregado a tu carrito.`,
-      'success'
-    );
-  };
-
-  // Función para navegar al carrito
-  const handleCartPress = () => {
-    // Esta función ahora es manejada por el TabNavigator principal,
-    // pero la dejamos por si se necesita en un futuro.
-    // El componente CartHeaderButton ya tiene su propia lógica.
-    console.log("Navegando al carrito desde SearchContent...");
-    // navigation.navigate('Carrito'); // Esto podría causar problemas si SearchContent no está en un Stack
-  };
-
-  // Función para navegar al restaurante
-  const handleProductPress = (product) => {
-    navigation.navigate('ProductDetail', { product });
-  };
-
-  return (
-    <View style={styles.searchContent}>
-      <View style={styles.searchBarContainer}>
-        <SearchBar
-          value={searchTerm}
-          onChangeText={setSearchTerm}
-          onSearch={handleManualSearch}
-          onFilterPress={() => setShowFilters(!showFilters)}
-        />
-      </View>
-
-      {showFilters && (
-        <View style={styles.filtersContainer}>
-          <SearchFilters
-            filters={filters}
-            onFiltersChange={handleFiltersChange}
-            onApplyFilters={handleApplyFilters}
-          />
-        </View>
-      )}
-
-      <ScrollView
-        style={styles.resultsContainer}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />
-        }
-      >
-        {loading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={COLORS.primary} />
-            <Text style={styles.loadingText}>Buscando...</Text>
-          </View>
-        ) : (
-          <>
-            <Text style={styles.resultsCount}>
-              {searchResults.length} {searchResults.length === 1 ? 'resultado' : 'resultados'}
-            </Text>
-            <View style={styles.productsGrid}>
-              {searchResults.map((item) => (
-                <ProductCard
-                  key={item.id}
-                  product={item}
-                  onPress={() => handleProductPress(item)}
-                  onAddToCart={() => handleAddToCart(item)}
-                />
-              ))}
-            </View>
-          </>
-        )}
-      </ScrollView>
-
-      <CartHeaderButton navigation={navigation} />
-    </View>
-  );
-};
-
-
 const ClientHomeScreen = ({ navigation }) => {
   const { user } = useAuth();
   const { addToCart } = useCart();
@@ -220,18 +53,15 @@ const ClientHomeScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Header
-        title="Bienvenido"
-        user={user}
-        // El onCartPress ahora puede navegar a la pestaña Pedidos
-        onCartPress={() => navigation.navigate('Pedidos')}
-      />
-      <HomeContentComponent
-        navigation={navigation}
-        onProductPress={handleProductPress}
-        onRestaurantPress={handleRestaurantPress}
-        onAddToCart={handleAddToCart}
-      />
+
+      <ScrollView>
+        <HomeContentComponent
+          user={user}
+          onProductPress={handleProductPress}
+          onRestaurantPress={handleRestaurantPress}
+          onAddToCart={handleAddToCart}
+        />
+      </ScrollView>
     </View>
   );
 };

@@ -9,6 +9,7 @@ import { STRINGS, ICONS } from '../../../constants/strings';
 import { useCart } from '../../../context/CartContext';
 import { getRestaurantById } from '../../../data/restaurantsData';
 import { restaurantsService } from '../../../services/restaurantsService';
+import { formatPrice } from '../../../utils/formatPrice';
 
 const ProductDetailScreen = ({ route, navigation }) => {
   const { product } = route.params;
@@ -20,12 +21,12 @@ const ProductDetailScreen = ({ route, navigation }) => {
   console.log('DEBUG price:', product.price, typeof product.price);
   const [quantity, setQuantity] = useState(1);
   const [isFavorite, setIsFavorite] = useState(false);
-  const { addToCart, getTotalQuantity } = useCart();
+  const { addToCart, totalQuantity } = useCart();
   const restaurantName = product.restaurant?.name || 'Restaurante desconocido';
 
   // Simulación de delivery y tiempo
   const deliveryFee = typeof product.deliveryFee === 'number' ? product.deliveryFee : 0;
-  const delivery = deliveryFee === 0 ? STRINGS.FREE : `$${deliveryFee.toLocaleString('es-CO')}`;
+  const delivery = deliveryFee === 0 ? STRINGS.FREE : `$${formatPrice(deliveryFee)}`;
   const time = typeof product.preparationTime === 'string' ? product.preparationTime : '20 min';
   const restaurant = getRestaurantById(product.restaurantId);
 
@@ -140,27 +141,13 @@ const ProductDetailScreen = ({ route, navigation }) => {
           <View style={styles.priceQtyBox}>
             <View>
               <Text style={styles.priceUnit}>Precio Total</Text>
-              <Text style={styles.priceTotal}>
-                ${(product.price * quantity).toLocaleString('es-CO')}
-              </Text>
+              <Text style={styles.priceTotal}>${formatPrice(product.price * quantity)}</Text>
             </View>
             <View style={styles.qtySelectorBox}>
               <ProductQuantitySelector quantity={quantity} setQuantity={setQuantity} />
             </View>
           </View>
         </ScrollView>
-
-        {/* Botón flotante para el carrito */}
-        <TouchableOpacity style={styles.cartFloatingBtn} onPress={handleCartPress}>
-          <View style={styles.cartBtn}>
-            <Ionicons name="cart-outline" size={28} color={COLORS.primary} />
-            {getTotalQuantity() > 0 && (
-              <View style={[styles.cartBadge, { width: getBadgeWidth(getTotalQuantity()) }]}>
-                <Text style={styles.cartBadgeText}>{getTotalQuantity()}</Text>
-              </View>
-            )}
-          </View>
-        </TouchableOpacity>
 
         {/* Botón principal de agregar al carrito */}
         <View style={styles.addToCartBtnWrapper}>
@@ -383,12 +370,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 2,
   },
-  cartFloatingBtn: {
-    position: 'absolute',
-    top: 100,
-    right: 24,
-    zIndex: 20,
-  },
+
   cartBtn: {
     backgroundColor: '#fff',
     borderRadius: 28,
@@ -405,23 +387,22 @@ const styles = StyleSheet.create({
   },
   cartBadge: {
     position: 'absolute',
-    top: -3,
-    right: -2,
+    top: -4,
+    right: 0,
     backgroundColor: COLORS.primary,
-    borderRadius: 10,
-    height: 20,
+    borderRadius: 12,
+    height: 24,
+    minWidth: 24,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 6,
-    paddingVertical: 1,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: '#fff',
   },
   cartBadgeText: {
     color: '#fff',
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: 'bold',
-    textAlign: 'center',
   },
 });
 

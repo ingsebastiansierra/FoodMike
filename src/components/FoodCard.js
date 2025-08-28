@@ -5,6 +5,7 @@ import { COLORS } from "../theme/colors";
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, typography } from '../theme';
 import { normalizeImageSource } from '../shared/utils/imageUtils';
+import { formatPrice } from "../utils/formatPrice";
 
 const FoodCard = ({ image, name, price, stars, onPress, onAddPress }) => {
   const imageSource = normalizeImageSource(image);
@@ -38,7 +39,7 @@ const FoodCard = ({ image, name, price, stars, onPress, onAddPress }) => {
         )}
         <View style={styles.footer}>
           <Text style={styles.price}>
-            {typeof price === 'number' && !isNaN(price) ? `$${price.toFixed(2)}` : ''}
+            {typeof price === 'number' && !isNaN(price) ? `$${formatPrice(price)}` : ''}
           </Text>
           <TouchableOpacity style={styles.addButton} onPress={onAddPress}>
             <Ionicons name="add" size={20} color={colors.white} />

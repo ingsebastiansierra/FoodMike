@@ -18,16 +18,17 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../theme/colors';
 import { SPACING } from '../theme/spacing';
 import { showAlert, showConfirmAlert } from '../features/core/utils/alert';
+import { formatPrice } from '../utils/formatPrice';
 
 const { width, height } = Dimensions.get('window');
 
 const ConfirmarOrdenComponente = () => {
-  const { cartItems, getTotalPrice, clearCart } = useContext(CartContext);
+  const { cartItems, totalPrice, clearCart } = useContext(CartContext);
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const [isProcessing, setIsProcessing] = useState(false);
   
-  const totalPrice = getTotalPrice();
+  
   const shippingCost = totalPrice >= 50 ? 0 : 5;
   const finalTotal = totalPrice + shippingCost;
 
@@ -43,7 +44,7 @@ const ConfirmarOrdenComponente = () => {
 
     showConfirmAlert(
       'Confirmar Pago',
-      `¿Estás seguro de que quieres procesar el pago por $${finalTotal.toFixed(2)}?`,
+      `¿Estás seguro de que quieres procesar el pago por $${formatPrice(finalTotal)}?`,
       () => {
         setIsProcessing(true);
         // Simular procesamiento de pago
@@ -117,13 +118,13 @@ const ConfirmarOrdenComponente = () => {
               
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Subtotal:</Text>
-                <Text style={styles.summaryValue}>${totalPrice.toFixed(2)}</Text>
+                <Text style={styles.summaryValue}>${formatPrice(totalPrice)}</Text>
               </View>
               
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Envío:</Text>
                 <Text style={styles.summaryValue}>
-                  {shippingCost === 0 ? 'Gratis' : `$${shippingCost.toFixed(2)}`}
+                  {shippingCost === 0 ? 'Gratis' : `$${formatPrice(shippingCost)}`}
                 </Text>
               </View>
               
@@ -131,7 +132,7 @@ const ConfirmarOrdenComponente = () => {
               
               <View style={styles.summaryRow}>
                 <Text style={styles.totalLabel}>Total:</Text>
-                <Text style={styles.totalValue}>${finalTotal.toFixed(2)}</Text>
+                <Text style={styles.totalValue}>${formatPrice(finalTotal)}</Text>
               </View>
               
               {shippingCost === 0 && (
@@ -174,7 +175,7 @@ const ConfirmarOrdenComponente = () => {
                 color={COLORS.white} 
               />
               <Text style={styles.paymentButtonText}>
-                {isProcessing ? 'Procesando...' : `Pagar $${finalTotal.toFixed(2)}`}
+                {isProcessing ? 'Procesando...' : `Pagar $${formatPrice(finalTotal)}`}
               </Text>
             </LinearGradient>
           </TouchableOpacity>

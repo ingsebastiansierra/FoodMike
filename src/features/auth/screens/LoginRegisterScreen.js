@@ -160,10 +160,9 @@ const LoginRegisterScreen = ({ navigation }) => {
               </View>
             ) : (
               <BotonEstandar
-                texto={isLogin ? 'Iniciar Sesión' : 'Registrarse'}
+                title={isLogin ? 'Iniciar Sesión' : 'Registrarse'}
                 onPress={isLogin ? handleLogin : handleRegister}
                 style={styles.mainButton}
-                colorFondo={COLORS.primary}
               />
             )}
 

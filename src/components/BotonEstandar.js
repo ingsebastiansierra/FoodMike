@@ -4,12 +4,12 @@ import { COLORS } from '../theme/colors';
 import { SPACING } from '../theme/spacing';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
-const BotonEstandar = ({ title, onPress, style, icon }) => {
+const BotonEstandar = ({ title, onPress, style, icon, textColor }) => {
   return (
     <TouchableOpacity style={[styles.button, style]} onPress={onPress}>
       <View style={styles.buttonContent}>
         {icon && <Icon name={icon} size={20} color={COLORS.white} style={{ marginRight: 5 }} />}
-        <Text style={styles.text}>{title}</Text>
+        <Text style={[styles.text, { color: textColor || COLORS.white }]}>{title}</Text>
       </View>
     </TouchableOpacity>
   );

@@ -27,7 +27,7 @@ const RestaurantDetailScreen = ({ route, navigation }) => {
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const { addToCart, getTotalQuantity } = useCart();
+  const { addToCart, totalQuantity } = useCart();
 
   useEffect(() => {
     loadProducts();
@@ -149,19 +149,7 @@ const RestaurantDetailScreen = ({ route, navigation }) => {
           )}
         </View>
       </ScrollView>
-      {/* Botón flotante de carrito */}
-      <TouchableOpacity
-        style={styles.cartFloatingBtn}
-        onPress={() => navigation.navigate('Carrito')}
-        activeOpacity={0.85}
-      >
-        <Ionicons name="cart" size={28} color={colors.white} />
-        {getTotalQuantity() > 0 && (
-          <View style={styles.cartBadge}>
-            <Text style={styles.cartBadgeText}>{getTotalQuantity()}</Text>
-          </View>
-        )}
-      </TouchableOpacity>
+
     </View>
   );
 };
@@ -274,40 +262,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     marginTop: 32,
   },
-  cartFloatingBtn: {
-    position: 'absolute',
-    bottom: 28,
-    right: 24,
-    backgroundColor: colors.primary,
-    borderRadius: 28,
-    width: 56,
-    height: 56,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 6,
-    zIndex: 10,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-  },
-  cartBadge: {
-    position: 'absolute',
-    top: 6,
-    right: 6,
-    backgroundColor: colors.white,
-    borderRadius: 10,
-    minWidth: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 4,
-  },
-  cartBadgeText: {
-    color: colors.primary,
-    fontWeight: 'bold',
-    fontSize: 13,
-  },
+
 });
 
 export default RestaurantDetailScreen;

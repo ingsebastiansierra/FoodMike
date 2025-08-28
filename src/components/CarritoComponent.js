@@ -18,17 +18,18 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../theme/colors';
 import { SPACING } from '../theme/spacing';
 import { showAlert, showConfirmAlert } from '../features/core/utils/alert';
+import { formatPrice } from '../utils/formatPrice';
 
 const { width, height } = Dimensions.get('window');
 
 const CarritoComponent = () => {
-  const { cartItems, getTotalPrice, clearCart } = useContext(CartContext);
+  const { cartItems, totalPrice, clearCart } = useContext(CartContext);
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const [showConfirmarOrden, setShowConfirmarOrden] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   
-  const totalPrice = getTotalPrice();
+  
   const shippingCost = totalPrice >= 50 ? 0 : 5;
   const finalTotal = totalPrice + shippingCost;
 
@@ -43,7 +44,7 @@ const CarritoComponent = () => {
   const handleClearCart = () => {
     showConfirmAlert(
       'Vaciar Carrito',
-      '¿Estás seguro de que quieres vaciar todo el carrito?',
+      '¿Estáss seguro de que quieres vaciar todo el carrito?',
       () => {
         clearCart();
         showAlert('Carrito Vacío', 'Se han eliminado todos los productos del carrito.');
@@ -67,7 +68,7 @@ const CarritoComponent = () => {
 
     showConfirmAlert(
       'Confirmar Pago',
-      `¿Estás seguro de que quieres procesar el pago por $${finalTotal.toFixed(2)}?`,
+      `¿Estás seguro de que quieres procesar el pago por $${formatPrice(finalTotal)}?`,
       () => {
         setIsProcessing(true);
         // Simular procesamiento de pago
@@ -113,13 +114,13 @@ const CarritoComponent = () => {
         
         <View style={styles.summaryRow}>
           <Text style={styles.summaryLabel}>Subtotal:</Text>
-          <Text style={styles.summaryValue}>${totalPrice.toFixed(2)}</Text>
+          <Text style={styles.summaryValue}>${formatPrice(totalPrice)}</Text>
         </View>
         
         <View style={styles.summaryRow}>
           <Text style={styles.summaryLabel}>Envío:</Text>
           <Text style={styles.summaryValue}>
-            {shippingCost === 0 ? 'Gratis' : `$${shippingCost.toFixed(2)}`}
+            {shippingCost === 0 ? 'Gratis' : `$${formatPrice(shippingCost)}`}
           </Text>
         </View>
         
@@ -127,7 +128,7 @@ const CarritoComponent = () => {
         
         <View style={styles.summaryRow}>
           <Text style={styles.totalLabel}>Total:</Text>
-          <Text style={styles.totalValue}>${finalTotal.toFixed(2)}</Text>
+          <Text style={styles.totalValue}>${formatPrice(finalTotal)}</Text>
         </View>
         
         {shippingCost === 0 && (
@@ -176,43 +177,9 @@ const CarritoComponent = () => {
   );
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
-      
-      {/* Header */}
-      <LinearGradient
-        colors={[COLORS.primary, COLORS.primary + 'DD']}
-        style={styles.headerGradient}
-      >
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-            <Icon name="arrow-left" size={18} color={COLORS.white} />
-          </TouchableOpacity>
-          
-          <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>
-              {showConfirmarOrden ? 'Confirmar Pedido' : 'Mi Carrito'}
-            </Text>
-            <Text style={styles.headerSubtitle}>
-              {cartItems.length} {cartItems.length === 1 ? 'producto' : 'productos'}
-            </Text>
-          </View>
-          
-          {!showConfirmarOrden && cartItems.length > 0 && (
-            <TouchableOpacity style={styles.clearCartButton} onPress={handleClearCart}>
-              <Icon name="trash" size={16} color={COLORS.white} />
-            </TouchableOpacity>
-          )}
-          
-          {!showConfirmarOrden && cartItems.length === 0 && (
-            <View style={styles.placeholder} />
-          )}
-        </View>
-      </LinearGradient>
-
-      {/* Content */}
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" />
       {showConfirmarOrden ? renderConfirmarOrden() : renderCarrito()}
-
       {/* Bottom Container */}
       {cartItems.length > 0 && (
         <View style={styles.bottomContainer}>
@@ -223,7 +190,7 @@ const CarritoComponent = () => {
               disabled={isProcessing}
             >
               <LinearGradient
-                colors={isProcessing ? [COLORS.gray, COLORS.gray] : [COLORS.primary, COLORS.primary + 'DD']}
+                colors={isProcessing ? [COLORS.gray, COLORS.gray] : [COLORS.primary, COLORS.accent]}
                 style={styles.paymentButtonGradient}
               >
                 <Icon 
@@ -232,7 +199,7 @@ const CarritoComponent = () => {
                   color={COLORS.white} 
                 />
                 <Text style={styles.paymentButtonText}>
-                  {isProcessing ? 'Procesando...' : `Pagar $${finalTotal.toFixed(2)}`}
+                  {isProcessing ? 'Procesando...' : `Pagar $${formatPrice(finalTotal)}`}
                 </Text>
               </LinearGradient>
             </TouchableOpacity>
@@ -241,14 +208,13 @@ const CarritoComponent = () => {
               style={styles.confirmButton}
               onPress={handleConfirmOrder}
             >
-              <LinearGradient
-                colors={[COLORS.primary, COLORS.primary + 'DD']}
+              <View
                 style={styles.confirmButtonGradient}
               >
                 <Text style={styles.confirmButtonText}>
-                  Confirmar Pedido • ${finalTotal.toFixed(2)}
+                  Confirmar Pedido • ${formatPrice(finalTotal)}
                 </Text>
-              </LinearGradient>
+              </View>
             </TouchableOpacity>
           )}
         </View>
@@ -261,51 +227,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
-  },
-  headerGradient: {
-    paddingTop: 20,
-    paddingBottom: SPACING.sm,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.xs,
-  },
-  backButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: SPACING.sm,
-  },
-  headerContent: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.white,
-    marginTop: SPACING.xs,
-  },
-  headerSubtitle: {
-    fontSize: 12,
-    color: COLORS.white,
-    opacity: 0.9,
-  },
-  clearCartButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  placeholder: {
-    width: 36,
   },
   content: {
     flex: 1,
@@ -443,6 +364,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: SPACING.md,
     paddingHorizontal: SPACING.xl,
+    backgroundColor: COLORS.primary,
+    borderRadius: 12,
   },
   confirmButtonText: {
     color: COLORS.white,

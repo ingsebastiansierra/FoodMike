@@ -11,6 +11,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, typography } from '../theme';
 import { normalizeImageSource } from '../shared/utils/imageUtils';
+import { formatPrice } from '../utils/formatPrice';
 
 const { width } = Dimensions.get('window');
 
@@ -99,7 +100,7 @@ const ProductCard = ({ product, onPress, onAddToCart }) => {
 
           {/* Precio */}
           <View style={styles.priceContainer}>
-            <Text style={styles.price}>${product.price.toFixed(2)}</Text>
+            <Text style={styles.price}>${formatPrice(product.price)}</Text>
             <View style={styles.deliveryInfo}>
               <Ionicons name="time-outline" size={12} color={colors.gray} />
               <Text style={styles.deliveryText}>

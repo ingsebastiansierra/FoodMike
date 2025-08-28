@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useMemo, useCallback } from 'react';
 
 export const CartContext = createContext();
 
@@ -13,69 +13,70 @@ export const useCart = () => {
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
 
-  const addToCart = (item) => {
-    const existingItemIndex = cartItems.findIndex(cartItem => cartItem.id === item.id);
+  const addToCart = useCallback((item) => {
+    setCartItems(prevItems => {
+      const existingItemIndex = prevItems.findIndex(cartItem => cartItem.id === item.id);
+      if (existingItemIndex > -1) {
+        const updatedCartItems = [...prevItems];
+        updatedCartItems[existingItemIndex] = {
+          ...updatedCartItems[existingItemIndex],
+          quantity: updatedCartItems[existingItemIndex].quantity + (item.quantity || 1),
+        };
+        return updatedCartItems;
+      } else {
+        return [...prevItems, { ...item, quantity: item.quantity || 1 }];
+      }
+    });
+  }, []);
 
-    if (existingItemIndex > -1) {
-      const updatedCartItems = [...cartItems];
-      updatedCartItems[existingItemIndex] = {
-        ...updatedCartItems[existingItemIndex],
-        quantity: updatedCartItems[existingItemIndex].quantity + (item.quantity || 1),
-      };
-      setCartItems(updatedCartItems);
-    } else {
-      setCartItems([...cartItems, { ...item, quantity: item.quantity || 1 }]);
-    }
-  };
+  const removeFromCart = useCallback((itemId) => {
+    setCartItems(prevItems => prevItems.filter(item => item.id !== itemId));
+  }, []);
 
-  const removeFromCart = (itemId) => {
-    setCartItems(cartItems.filter(item => item.id !== itemId));
-  };
-
-  const increaseQuantity = (itemId) => {
-    const updatedCartItems = cartItems.map(item => {
+  const increaseQuantity = useCallback((itemId) => {
+    setCartItems(prevItems => prevItems.map(item => {
       if (item.id === itemId) {
         return { ...item, quantity: item.quantity + 1 };
       }
       return item;
-    });
-    setCartItems(updatedCartItems);
-  };
+    }));
+  }, []);
 
-  const decreaseQuantity = (itemId) => {
-    const updatedCartItems = cartItems.map(item => {
+  const decreaseQuantity = useCallback((itemId) => {
+    setCartItems(prevItems => prevItems.map(item => {
       if (item.id === itemId && item.quantity > 1) {
         return { ...item, quantity: item.quantity - 1 };
       }
       return item;
-    });
-    setCartItems(updatedCartItems);
-  };
+    }));
+  }, []);
 
-  const clearCart = () => {
+  const clearCart = useCallback(() => {
     setCartItems([]);
-  };
+  }, []);
 
-  const getTotalQuantity = () => {
+  const totalQuantity = useMemo(() => {
     return cartItems.reduce((total, item) => total + item.quantity, 0);
-  };
+  }, [cartItems]);
 
-  const getTotalPrice = () => {
+  const totalPrice = useMemo(() => {
     return cartItems.reduce((total, item) => total + (parseFloat(item.price) * item.quantity), 0);
-  };
+  }, [cartItems]);
+
+  const value = useMemo(() => ({
+    cartItems,
+    addToCart,
+    removeFromCart,
+    increaseQuantity,
+    decreaseQuantity,
+    clearCart,
+    totalQuantity,
+    totalPrice,
+  }), [cartItems, addToCart, removeFromCart, increaseQuantity, decreaseQuantity, clearCart, totalQuantity, totalPrice]);
 
   return (
-    <CartContext.Provider value={{ 
-      cartItems, 
-      addToCart, 
-      removeFromCart, 
-      increaseQuantity, 
-      decreaseQuantity, 
-      clearCart,
-      getTotalQuantity, 
-      getTotalPrice 
-    }}>
+    <CartContext.Provider value={value}>
       {children}
     </CartContext.Provider>
   );
-}; 
+};
