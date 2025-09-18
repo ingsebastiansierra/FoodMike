@@ -1,83 +1,128 @@
-import api from '../config/api';
+import { supabase, handleError } from '../config/supabase';
 
-export const restaurantsService = {
+// Implementación usando Supabase
+const restaurantsService = {
   // Obtener todos los restaurantes
   getAll: async () => {
     try {
-      const response = await api.get('/restaurants');
-      return response.data;
+      const { data, error } = await supabase
+        .from('restaurants')
+        .select('*');
+      
+      if (error) throw error;
+      return { data };
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Error al obtener restaurantes');
+      handleError(error, 'getAll restaurants');
     }
   },
 
   // Obtener restaurante por ID
   getById: async (id) => {
     try {
-      const response = await api.get(`/restaurants/${id}`);
-      return response.data;
+      const { data, error } = await supabase
+        .from('restaurants')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (error) throw error;
+      return { data };
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Error al obtener restaurante');
+      handleError(error, `getById restaurant ${id}`);
     }
   },
 
   // Obtener menú completo de un restaurante
   getMenu: async (id) => {
     try {
-      const response = await api.get(`/restaurants/${id}/menu`);
-      return response.data;
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('restaurantid', id); // ojo: aquí uso restaurantid en minúscula
+       
+      if (error) throw error;
+      return { data };
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Error al obtener menú del restaurante');
+      handleError(error, `getMenu restaurant ${id}`);
     }
   },
 
   // Obtener restaurantes por categoría
   getByCategory: async (category) => {
     try {
-      const response = await api.get(`/restaurants/category/${category}`);
-      return response.data;
+      const { data, error } = await supabase
+        .from('restaurants')
+        .select('*')
+        .eq('category', category);
+      
+      if (error) throw error;
+      return { data };
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Error al obtener restaurantes por categoría');
+      handleError(error, `getByCategory restaurants ${category}`);
     }
   },
 
   // Obtener restaurantes abiertos
   getOpen: async () => {
     try {
-      const response = await api.get('/restaurants/open');
-      return response.data;
+      const { data, error } = await supabase
+        .from('restaurants')
+        .select('*')
+        .eq('isopen', true);
+      
+      if (error) throw error;
+      return { data };
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Error al obtener restaurantes abiertos');
+      handleError(error, 'getOpen restaurants');
     }
   },
 
   // Crear restaurante
   create: async (restaurantData) => {
     try {
-      const response = await api.post('/restaurants', restaurantData);
-      return response.data;
+      const { data, error } = await supabase
+        .from('restaurants')
+        .insert(restaurantData)
+        .select();
+      
+      if (error) throw error;
+      return { data };
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Error al crear restaurante');
+      handleError(error, 'create restaurant');
     }
   },
 
   // Actualizar restaurante
   update: async (id, restaurantData) => {
     try {
-      const response = await api.put(`/restaurants/${id}`, restaurantData);
-      return response.data;
+      const { data, error } = await supabase
+        .from('restaurants')
+        .update(restaurantData)
+        .eq('id', id)
+        .select();
+      
+      if (error) throw error;
+      return { data };
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Error al actualizar restaurante');
+      handleError(error, `update restaurant ${id}`);
     }
   },
 
   // Eliminar restaurante
   delete: async (id) => {
     try {
-      const response = await api.delete(`/restaurants/${id}`);
-      return response.data;
+      const { error } = await supabase
+        .from('restaurants')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      return { success: true };
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Error al eliminar restaurante');
+      handleError(error, `delete restaurant ${id}`);
     }
   }
-}; 
+};
+// Exportamos con un nombre corto y claro
+
+export default restaurantsService;

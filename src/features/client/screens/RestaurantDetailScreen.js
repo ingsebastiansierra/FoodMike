@@ -36,19 +36,47 @@ const RestaurantDetailScreen = ({ route, navigation }) => {
   const loadProducts = async () => {
     setLoading(true);
     try {
-      // Obtener todos los productos y filtrar por restaurante
-      const response = await searchService.getAllProducts(1000);
-      const allProducts = response.data || [];
-      const restaurantProducts = allProducts.filter(
-        p => p.restaurant?.id === restaurant.id
-      );
+      console.log('Cargando productos para el restaurante ID:', restaurant.id);
+      console.log('Tipo de restaurant.id:', typeof restaurant.id);
+      console.log('Datos completos del restaurante:', JSON.stringify(restaurant, null, 2));
+      
+      if (!restaurant.id) {
+        console.error('Error: ID de restaurante no válido');
+        return;
+      }
+      
+      // Asegurarse de que el ID sea un string para la comparación en Supabase
+      const restaurantId = String(restaurant.id);
+      console.log('ID de restaurante convertido a string:', restaurantId);
+      
+      const response = await searchService.getByRestaurant(restaurantId);
+      console.log('Productos del restaurante response:', response);
+      
+      const restaurantProducts = response.data || [];
+      console.log('Productos encontrados:', restaurantProducts.length);
+      
+      // Verificar la estructura de los productos
+      if (restaurantProducts.length > 0) {
+        console.log('Ejemplo de producto:', JSON.stringify(restaurantProducts[0], null, 2));
+      }
+      
       setProducts(restaurantProducts);
+      
       // Extraer categorías únicas de los productos de este restaurante
       const uniqueCategories = [
         ...new Set(restaurantProducts.map(p => p.category).filter(Boolean))
       ];
+      console.log('Categorías únicas encontradas:', uniqueCategories);
       setCategories(uniqueCategories);
+      
+      // Si no hay categorías pero hay productos, crear una categoría por defecto
+      if (uniqueCategories.length === 0 && restaurantProducts.length > 0) {
+        console.log('No se encontraron categorías, creando categoría por defecto');
+        setCategories(['Todos los productos']);
+        setSelectedCategory('Todos los productos');
+      }
     } catch (error) {
+      console.error('Error cargando productos del restaurante:', error);
       setProducts([]);
       setCategories([]);
     } finally {
@@ -57,9 +85,21 @@ const RestaurantDetailScreen = ({ route, navigation }) => {
   };
 
   // Filtrar productos por categoría seleccionada
-  const filteredProducts = selectedCategory === 'all'
-    ? products
-    : products.filter(p => p.category === selectedCategory);
+  const filteredProducts = selectedCategory === 'all' || selectedCategory === 'Todos los productos'
+    ? products 
+    : products.filter(p => {
+        // Comparación más flexible para categorías
+        if (!p.category) {
+          console.log('Producto sin categoría:', p.id, p.name);
+          return false;
+        }
+        if (typeof p.category !== 'string') return false;
+        const matches = p.category.toLowerCase() === selectedCategory.toLowerCase();
+        console.log(`Producto ${p.id} (${p.name}) - Categoría: ${p.category} - ¿Coincide con ${selectedCategory}? ${matches}`);
+        return matches;
+      });
+  
+  console.log(`Productos filtrados: ${filteredProducts.length} de ${products.length} totales`);
 
   // Renderizar categoría en el carrusel
   const renderCategory = ({ item }) => (

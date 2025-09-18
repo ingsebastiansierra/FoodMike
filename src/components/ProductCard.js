@@ -20,8 +20,10 @@ const ProductCard = ({ product, onPress, onAddToCart }) => {
   const normalizedImage = normalizeImageSource(product.image);
   
   const renderStars = (stars) => {
-    const fullStars = Math.floor(stars);
-    const hasHalfStar = stars % 1 !== 0;
+    // Asegurarse de que stars sea un número
+    const starsValue = typeof stars === 'number' ? stars : 0;
+    const fullStars = Math.floor(starsValue);
+    const hasHalfStar = starsValue % 1 !== 0;
     
     return (
       <View style={styles.starsContainer}>
@@ -33,7 +35,7 @@ const ProductCard = ({ product, onPress, onAddToCart }) => {
             color={colors.primary}
           />
         ))}
-        <Text style={styles.starsText}>{stars}</Text>
+        <Text style={styles.starsText}>{starsValue.toFixed(1)}</Text>
       </View>
     );
   };
@@ -89,7 +91,7 @@ const ProductCard = ({ product, onPress, onAddToCart }) => {
           <View style={styles.restaurantInfo}>
             <Ionicons name="business" size={12} color={colors.gray} />
             <Text style={styles.restaurantName} numberOfLines={1}>
-              {product.restaurant?.name}
+              {product.restaurant || 'Restaurante'}
             </Text>
           </View>
 
@@ -242,4 +244,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ProductCard; 
+export default ProductCard;

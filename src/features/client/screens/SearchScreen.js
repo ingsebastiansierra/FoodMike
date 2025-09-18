@@ -69,6 +69,9 @@ const SearchScreen = ({ navigation }) => {
         searchService.getAllProducts(1000),
       ]);
 
+      console.log('Categorías cargadas:', categoriesResponse);
+      console.log('Productos cargados:', productsResponse);
+
       setCategories(categoriesResponse.data || []);
       setAllProducts(productsResponse.data || []);
       setSearchResults(productsResponse.data || []);
@@ -86,9 +89,24 @@ const SearchScreen = ({ navigation }) => {
     if (selectedCategory !== 'all') {
       const selectedCat = categories.find((cat) => cat.id === selectedCategory);
       if (selectedCat) {
-        filtered = filtered.filter((product) =>
-          product.category?.toLowerCase().includes(selectedCat.name.toLowerCase())
-        );
+        console.log('Filtrando por categoría:', selectedCat.name);
+        filtered = filtered.filter((product) => {
+          if (!product.category) {
+            console.log('Producto sin categoría:', product.id, product.name);
+            return false;
+          }
+          
+          // Asegurarse de que la categoría sea un string
+          if (typeof product.category !== 'string') {
+            console.log('Categoría no es string:', product.id, product.name, product.category);
+            return false;
+          }
+          
+          const matches = product.category.toLowerCase().includes(selectedCat.name.toLowerCase());
+          console.log(`Producto ${product.id} (${product.name}) - Categoría: ${product.category} - ¿Coincide con ${selectedCat.name}? ${matches}`);
+          return matches;
+        });
+        console.log('Productos filtrados por categoría:', filtered.length);
       }
     }
 

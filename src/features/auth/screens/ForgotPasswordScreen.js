@@ -15,7 +15,7 @@ import { SPACING } from '../../../theme/spacing';
 import BotonEstandar from '../../../components/BotonEstandar';
 import Input from '../../../components/Input';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { firebase } from '../../../../firebase-config';
+import { supabase } from '../../../config/supabase';
 import { LinearGradient } from 'expo-linear-gradient';
 import { showAlert } from '../../core/utils/alert';
 
@@ -35,7 +35,12 @@ const ForgotPasswordScreen = ({ navigation }) => {
     setError('');
     setSuccess('');
     try {
-      await firebase.auth().sendPasswordResetEmail(email);
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: 'foodmike://reset-password',
+      });
+      
+      if (error) throw error;
+      
       setSuccess('¡Correo de recuperación enviado! Revisa tu bandeja de entrada.');
       showAlert(
         'Correo Enviado',
@@ -43,9 +48,9 @@ const ForgotPasswordScreen = ({ navigation }) => {
       );
     } catch (err) {
       console.error('Error al enviar correo de recuperación:', err);
-      if (err.code === 'auth/user-not-found') {
+      if (err.message.includes('user not found')) {
         setError('No existe una cuenta con este correo electrónico.');
-      } else if (err.code === 'auth/invalid-email') {
+      } else if (err.message.includes('invalid email')) {
         setError('Formato de correo electrónico inválido.');
       } else {
         setError('No se pudo enviar el correo. Verifica el email e intenta de nuevo.');

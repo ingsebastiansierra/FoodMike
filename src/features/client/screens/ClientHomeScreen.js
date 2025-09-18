@@ -33,7 +33,7 @@ import ConfirmarOrdenComponente from "../../../components/ConfirmarOrdenComponen
 import SearchScreen from "./SearchScreen";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
-import { searchService } from '../../../services/searchService';
+import { search } from '../../../services/searchService';
 
 const ClientHomeScreen = ({ navigation }) => {
   const { user } = useAuth();
@@ -51,9 +51,11 @@ const ClientHomeScreen = ({ navigation }) => {
     addToCart(food);
   };
 
+  // Eliminada la navegación a SettingsScreen que ya no existe
+
   return (
     <View style={styles.container}>
-
+   
       <ScrollView>
         <HomeContentComponent
           user={user}
@@ -71,6 +73,22 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.lightGray,
   },
+  headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    backgroundColor: COLORS.white,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.lightGray,
+  },
+  welcomeText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.dark,
+  },
+  // Estilo eliminado para el botón de configuración que ya no existe
   content: {
     flex: 1,
   },

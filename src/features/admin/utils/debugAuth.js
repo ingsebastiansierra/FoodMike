@@ -1,31 +1,32 @@
-import { firebase } from '../../../../firebase-config';
+import { supabase } from '../../../config/supabase';
 
-// Función para verificar el rol de un usuario en Firestore
+// Función para verificar el rol de un usuario en Supabase
 export const checkUserRole = async (email) => {
   try {
     console.log('🔍 Verificando rol para usuario:', email);
     
     // Buscar usuario por email
-    const usersSnapshot = await firebase.firestore()
-      .collection('users')
-      .where('email', '==', email)
-      .limit(1)
-      .get();
+    const { data: users, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .limit(1);
 
-    if (usersSnapshot.empty) {
-      console.log('❌ Usuario no encontrado en Firestore');
+    if (error) throw error;
+
+    if (!users || users.length === 0) {
+      console.log('❌ Usuario no encontrado en Supabase');
       return null;
     }
 
-    const userDoc = usersSnapshot.docs[0];
-    const userData = userDoc.data();
+    const userData = users[0];
     
     console.log('✅ Usuario encontrado:', {
-      uid: userData.uid,
+      id: userData.id,
       email: userData.email,
       name: userData.name,
       role: userData.role,
-      createdAt: userData.createdAt
+      createdAt: userData.created_at
     });
     
     return userData;
@@ -40,19 +41,27 @@ export const fixUserRole = async (email, newRole) => {
   try {
     console.log('🔧 Corrigiendo rol para usuario:', email, '->', newRole);
     
-    const usersSnapshot = await firebase.firestore()
-      .collection('users')
-      .where('email', '==', email)
-      .limit(1)
-      .get();
+    // Primero obtenemos el usuario por email
+    const { data: users, error: selectError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .limit(1);
 
-    if (usersSnapshot.empty) {
-      console.log('❌ Usuario no encontrado en Firestore');
+    if (selectError) throw selectError;
+
+    if (!users || users.length === 0) {
+      console.log('❌ Usuario no encontrado en Supabase');
       return false;
     }
 
-    const userDoc = usersSnapshot.docs[0];
-    await userDoc.ref.update({ role: newRole });
+    // Actualizamos el rol del usuario
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({ role: newRole })
+      .eq('id', users[0].id);
+
+    if (updateError) throw updateError;
     
     console.log('✅ Rol corregido exitosamente');
     return true;
@@ -67,14 +76,11 @@ export const listAllUsers = async () => {
   try {
     console.log('📋 Listando todos los usuarios...');
     
-    const snapshot = await firebase.firestore()
-      .collection('users')
-      .get();
+    const { data: users, error } = await supabase
+      .from('users')
+      .select('*');
 
-    const users = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
+    if (error) throw error;
     
     console.log('📋 Usuarios encontrados:', users.length);
     users.forEach(user => {
@@ -93,27 +99,38 @@ export const createTestAdmin = async (email, password, name) => {
   try {
     console.log('👤 Creando usuario administrador de prueba:', { email, name });
     
-    // Crear usuario en Firebase Auth
-    const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
-    const firebaseUser = userCredential.user;
+    // Crear usuario en Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          name: name,
+          role: 'administrador'
+        }
+      }
+    });
+
+    if (authError) throw authError;
     
-    // Crear documento en Firestore
+    // Crear registro en la tabla users
     const userData = {
-      uid: firebaseUser.uid,
-      email: firebaseUser.email,
+      id: authData.user.id,
+      email: email,
       name: name,
       role: 'administrador',
-      createdAt: new Date(),
-      isActive: true
+      created_at: new Date(),
+      is_active: true
     };
     
-    await firebase.firestore()
-      .collection('users')
-      .doc(firebaseUser.uid)
-      .set(userData);
+    const { error: insertError } = await supabase
+      .from('users')
+      .insert(userData);
+
+    if (insertError) throw insertError;
     
     console.log('✅ Usuario administrador creado exitosamente');
-    return { success: true, user: { ...firebaseUser, ...userData } };
+    return { success: true, user: userData };
   } catch (error) {
     console.error('❌ Error creando usuario administrador:', error);
     return { success: false, error: error.message };

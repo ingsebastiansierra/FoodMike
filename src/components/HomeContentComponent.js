@@ -26,8 +26,8 @@ import FoodCard from "../components/FoodCard";
 import AutoCarousel from "../components/AutoCarousel";
 import { SPACING } from "../theme/spacing";
 import RestaurantCard from "../components/RestaurantCard";
-import { restaurantsService } from "../services/restaurantsService";
-import { searchService } from "../services/searchService";
+import restaurantsService from "../services/restaurantsService";
+import { search } from "../services/searchService";
 import { formatPrice } from "../utils/formatPrice";
 
 const { width } = Dimensions.get('window');
@@ -59,15 +59,15 @@ const EXPERIENCES = [
   { id: 3, text: '"Variedad, calidad y servicio top."' },
 ];
 
-const HomeContentComponent = ({ onAddToCart, onProductPress, onRestaurantPress }) => {
+const HomeContentComponent = ({ user, onAddToCart, onProductPress, onRestaurantPress }) => {
   const [activeCategory, setActiveCategory] = useState("all");
   const [categories, setCategories] = useState([]);
-  const [restaurants, setRestaurants] = useState([]);
+  const [restaurantsList, setRestaurantsList] = useState([]);
   const [popularFoods, setPopularFoods] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingFoods, setLoadingFoods] = useState(true);
   const [loadingCategories, setLoadingCategories] = useState(true);
-  const [userName, setUserName] = useState('Mike'); // Puedes personalizar esto
+  const [userName, setUserName] = useState(''); // Inicializado vacío
 
   useEffect(() => { 
     loadOpenRestaurants(); 
@@ -80,7 +80,8 @@ const HomeContentComponent = ({ onAddToCart, onProductPress, onRestaurantPress }
 
   const loadCategories = async () => {
     try {
-      const response = await searchService.getCategories();
+      const response = await search.getCategories();
+      console.log('Categorías response:', response);
       setCategories(response.data || []);
     } catch (error) {
       console.error('Error cargando categorías:', error);
@@ -92,7 +93,8 @@ const HomeContentComponent = ({ onAddToCart, onProductPress, onRestaurantPress }
   const loadOpenRestaurants = async () => {
     try {
       const response = await restaurantsService.getOpen();
-      setRestaurants(response.data || []);
+      console.log('Restaurantes abiertos response:', response);
+      setRestaurantsList(response.data || []);
     } catch (error) {
       console.error('Error cargando restaurantes:', error);
     } finally {
@@ -102,12 +104,12 @@ const HomeContentComponent = ({ onAddToCart, onProductPress, onRestaurantPress }
 
   const loadPopularFoods = async () => {
     try {
-      const response = await searchService.getFeaturedProducts(8);
-      const products = Array.isArray(response.data?.data)
-        ? response.data.data
-        : Array.isArray(response.data)
-          ? response.data
-          : [];
+      const response = await search.getFeaturedProducts(8);
+      console.log('Productos populares response:', response);
+      const products = Array.isArray(response.data)
+        ? response.data
+        : [];
+      console.log('Productos populares procesados:', products);
       setPopularFoods(products);
     } catch (error) {
       console.error('Error cargando productos populares:', error);
@@ -355,7 +357,7 @@ const HomeContentComponent = ({ onAddToCart, onProductPress, onRestaurantPress }
       <ScrollView showsVerticalScrollIndicator={false} style={{ backgroundColor: COLORS.background }}>
         {/* HERO SECTION */}
         <LinearGradient colors={[COLORS.primary, COLORS.secondary]} style={styles.heroSection}>
-          <Text style={styles.heroHello}>👋 ¡Hola, {userName}!</Text>
+          <Text style={styles.heroHello}>👋 ¡Hola, {user?.displayName || user?.email?.split('@')[0] || 'Usuario'}!</Text>
           <Text style={styles.heroTitle}>¿Qué se te antoja hoy?</Text>
           <Text style={styles.heroSubtitle}>Descubre los mejores sabores cerca de ti</Text>
         </LinearGradient>
@@ -452,7 +454,7 @@ const HomeContentComponent = ({ onAddToCart, onProductPress, onRestaurantPress }
           </View>
         </View>
         <View style={styles.restaurantsList}>
-          {restaurants.filter(r => r !== null).map((restaurant) => (
+          {restaurantsList.filter(r => r !== null).map((restaurant) => (
             <View key={restaurant.id} style={styles.animatedRestaurantWrapper}>
               <RestaurantCard
                 restaurant={restaurant}

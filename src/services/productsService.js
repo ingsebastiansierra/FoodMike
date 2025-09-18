@@ -1,83 +1,130 @@
-import api from '../config/api';
+import { supabase, handleError } from '../config/supabase';
 
-export const productsService = {
+// Implementación usando Supabase
+const productsService = {
   // Obtener productos de un lugar
   getByPlace: async (placeId) => {
     try {
-      const response = await api.get(`/places/${placeId}/products`);
-      return response.data;
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('restaurantid', placeId);
+      
+      if (error) throw error;
+      return { data };
     } catch (error) {
-      throw new Error(error.response?.data?.error || 'Error al obtener productos del lugar');
+      handleError(error, `getByPlace products ${placeId}`);
     }
   },
 
-  // Obtener producto por ID dentro de un lugar
-  getById: async (placeId, productId) => {
+  // Obtener producto por ID
+  getById: async (id) => {
     try {
-      const response = await api.get(`/places/${placeId}/products/${productId}`);
-      return response.data;
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (error) throw error;
+      return { data };
     } catch (error) {
-      throw new Error(error.response?.data?.error || 'Error al obtener producto');
+      handleError(error, `getById product ${id}`);
     }
   },
 
   // Obtener productos por restaurante
   getByRestaurant: async (restaurantId) => {
     try {
-      const response = await api.get(`/products/restaurant/${restaurantId}`);
-      return response.data;
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('restaurantid', restaurantId);
+      
+      if (error) throw error;
+      return { data };
     } catch (error) {
-      throw new Error(error.response?.data?.error || 'Error al obtener productos del restaurante');
+      handleError(error, `getByRestaurant products ${restaurantId}`);
     }
   },
 
   // Obtener productos por categoría
   getByCategory: async (category) => {
     try {
-      const response = await api.get(`/products/category/${category}`);
-      return response.data;
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('category', category);
+      
+      if (error) throw error;
+      return { data };
     } catch (error) {
-      throw new Error(error.response?.data?.error || 'Error al obtener productos por categoría');
+      handleError(error, `getByCategory products ${category}`);
     }
   },
 
   // Obtener productos populares
   getPopular: async () => {
     try {
-      const response = await api.get('/products/popular');
-      return response.data;
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .order('reviews', { ascending: false })
+        .limit(10);
+      
+      if (error) throw error;
+      return { data };
     } catch (error) {
-      throw new Error(error.response?.data?.error || 'Error al obtener productos populares');
+      handleError(error, 'getPopular products');
     }
   },
 
   // Crear producto
   create: async (productData) => {
     try {
-      const response = await api.post('/products', productData);
-      return response.data;
+      const { data, error } = await supabase
+        .from('products')
+        .insert(productData)
+        .select();
+      
+      if (error) throw error;
+      return { data };
     } catch (error) {
-      throw new Error(error.response?.data?.error || 'Error al crear producto');
+      handleError(error, 'create product');
     }
   },
 
   // Actualizar producto
   update: async (id, productData) => {
     try {
-      const response = await api.put(`/products/${id}`, productData);
-      return response.data;
+      const { data, error } = await supabase
+        .from('products')
+        .update(productData)
+        .eq('id', id)
+        .select();
+      
+      if (error) throw error;
+      return { data };
     } catch (error) {
-      throw new Error(error.response?.data?.error || 'Error al actualizar producto');
+      handleError(error, `update product ${id}`);
     }
   },
 
   // Eliminar producto
   delete: async (id) => {
     try {
-      const response = await api.delete(`/products/${id}`);
-      return response.data;
+      const { data, error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      return { success: true };
     } catch (error) {
-      throw new Error(error.response?.data?.error || 'Error al eliminar producto');
+      handleError(error, `delete product ${id}`);
     }
   }
-}; 
+};
+
+// Exportamos el servicio para que los componentes lo usen
+export const products = productsService;

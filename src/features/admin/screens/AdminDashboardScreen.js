@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { useAuth } from '../../../context/AuthContext';
-import { firebase } from '../../../../firebase-config';
+
 
 // Componente resumen de órdenes
 const SummaryCard = ({ label, value }) => (
