@@ -16,6 +16,8 @@ import ProfileScreen from '../features/client/screens/ProfileScreen';
 // Pantallas de detalle (para el Stack)
 import RestaurantDetailScreen from '../features/client/screens/RestaurantDetailScreen';
 import ProductDetailScreen from '../features/client/screens/ProductDetailScreen';
+import CheckoutScreen from '../features/client/screens/CheckoutScreen';
+import OrderDetailScreen from '../features/client/screens/OrderDetailScreen';
 import CarritoComponent from '../components/CarritoComponent';
 
 const Tab = createBottomTabNavigator();
@@ -47,6 +49,16 @@ const HomeStack = () => (
     <Stack.Screen name="RestaurantDetail" component={RestaurantDetailScreen} />
     <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
     <Stack.Screen name="Carrito" component={CarritoComponent} />
+    <Stack.Screen 
+      name="Checkout" 
+      component={CheckoutScreen}
+      options={{ headerRight: () => null }}
+    />
+    <Stack.Screen
+      name="OrderDetail"
+      component={OrderDetailScreen}
+      options={{ headerRight: () => null }}
+    />
   </Stack.Navigator>
 );
 
@@ -56,18 +68,34 @@ const SearchStack = () => (
     <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
     <Stack.Screen name="RestaurantDetail" component={RestaurantDetailScreen} />
     <Stack.Screen name="Carrito" component={CarritoComponent} />
-  </Stack.Navigator>
-);
-
-const OrdersStack = () => (
-  <Stack.Navigator screenOptions={commonStackScreenOptions}>
-    <Stack.Screen
-      name="OrdersInitial"
-      component={OrdersScreen}
-      options={{ headerRight: () => null }} // No mostrar el carrito en la pantalla del carrito
+    <Stack.Screen 
+      name="Checkout" 
+      component={CheckoutScreen}
+      options={{ headerRight: () => null }}
     />
   </Stack.Navigator>
 );
+
+const OrdersStack = () => {
+  console.log('OrdersStack creado con OrderDetailScreen');
+  return (
+    <Stack.Navigator screenOptions={commonStackScreenOptions}>
+      <Stack.Screen
+        name="OrdersInitial"
+        component={OrdersScreen}
+        options={{ headerRight: () => null }} // No mostrar el carrito en la pantalla de pedidos
+      />
+      <Stack.Screen
+        name="OrderDetail"
+        component={OrderDetailScreen}
+        options={{ 
+          headerRight: () => null,
+          headerTitle: 'Detalle del Pedido'
+        }}
+      />
+    </Stack.Navigator>
+  );
+};
 
 const FavoritesStack = () => (
   <Stack.Navigator screenOptions={commonStackScreenOptions}>

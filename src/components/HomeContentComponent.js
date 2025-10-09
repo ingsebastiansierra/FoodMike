@@ -28,7 +28,7 @@ import { SPACING } from "../theme/spacing";
 import RestaurantCard from "../components/RestaurantCard";
 import restaurantsService from "../services/restaurantsService";
 import { search } from "../services/searchService";
-import { formatPrice } from "../utils/formatPrice";
+import { formatCurrency } from "../shared/utils/format";
 
 const { width } = Dimensions.get('window');
 

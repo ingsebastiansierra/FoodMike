@@ -8,7 +8,7 @@ import { COLORS, SPACING, typography } from '../../../theme';
 import { STRINGS, ICONS } from '../../../constants/strings';
 import { useCart } from '../../../context/CartContext';
 import restaurantsService from '../../../services/restaurantsService'; // 👈 corregí la ruta
-import { formatPrice } from '../../../utils/formatPrice';
+import { formatCurrency } from '../../../shared/utils/format';
 
 const ProductDetailScreen = ({ route, navigation }) => {
   const { product } = route.params;
@@ -54,7 +54,7 @@ const ProductDetailScreen = ({ route, navigation }) => {
 
   // Delivery y tiempo
   const deliveryFee = typeof product.deliveryfee === 'number' ? product.deliveryfee : 0;
-  const delivery = deliveryFee === 0 ? STRINGS.FREE : `$${formatPrice(deliveryFee)}`;
+  const delivery = deliveryFee === 0 ? STRINGS.FREE : formatCurrency(deliveryFee);
   const time = typeof product.preparationTime === 'string' ? product.preparationTime : '20 min';
 
   // Simulación de tamaños
@@ -152,7 +152,7 @@ const ProductDetailScreen = ({ route, navigation }) => {
             <View>
               <Text style={styles.priceUnit}>Precio Total</Text>
               <Text style={styles.priceTotal}>
-                ${formatPrice(product.price * quantity)}
+                {formatCurrency(product.price * quantity)}
               </Text>
             </View>
             <View style={styles.qtySelectorBox}>

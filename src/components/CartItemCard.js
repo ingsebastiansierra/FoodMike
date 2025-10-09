@@ -6,7 +6,7 @@ import { COLORS } from '../theme/colors';
 import { SPACING } from '../theme/spacing';
 import { showConfirmAlert } from '../features/core/utils/alert';
 import { normalizeImageSource } from '../shared/utils/imageUtils';
-import { formatPrice } from "../utils/formatPrice";
+import { formatCurrency } from "../shared/utils/format";
 
 const CartItemCard = ({ item, index }) => {
   const { increaseQuantity, decreaseQuantity, removeFromCart } = useContext(CartContext);
@@ -68,10 +68,10 @@ const CartItemCard = ({ item, index }) => {
 
         <View style={styles.priceRow}>
           <Text style={styles.unitPrice}>
-            ${formatPrice(parseFloat(item.price))} c/u
+            {formatCurrency(parseFloat(item.price))} c/u
           </Text>
           <Text style={styles.totalPrice}>
-            ${formatPrice(itemTotal)}
+            {formatCurrency(itemTotal)}
           </Text>
         </View>
 
@@ -112,7 +112,7 @@ const CartItemCard = ({ item, index }) => {
           <View style={styles.savingsNote}>
             <Icon name="info-circle" size={10} color="#4CAF50" />
             <Text style={styles.savingsText}>
-              Ahorras ${formatPrice((item.quantity - 1) * parseFloat(item.price))} en este producto
+              Ahorras {formatCurrency((item.quantity - 1) * parseFloat(item.price))} en este producto
             </Text>
           </View>
         )}

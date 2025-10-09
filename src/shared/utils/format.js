@@ -1,26 +1,26 @@
 import { CURRENCY_CONFIG } from '../../constants';
 
 // Utilidades de formato
-export const formatCurrency = (amount, currency = CURRENCY_CONFIG.CODE) => {
-  if (typeof amount !== 'number') return '0.00';
+export const formatCurrency = (amount, currency = 'COP') => {
+  if (typeof amount !== 'number') return '$0';
   
-  return new Intl.NumberFormat('es-MX', {
+  return new Intl.NumberFormat('es-CO', {
     style: 'currency',
     currency: currency,
-    minimumFractionDigits: CURRENCY_CONFIG.DECIMAL_PLACES,
-    maximumFractionDigits: CURRENCY_CONFIG.DECIMAL_PLACES,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   }).format(amount);
 };
 
 export const formatDate = (date, options = {}) => {
   const defaultOptions = {
     year: 'numeric',
-    month: 'long',
+    month: 'short',
     day: 'numeric',
     ...options,
   };
   
-  return new Date(date).toLocaleDateString('es-MX', defaultOptions);
+  return new Date(date).toLocaleDateString('es-CO', defaultOptions);
 };
 
 export const formatTime = (date) => {

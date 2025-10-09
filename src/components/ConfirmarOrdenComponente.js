@@ -18,7 +18,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../theme/colors';
 import { SPACING } from '../theme/spacing';
 import { showAlert, showConfirmAlert } from '../features/core/utils/alert';
-import { formatPrice } from '../utils/formatPrice';
+import { formatCurrency } from '../shared/utils/format';
 
 const { width, height } = Dimensions.get('window');
 
@@ -44,7 +44,7 @@ const ConfirmarOrdenComponente = () => {
 
     showConfirmAlert(
       'Confirmar Pago',
-      `¿Estás seguro de que quieres procesar el pago por $${formatPrice(finalTotal)}?`,
+      `¿Estás seguro de que quieres procesar el pago por ${formatCurrency(finalTotal)}?`,
       () => {
         setIsProcessing(true);
         // Simular procesamiento de pago
@@ -118,13 +118,13 @@ const ConfirmarOrdenComponente = () => {
               
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Subtotal:</Text>
-                <Text style={styles.summaryValue}>${formatPrice(totalPrice)}</Text>
+                <Text style={styles.summaryValue}>{formatCurrency(totalPrice)}</Text>
               </View>
               
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Envío:</Text>
                 <Text style={styles.summaryValue}>
-                  {shippingCost === 0 ? 'Gratis' : `$${formatPrice(shippingCost)}`}
+                  {shippingCost === 0 ? 'Gratis' : formatCurrency(shippingCost)}
                 </Text>
               </View>
               
@@ -132,7 +132,7 @@ const ConfirmarOrdenComponente = () => {
               
               <View style={styles.summaryRow}>
                 <Text style={styles.totalLabel}>Total:</Text>
-                <Text style={styles.totalValue}>${formatPrice(finalTotal)}</Text>
+                <Text style={styles.totalValue}>{formatCurrency(finalTotal)}</Text>
               </View>
               
               {shippingCost === 0 && (
@@ -175,7 +175,7 @@ const ConfirmarOrdenComponente = () => {
                 color={COLORS.white} 
               />
               <Text style={styles.paymentButtonText}>
-                {isProcessing ? 'Procesando...' : `Pagar $${formatPrice(finalTotal)}`}
+                {isProcessing ? 'Procesando...' : `Pagar ${formatCurrency(finalTotal)}`}
               </Text>
             </LinearGradient>
           </TouchableOpacity>

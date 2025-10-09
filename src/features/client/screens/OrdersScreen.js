@@ -1,248 +1,415 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  FlatList, 
+  TouchableOpacity, 
+  RefreshControl,
+  ActivityIndicator,
+  Image
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useCart } from '../../../context/CartContext';
+import { useAuth } from '../../../context/AuthContext';
 import { colors, spacing, typography } from '../../../theme';
-import { formatPrice } from '../../../utils/formatPrice';
-import CartItemCard from '../../../components/CartItemCard';
-import { showAlert, showConfirmAlert } from '../../core/utils/alert';
+import { formatCurrency, formatDate } from '../../../shared/utils/format';
+import ordersService from '../../../services/ordersService';
+import { showAlert } from '../../core/utils/alert';
 
 const OrdersScreen = ({ navigation }) => {
-    // CORRECCIÓN: Se usa 'totalPrice' para obtener el total del carrito,
-    // ya que este es el nombre que se define en tu CartProvider.
-    const { cartItems, totalPrice, clearCart } = useCart();
+  const { user } = useAuth();
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [selectedFilter, setSelectedFilter] = useState('all');
+
+  useEffect(() => {
+    if (user) {
+      loadOrders();
+    }
+  }, [user]);
+
+  const loadOrders = async () => {
+    if (!user) return;
     
-    const [isProcessing, setIsProcessing] = useState(false);
-    const [address] = useState('Calle Falsa 123, Ciudad Principal');
+    try {
+      setLoading(true);
+      const response = await ordersService.getUserOrders(user.id);
+      setOrders(response.data || []);
+    } catch (error) {
+      console.error('Error cargando pedidos:', error);
+      showAlert('Error', 'No se pudieron cargar los pedidos');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    // El costo de envío se calcula correctamente
-    const shippingCost = totalPrice >= 50 ? 0 : 5;
-    const finalTotal = totalPrice + shippingCost;
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadOrders();
+    setRefreshing(false);
+  }, []);
 
-    const handleConfirmOrder = () => {
-        if (cartItems.length === 0) {
-            showAlert('Carrito Vacío', 'No hay productos en el carrito para confirmar.');
-            return;
-        }
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'pending': return colors.warning;
+      case 'confirmed': return colors.info;
+      case 'preparing': return colors.primary;
+      case 'ready': return colors.success;
+      case 'delivered': return colors.success;
+      case 'cancelled': return colors.error;
+      default: return colors.gray;
+    }
+  };
 
-        showConfirmAlert(
-            'Confirmar Pago',
-            // CORRECCIÓN: Se usa formatPrice para que el valor se vea como moneda
-            `¿Estás seguro de que quieres procesar el pago por $${formatPrice(finalTotal)}?`,
-            () => {
-                setIsProcessing(true);
-                // Simular el procesamiento del pago
-                setTimeout(() => {
-                    setIsProcessing(false);
-                    showAlert(
-                        '¡Pago Exitoso!',
-                        'Tu pedido ha sido procesado correctamente. Recibirás una confirmación por email.',
-                        () => {
-                            clearCart();
-                            navigation.navigate('ClientDashboard');
-                        }
-                    );
-                }, 2000);
-            }
-        );
-    };
+  const getStatusText = (status) => {
+    switch (status) {
+      case 'pending': return 'Pendiente';
+      case 'confirmed': return 'Confirmado';
+      case 'preparing': return 'Preparando';
+      case 'ready': return 'Listo';
+      case 'delivered': return 'Entregado';
+      case 'cancelled': return 'Cancelado';
+      default: return status;
+    }
+  };
 
-    const renderProductItem = ({ item }) => <CartItemCard item={item} />;
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'pending': return 'time-outline';
+      case 'confirmed': return 'checkmark-circle-outline';
+      case 'preparing': return 'restaurant-outline';
+      case 'ready': return 'bag-check-outline';
+      case 'delivered': return 'checkmark-done-circle-outline';
+      case 'cancelled': return 'close-circle-outline';
+      default: return 'help-circle-outline';
+    }
+  };
 
-    return (
-        <View style={styles.container}>
-            <ScrollView contentContainerStyle={styles.scrollViewContent}>
-                <Text style={styles.title}>Confirmar Pedido</Text>
+  const filteredOrders = orders.filter(order => {
+    if (selectedFilter === 'all') return true;
+    return order.status === selectedFilter;
+  });
 
-                {/* Resumen de Productos */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Resumen del Pedido</Text>
-                    <FlatList
-                        data={cartItems}
-                        keyExtractor={(item) => item.id}
-                        renderItem={renderProductItem}
-                        scrollEnabled={false}
-                    />
-                </View>
-
-                {/* Detalles de Entrega */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Dirección de Entrega</Text>
-                    <View style={styles.addressContainer}>
-                        <Ionicons name="location-outline" size={24} color={colors.primary} />
-                        <Text style={styles.addressText}>{address}</Text>
-                        <TouchableOpacity style={styles.changeAddressButton}>
-                            <Text style={styles.changeAddressText}>Cambiar</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-
-                {/* Desglose de Precios */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Detalle de Precios</Text>
-                    <View style={styles.priceRow}>
-                        <Text style={styles.priceLabel}>Subtotal</Text>
-                        <Text style={styles.priceValue}>{formatPrice(totalPrice)}</Text>
-                    </View>
-                    <View style={styles.priceRow}>
-                        <Text style={styles.priceLabel}>Envío</Text>
-                        <Text style={styles.priceValue}>
-                            {shippingCost === 0 ? 'Gratis' : formatPrice(shippingCost)}
-                        </Text>
-                    </View>
-                    <View style={styles.divider} />
-                    <View style={[styles.priceRow, styles.totalRow]}>
-                        <Text style={styles.totalLabel}>Total a Pagar</Text>
-                        <Text style={styles.totalValue}>{formatPrice(finalTotal)}</Text>
-                    </View>
-                </View>
-            </ScrollView>
-
-            {/* CORRECCIÓN: Este contenedor es el que le da el estilo y la posición al botón */}
-            <View style={styles.bottomContainer}>
-                <TouchableOpacity
-                    style={[styles.confirmButton, isProcessing && styles.disabledButton]}
-                    onPress={handleConfirmOrder}
-                    disabled={isProcessing}
-                >
-                    <Text style={styles.confirmButtonText}>
-                        {isProcessing ? 'Procesando...' : 'Confirmar y Pagar'}
-                    </Text>
-                    {!isProcessing && (
-                        <Ionicons
-                            name="arrow-forward"
-                            size={20}
-                            color={colors.white}
-                            style={styles.confirmButtonIcon}
-                        />
-                    )}
-                </TouchableOpacity>
-            </View>
+  const renderOrderItem = ({ item: order }) => (
+    <TouchableOpacity 
+      style={styles.orderCard}
+      onPress={() => {
+        console.log('Navegando a OrderDetail con orderId:', order.id);
+        navigation.navigate('OrderDetail', { orderId: order.id });
+      }}
+    >
+      <View style={styles.orderHeader}>
+        <View style={styles.orderInfo}>
+          <Text style={styles.orderNumber}>Pedido #{order.id.slice(-8)}</Text>
+          <Text style={styles.orderDate}>{formatDate(order.created_at)}</Text>
         </View>
+        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(order.status) }]}>
+          <Ionicons 
+            name={getStatusIcon(order.status)} 
+            size={16} 
+            color={colors.white} 
+          />
+          <Text style={styles.statusText}>{getStatusText(order.status)}</Text>
+        </View>
+      </View>
+
+      <View style={styles.restaurantInfo}>
+        <Image 
+          source={{ uri: order.restaurants?.image || 'https://via.placeholder.com/50' }}
+          style={styles.restaurantImage}
+        />
+        <View style={styles.restaurantDetails}>
+          <Text style={styles.restaurantName}>{order.restaurants?.name}</Text>
+          <Text style={styles.restaurantAddress}>{order.restaurants?.address}</Text>
+        </View>
+      </View>
+
+      <View style={styles.orderItems}>
+        <Text style={styles.itemsTitle}>
+          {order.order_items?.length || 0} producto(s)
+        </Text>
+        {order.order_items?.slice(0, 2).map((item, index) => (
+          <Text key={index} style={styles.itemName}>
+            {item.quantity}x {item.products?.name}
+          </Text>
+        ))}
+        {(order.order_items?.length || 0) > 2 && (
+          <Text style={styles.moreItems}>
+            +{(order.order_items?.length || 0) - 2} más...
+          </Text>
+        )}
+      </View>
+
+      <View style={styles.orderFooter}>
+        <Text style={styles.orderTotal}>{formatCurrency(order.total)}</Text>
+        <Ionicons name="chevron-forward" size={20} color={colors.gray} />
+      </View>
+    </TouchableOpacity>
+  );
+
+  const renderFilterButton = (filter, label) => (
+    <TouchableOpacity
+      key={filter}
+      style={[
+        styles.filterButton,
+        selectedFilter === filter && styles.filterButtonActive
+      ]}
+      onPress={() => setSelectedFilter(filter)}
+    >
+      <Text style={[
+        styles.filterButtonText,
+        selectedFilter === filter && styles.filterButtonTextActive
+      ]}>
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+
+  const renderEmptyState = () => (
+    <View style={styles.emptyContainer}>
+      <Ionicons name="receipt-outline" size={80} color={colors.gray} />
+      <Text style={styles.emptyTitle}>No tienes pedidos</Text>
+      <Text style={styles.emptySubtitle}>
+        Cuando realices tu primer pedido, aparecerá aquí
+      </Text>
+      <TouchableOpacity 
+        style={styles.shopButton}
+        onPress={() => navigation.navigate('Inicio')}
+      >
+        <Text style={styles.shopButtonText}>Explorar Restaurantes</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={styles.loadingText}>Cargando pedidos...</Text>
+      </View>
     );
+  }
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Mis Pedidos</Text>
+      </View>
+
+      {/* Filtros */}
+      <View style={styles.filtersContainer}>
+        {renderFilterButton('all', 'Todos')}
+        {renderFilterButton('pending', 'Pendientes')}
+        {renderFilterButton('delivered', 'Entregados')}
+        {renderFilterButton('cancelled', 'Cancelados')}
+      </View>
+
+      {/* Lista de pedidos */}
+      <FlatList
+        data={filteredOrders}
+        keyExtractor={(item) => item.id}
+        renderItem={renderOrderItem}
+        contentContainerStyle={styles.listContainer}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.primary}
+          />
+        }
+        ListEmptyComponent={renderEmptyState}
+      />
+    </View>
+  );
 };
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: colors.background,
-    },
-    scrollViewContent: {
-        padding: spacing.lg,
-        paddingBottom: 100,
-    },
-    title: {
-        fontSize: typography.sizes.xxl,
-        fontWeight: 'bold',
-        color: colors.primary,
-        marginBottom: spacing.lg,
-        textAlign: 'center',
-    },
-    section: {
-        backgroundColor: colors.white,
-        borderRadius: 16,
-        padding: spacing.lg,
-        marginBottom: spacing.md,
-        elevation: 2,
-        shadowColor: colors.black,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-    },
-    sectionTitle: {
-        fontSize: typography.sizes.lg,
-        fontWeight: '600',
-        color: colors.dark,
-        marginBottom: spacing.md,
-    },
-    addressContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: spacing.md,
-        backgroundColor: colors.lightGray,
-        borderRadius: 12,
-    },
-    addressText: {
-        flex: 1,
-        fontSize: typography.sizes.md,
-        color: colors.gray,
-        marginLeft: spacing.sm,
-    },
-    changeAddressButton: {
-        paddingHorizontal: spacing.sm,
-    },
-    changeAddressText: {
-        fontSize: typography.sizes.sm,
-        color: colors.primary,
-        fontWeight: 'bold',
-    },
-    priceRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: spacing.sm,
-    },
-    priceLabel: {
-        fontSize: typography.sizes.md,
-        color: colors.gray,
-    },
-    priceValue: {
-        fontSize: typography.sizes.md,
-        fontWeight: '500',
-        color: colors.dark,
-    },
-    divider: {
-        borderBottomWidth: 1,
-        borderBottomColor: colors.lightGray,
-        marginVertical: spacing.sm,
-    },
-    totalRow: {
-        marginTop: spacing.sm,
-    },
-    totalLabel: {
-        fontSize: typography.sizes.lg,
-        fontWeight: 'bold',
-        color: colors.dark,
-    },
-    totalValue: {
-        fontSize: typography.sizes.lg,
-        fontWeight: 'bold',
-        color: colors.primary,
-    },
-    bottomContainer: {
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        backgroundColor: colors.white,
-        padding: spacing.lg,
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
-        elevation: 8,
-        shadowColor: colors.black,
-        shadowOffset: { width: 0, height: -4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-    },
-    confirmButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: colors.primary,
-        borderRadius: 25,
-        paddingVertical: spacing.md,
-    },
-    disabledButton: {
-        backgroundColor: colors.gray,
-    },
-    confirmButtonText: {
-        color: colors.white,
-        fontSize: typography.sizes.md,
-        fontWeight: 'bold',
-        marginRight: spacing.sm,
-    },
-    confirmButtonIcon: {
-        marginLeft: spacing.sm,
-    },
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.background,
+  },
+  loadingText: {
+    marginTop: spacing.md,
+    fontSize: typography.sizes.md,
+    color: colors.gray,
+  },
+  header: {
+    backgroundColor: colors.white,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.lightGray,
+  },
+  title: {
+    fontSize: typography.sizes.xl,
+    fontWeight: 'bold',
+    color: colors.dark,
+  },
+  filtersContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.white,
+  },
+  filterButton: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    marginRight: spacing.sm,
+    borderRadius: 20,
+    backgroundColor: colors.lightGray,
+  },
+  filterButtonActive: {
+    backgroundColor: colors.primary,
+  },
+  filterButtonText: {
+    fontSize: typography.sizes.sm,
+    color: colors.gray,
+    fontWeight: '600',
+  },
+  filterButtonTextActive: {
+    color: colors.white,
+  },
+  listContainer: {
+    padding: spacing.lg,
+  },
+  orderCard: {
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+    elevation: 2,
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  orderHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  orderInfo: {
+    flex: 1,
+  },
+  orderNumber: {
+    fontSize: typography.sizes.md,
+    fontWeight: 'bold',
+    color: colors.dark,
+  },
+  orderDate: {
+    fontSize: typography.sizes.sm,
+    color: colors.gray,
+    marginTop: spacing.xs,
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: 12,
+  },
+  statusText: {
+    fontSize: typography.sizes.xs,
+    color: colors.white,
+    fontWeight: 'bold',
+    marginLeft: spacing.xs,
+  },
+  restaurantInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  restaurantImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: spacing.md,
+  },
+  restaurantDetails: {
+    flex: 1,
+  },
+  restaurantName: {
+    fontSize: typography.sizes.md,
+    fontWeight: '600',
+    color: colors.dark,
+  },
+  restaurantAddress: {
+    fontSize: typography.sizes.sm,
+    color: colors.gray,
+    marginTop: spacing.xs,
+  },
+  orderItems: {
+    marginBottom: spacing.md,
+  },
+  itemsTitle: {
+    fontSize: typography.sizes.sm,
+    fontWeight: '600',
+    color: colors.dark,
+    marginBottom: spacing.xs,
+  },
+  itemName: {
+    fontSize: typography.sizes.sm,
+    color: colors.gray,
+    marginBottom: spacing.xs,
+  },
+  moreItems: {
+    fontSize: typography.sizes.sm,
+    color: colors.primary,
+    fontStyle: 'italic',
+  },
+  orderFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: colors.lightGray,
+    paddingTop: spacing.md,
+  },
+  orderTotal: {
+    fontSize: typography.sizes.lg,
+    fontWeight: 'bold',
+    color: colors.primary,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: spacing.xl * 2,
+  },
+  emptyTitle: {
+    fontSize: typography.sizes.xl,
+    fontWeight: 'bold',
+    color: colors.dark,
+    marginTop: spacing.lg,
+    marginBottom: spacing.sm,
+  },
+  emptySubtitle: {
+    fontSize: typography.sizes.md,
+    color: colors.gray,
+    textAlign: 'center',
+    marginBottom: spacing.xl,
+    paddingHorizontal: spacing.lg,
+  },
+  shopButton: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.lg,
+    borderRadius: 12,
+  },
+  shopButtonText: {
+    color: colors.white,
+    fontSize: typography.sizes.md,
+    fontWeight: 'bold',
+  },
 });
 
 export default OrdersScreen;
