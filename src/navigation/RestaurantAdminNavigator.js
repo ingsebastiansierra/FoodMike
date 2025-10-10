@@ -13,14 +13,7 @@ import AddProductScreen from '../screens/AddProductScreen';
 import EditProductScreen from '../screens/EditProductScreen';
 import OrderDetailScreen from '../screens/OrderDetailScreen';
 
-// Verificar que todos los componentes estén definidos
-console.log('RestaurantAdminDashboardScreen:', typeof RestaurantAdminDashboardScreen);
-console.log('RestaurantProductsScreen:', typeof RestaurantProductsScreen);
-console.log('RestaurantOrdersScreen:', typeof RestaurantOrdersScreen);
-console.log('RestaurantSettingsScreen:', typeof RestaurantSettingsScreen);
-console.log('AddProductScreen:', typeof AddProductScreen);
-console.log('EditProductScreen:', typeof EditProductScreen);
-console.log('OrderDetailScreen:', typeof OrderDetailScreen);
+
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -62,17 +55,26 @@ const ProductsStack = () => (
         <Stack.Screen
             name="ProductsList"
             component={RestaurantProductsScreen}
-            options={{ title: 'Productos' }}
+            options={{
+                title: 'Productos',
+                headerShown: true
+            }}
         />
         <Stack.Screen
             name="AddProduct"
             component={AddProductScreen}
-            options={{ title: 'Nuevo Producto' }}
+            options={{
+                title: 'Nuevo Producto',
+                headerShown: true
+            }}
         />
         <Stack.Screen
             name="EditProduct"
             component={EditProductScreen}
-            options={{ title: 'Editar Producto' }}
+            options={{
+                title: 'Editar Producto',
+                headerShown: true
+            }}
         />
     </Stack.Navigator>
 );
@@ -177,6 +179,12 @@ const RestaurantAdminNavigator = () => {
                 name="Products"
                 component={ProductsStack}
                 options={{ title: 'Productos' }}
+                listeners={({ navigation }) => ({
+                    tabPress: (e) => {
+                        // Navegar a la primera pantalla del stack
+                        navigation.navigate('Products', { screen: 'ProductsList' });
+                    },
+                })}
             />
             <Tab.Screen
                 name="Orders"

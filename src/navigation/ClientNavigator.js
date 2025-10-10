@@ -257,8 +257,13 @@ const ClientNavigator = () => {
 
   const handleTabPress = (e, navigation, targetTabName) => {
     const state = navigation.getState();
-    let hasCartInAnyTab = false;
+    const currentTab = state.routes[state.index];
 
+    // Verificar si el tab actual tiene navegación anidada (más de una pantalla en el stack)
+    const hasNestedNavigation = currentTab.state?.routes && currentTab.state.routes.length > 1;
+
+    // Verificar si hay carrito abierto
+    let hasCartInAnyTab = false;
     state.routes.forEach((route) => {
       if (route.state?.routes) {
         const hasCart = route.state.routes.some(r => r.name === 'Carrito');
@@ -268,7 +273,8 @@ const ClientNavigator = () => {
       }
     });
 
-    if (hasCartInAnyTab) {
+    // Si hay navegación anidada o carrito, resetear al cambiar de tab
+    if (hasCartInAnyTab || hasNestedNavigation) {
       e.preventDefault();
 
       const newRoutes = state.routes.map(route => {

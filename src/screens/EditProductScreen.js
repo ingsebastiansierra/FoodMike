@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -8,7 +8,9 @@ import {
     TouchableOpacity,
     Alert,
     ActivityIndicator,
+    Image,
 } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import { COLORS } from '../theme/colors';
 import { SPACING } from '../theme/spacing';
 import restaurantAdminService from '../services/restaurantAdminService';
@@ -16,12 +18,31 @@ import restaurantAdminService from '../services/restaurantAdminService';
 const EditProductScreen = ({ route, navigation }) => {
     const { product } = route.params;
     const [loading, setLoading] = useState(false);
+    const [loadingCategories, setLoadingCategories] = useState(true);
+    const [categories, setCategories] = useState([]);
     const [formData, setFormData] = useState({
         name: product.name || '',
         description: product.description || '',
         price: product.price?.toString() || '',
+        image: product.image || '',
+        categoryid: product.categoryid?.toString() || '',
         preparation_time: product.preparation_time?.toString() || '15',
     });
+
+    useEffect(() => {
+        loadCategories();
+    }, []);
+
+    const loadCategories = async () => {
+        try {
+            const response = await restaurantAdminService.getCategories();
+            setCategories(response.data || []);
+        } catch (error) {
+            console.error('Error loading categories:', error);
+        } finally {
+            setLoadingCategories(false);
+        }
+    };
 
     const handleSubmit = async () => {
         if (!formData.name || !formData.price) {
@@ -29,19 +50,31 @@ const EditProductScreen = ({ route, navigation }) => {
             return;
         }
 
+        if (!formData.categoryid) {
+            Alert.alert('Error', 'Por favor selecciona una categoría');
+            return;
+        }
+
         try {
             setLoading(true);
-            await restaurantAdminService.updateProduct(product.id, {
-                ...formData,
+
+            // Preparar datos para enviar
+            const productData = {
+                name: formData.name,
+                description: formData.description || null,
                 price: parseFloat(formData.price),
-                preparation_time: parseInt(formData.preparation_time),
-            });
+                image: formData.image || null,
+                categoryid: parseInt(formData.categoryid),
+                preparation_time: parseInt(formData.preparation_time) || 15,
+            };
+
+            await restaurantAdminService.updateProduct(product.id, productData);
             Alert.alert('Éxito', 'Producto actualizado correctamente', [
                 { text: 'OK', onPress: () => navigation.goBack() },
             ]);
         } catch (error) {
             console.error('Error updating product:', error);
-            Alert.alert('Error', 'No se pudo actualizar el producto');
+            Alert.alert('Error', error.message || 'No se pudo actualizar el producto');
         } finally {
             setLoading(false);
         }
@@ -67,6 +100,58 @@ const EditProductScreen = ({ route, navigation }) => {
                     multiline
                     numberOfLines={4}
                 />
+
+                <Text style={styles.label}>URL de la Imagen</Text>
+                <TextInput
+                    style={styles.input}
+                    value={formData.image}
+                    onChangeText={(text) => setFormData({ ...formData, image: text })}
+                    placeholder="https://ejemplo.com/imagen.jpg"
+                    keyboardType="url"
+                    autoCapitalize="none"
+                />
+
+                {/* Vista previa de la imagen */}
+                {formData.image ? (
+                    <View style={styles.imagePreviewContainer}>
+                        <Text style={styles.previewLabel}>Vista Previa:</Text>
+                        <Image
+                            source={{ uri: formData.image }}
+                            style={styles.imagePreview}
+                            onError={() => Alert.alert('Error', 'No se pudo cargar la imagen. Verifica la URL.')}
+                        />
+                    </View>
+                ) : (
+                    <View style={styles.imagePlaceholder}>
+                        <Icon name="image" size={40} color="#BDC3C7" />
+                        <Text style={styles.placeholderText}>Sin imagen</Text>
+                    </View>
+                )}
+
+                <Text style={styles.label}>Categoría *</Text>
+                {loadingCategories ? (
+                    <ActivityIndicator size="small" color={COLORS.primary} />
+                ) : (
+                    <View style={styles.categoriesContainer}>
+                        {categories.map((category) => (
+                            <TouchableOpacity
+                                key={category.id}
+                                style={[
+                                    styles.categoryChip,
+                                    formData.categoryid === category.id.toString() && styles.categoryChipActive
+                                ]}
+                                onPress={() => setFormData({ ...formData, categoryid: category.id.toString() })}
+                            >
+                                <Text style={[
+                                    styles.categoryChipText,
+                                    formData.categoryid === category.id.toString() && styles.categoryChipTextActive
+                                ]}>
+                                    {category.icon} {category.name}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+                )}
 
                 <Text style={styles.label}>Precio *</Text>
                 <TextInput
@@ -143,6 +228,64 @@ const styles = StyleSheet.create({
         color: '#FFF',
         fontSize: 16,
         fontWeight: 'bold',
+    },
+    imagePreviewContainer: {
+        marginTop: SPACING.md,
+        alignItems: 'center',
+    },
+    previewLabel: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: COLORS.textSecondary,
+        marginBottom: SPACING.xs,
+    },
+    imagePreview: {
+        width: '100%',
+        height: 200,
+        borderRadius: 12,
+        backgroundColor: COLORS.lightGray,
+    },
+    imagePlaceholder: {
+        marginTop: SPACING.md,
+        height: 150,
+        backgroundColor: '#F5F7FA',
+        borderRadius: 12,
+        borderWidth: 2,
+        borderColor: '#E0E0E0',
+        borderStyle: 'dashed',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    placeholderText: {
+        fontSize: 14,
+        color: '#BDC3C7',
+        marginTop: SPACING.xs,
+    },
+    categoriesContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8,
+        marginBottom: SPACING.md,
+    },
+    categoryChip: {
+        paddingHorizontal: SPACING.md,
+        paddingVertical: SPACING.sm,
+        borderRadius: 20,
+        backgroundColor: '#F5F7FA',
+        borderWidth: 2,
+        borderColor: '#E0E0E0',
+    },
+    categoryChipActive: {
+        backgroundColor: COLORS.primary,
+        borderColor: COLORS.primary,
+    },
+    categoryChipText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#7F8C8D',
+    },
+    categoryChipTextActive: {
+        color: '#FFF',
     },
 });
 

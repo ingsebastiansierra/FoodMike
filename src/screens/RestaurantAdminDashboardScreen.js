@@ -15,6 +15,7 @@ import { COLORS } from '../theme/colors';
 import { SPACING } from '../theme/spacing';
 import restaurantAdminService from '../services/restaurantAdminService';
 import { formatCurrency } from '../shared/utils/format';
+import { DashboardCardSkeleton, ListItemSkeleton } from '../components/SkeletonLoader';
 
 const { width } = Dimensions.get('window');
 
@@ -47,10 +48,32 @@ const RestaurantAdminDashboardScreen = ({ navigation }) => {
 
     if (loading) {
         return (
-            <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={COLORS.primary} />
-                <Text style={styles.loadingText}>Cargando dashboard...</Text>
-            </View>
+            <ScrollView style={styles.container}>
+                <LinearGradient
+                    colors={[COLORS.primary, COLORS.secondary || COLORS.primary]}
+                    style={styles.header}
+                >
+                    <View style={{ opacity: 0.5 }}>
+                        <Text style={styles.greeting}>Cargando...</Text>
+                        <Text style={styles.restaurantName}>Dashboard</Text>
+                    </View>
+                </LinearGradient>
+
+                <View style={styles.content}>
+                    <View style={styles.statsGrid}>
+                        {[1, 2, 3, 4].map((item) => (
+                            <DashboardCardSkeleton key={item} />
+                        ))}
+                    </View>
+
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>Pedidos Recientes</Text>
+                        {[1, 2, 3].map((item) => (
+                            <ListItemSkeleton key={item} />
+                        ))}
+                    </View>
+                </View>
+            </ScrollView>
         );
     }
 
@@ -117,7 +140,7 @@ const RestaurantAdminDashboardScreen = ({ navigation }) => {
                         icon="add-circle"
                         label="Nuevo Producto"
                         color="#667eea"
-                        onPress={() => navigation.navigate('AddProduct')}
+                        onPress={() => navigation.navigate('Products', { screen: 'AddProduct' })}
                     />
                     <ActionButton
                         icon="list-alt"
@@ -135,7 +158,7 @@ const RestaurantAdminDashboardScreen = ({ navigation }) => {
                         icon="settings"
                         label="Configuración"
                         color="#FF6B6B"
-                        onPress={() => navigation.navigate('RestaurantSettings')}
+                        onPress={() => navigation.navigate('Settings')}
                     />
                 </View>
             </View>

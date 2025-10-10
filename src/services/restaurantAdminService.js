@@ -114,10 +114,22 @@ const restaurantAdminService = {
         try {
             const restaurantId = await getCurrentRestaurantId();
 
+            // Limpiar datos: eliminar campos vacíos o inválidos
+            const cleanedData = {};
+            Object.keys(productData).forEach(key => {
+                const value = productData[key];
+                // Solo incluir valores que no sean null, undefined o cadenas vacías
+                if (value !== null && value !== undefined && value !== '') {
+                    cleanedData[key] = value;
+                }
+            });
+
+            console.log('Cleaned product data:', cleanedData);
+
             const { data: product, error } = await supabase
                 .from('products')
                 .insert([{
-                    ...productData,
+                    ...cleanedData,
                     restaurantid: restaurantId,
                     createdat: new Date().toISOString(),
                     updatedat: new Date().toISOString()
@@ -125,7 +137,10 @@ const restaurantAdminService = {
                 .select()
                 .single();
 
-            if (error) throw error;
+            if (error) {
+                console.error('Supabase error:', error);
+                throw error;
+            }
 
             return { success: true, data: product };
         } catch (error) {

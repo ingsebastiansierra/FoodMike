@@ -18,41 +18,53 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState(null);
 
-  // Función para obtener el perfil y actualizar el estado
-  const fetchUserProfile = async (userId) => {
+  // Función para manejar cambios de sesión (login, logout, refresh)
+  const handleSessionChange = useCallback(async (currentSession) => {
+    console.log('📱 Cambio de sesión detectado');
+
+    if (!currentSession?.user) {
+      console.log('🚪 No hay sesión, limpiando estado');
+      setSession(null);
+      setUser(null);
+      setUserRole(null);
+      setLoading(false);
+      return;
+    }
+
+    // Hay un usuario autenticado
+    setSession(currentSession);
+    setUser(currentSession.user);
+
     try {
+      console.log('🔍 Buscando perfil para usuario:', currentSession.user.id);
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('id, role, full_name, email')
-        .eq('id', userId)
+        .select('id, role, full_name, email, restaurant_id')
+        .eq('id', currentSession.user.id)
         .maybeSingle();
 
       if (error) {
-        console.error('Error al cargar el perfil:', error);
+        console.error('❌ Error al cargar el perfil:', error);
         setUserRole('cliente');
       } else if (profile) {
         const role = profile.role || 'cliente';
+        console.log('✅ Perfil cargado:', {
+          email: profile.email,
+          role: role,
+          restaurant_id: profile.restaurant_id
+        });
         setUserRole(role);
       } else {
-        console.warn(`Perfil no encontrado para el usuario: ${userId}. Asignando rol por defecto.`);
+        console.warn(`⚠️ Perfil no encontrado. Asignando rol por defecto.`);
         setUserRole('cliente');
       }
     } catch (error) {
-      console.error('Error inesperado al cargar el perfil:', error);
+      console.error('❌ Error inesperado al cargar el perfil:', error);
       setUserRole('cliente');
+    } finally {
+      console.log('✨ Finalizando carga, quitando loading');
+      setLoading(false);
     }
-  };
-
-  // Función para manejar cambios de sesión (login, logout, refresh)
-  const handleSessionChange = useCallback(async (currentSession) => {
-    setSession(currentSession);
-    setUser(currentSession?.user ?? null);
-    if (currentSession?.user) {
-      await fetchUserProfile(currentSession.user.id);
-    } else {
-      setUserRole(null);
-    }
-    setLoading(false);
   }, []);
 
   // Efecto principal para inicializar y escuchar la autenticación

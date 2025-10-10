@@ -57,6 +57,12 @@ const AppNavigator = () => {
     console.log('Usuario autenticado:', user.email);
     console.log('Rol del usuario:', userRole);
 
+    // Si el usuario existe pero el rol aún no se ha cargado, mostrar loading
+    if (!userRole) {
+      console.log('⏳ Esperando a que se cargue el rol...');
+      return <LoadingScreen />;
+    }
+
     // Redirigir según el rol del usuario
     if (userRole === 'administrador') {
       console.log('Navegando a AdminNavigator');
