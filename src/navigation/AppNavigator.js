@@ -8,6 +8,7 @@ import { useAuth } from "../context/AuthContext";
 import AuthNavigator from './AuthNavigator';
 import AdminNavigator from './AdminNavigator';
 import ClientNavigator from './ClientNavigator';
+import RestaurantAdminNavigator from './RestaurantAdminNavigator';
 import OnboardingNavigator from './OnboardingNavigator';
 
 const LoadingScreen = () => (
@@ -52,7 +53,21 @@ const AppNavigator = () => {
   }
 
   if (user) {
-    return userRole === 'administrador' ? <AdminNavigator /> : <ClientNavigator />;
+    // Log para depuración
+    console.log('Usuario autenticado:', user.email);
+    console.log('Rol del usuario:', userRole);
+
+    // Redirigir según el rol del usuario
+    if (userRole === 'administrador') {
+      console.log('Navegando a AdminNavigator');
+      return <AdminNavigator />;
+    } else if (userRole === 'administradorRestaurante') {
+      console.log('Navegando a RestaurantAdminNavigator');
+      return <RestaurantAdminNavigator />;
+    } else {
+      console.log('Navegando a ClientNavigator');
+      return <ClientNavigator />;
+    }
   }
 
   if (!isOnboardingCompleted) {

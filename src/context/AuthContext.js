@@ -29,7 +29,7 @@ export const AuthProvider = ({ children }) => {
 
       if (error) {
         console.error('Error al cargar el perfil:', error);
-        setUserRole('cliente'); 
+        setUserRole('cliente');
       } else if (profile) {
         const role = profile.role || 'cliente';
         setUserRole(role);
@@ -66,7 +66,6 @@ export const AuthProvider = ({ children }) => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
-        console.log('Evento de autenticación:', event);
         handleSessionChange(currentSession);
       }
     );
@@ -122,6 +121,7 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated: !!user,
     isAdmin: userRole === 'administrador',
     isClient: userRole === 'cliente',
+    isRestaurantAdmin: userRole === 'administradorRestaurante',
     login,
     register,
     logout,

@@ -17,6 +17,7 @@ import { COLORS } from '../../../theme/colors';
 import { SPACING } from '../../../theme/spacing';
 import { showAlert, showConfirmAlert } from '../../core/utils/alert';
 import { resetOnboarding } from '../../core/utils/onboarding';
+import { useAutoCloseCart } from '../../../hooks/useAutoCloseCart';
 
 const { width, height } = Dimensions.get('window');
 const HEADER_MAX_HEIGHT = 200;
@@ -26,6 +27,9 @@ const ProfileScreen = () => {
   const { user, logout } = useAuth();
   const [showSettings, setShowSettings] = useState(false);
   const scrollY = useRef(new Animated.Value(0)).current;
+  
+  // Auto-close cart when this screen gains focus
+  useAutoCloseCart();
 
   // Datos del perfil mejorados
   const userData = {

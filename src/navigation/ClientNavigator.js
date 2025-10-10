@@ -62,6 +62,7 @@ import ProfileScreen from '../features/client/screens/ProfileScreen';
 
 // Pantallas de detalle (para el Stack)
 import RestaurantDetailScreen from '../features/client/screens/RestaurantDetailScreen';
+import RestaurantsListScreen from '../screens/RestaurantsListScreen';
 import ProductDetailScreen from '../features/client/screens/ProductDetailScreen';
 import CheckoutScreen from '../features/client/screens/CheckoutScreen';
 import OrderDetailScreen from '../features/client/screens/OrderDetailScreen';
@@ -83,6 +84,21 @@ const HomeStack = () => (
     screenOptions={stackScreenOptions}
   >
     <Stack.Screen name="HomeInitial" component={ClientHomeScreen} />
+    <Stack.Screen
+      name="RestaurantsList"
+      component={RestaurantsListScreen}
+      options={{
+        headerShown: true,
+        headerTitle: 'Todos los Restaurantes',
+        headerStyle: {
+          backgroundColor: COLORS.primary,
+        },
+        headerTintColor: '#fff',
+        headerTitleStyle: {
+          fontWeight: 'bold',
+        },
+      }}
+    />
     <Stack.Screen name="RestaurantDetail" component={RestaurantDetailScreen} />
     <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
     <Stack.Screen
@@ -237,9 +253,56 @@ const ProfileStack = () => (
 );
 
 const ClientNavigator = () => {
+  const [navigationRef, setNavigationRef] = React.useState(null);
+
+  const handleTabPress = (e, navigation, targetTabName) => {
+    const state = navigation.getState();
+    let hasCartInAnyTab = false;
+
+    state.routes.forEach((route) => {
+      if (route.state?.routes) {
+        const hasCart = route.state.routes.some(r => r.name === 'Carrito');
+        if (hasCart) {
+          hasCartInAnyTab = true;
+        }
+      }
+    });
+
+    if (hasCartInAnyTab) {
+      e.preventDefault();
+
+      const newRoutes = state.routes.map(route => {
+        let initialScreen = 'HomeInitial';
+        switch (route.name) {
+          case 'Inicio': initialScreen = 'HomeInitial'; break;
+          case 'Buscar': initialScreen = 'SearchInitial'; break;
+          case 'Pedidos': initialScreen = 'OrdersInitial'; break;
+          case 'Favoritos': initialScreen = 'FavoritesInitial'; break;
+          case 'Perfil': initialScreen = 'ProfileInitial'; break;
+        }
+
+        return {
+          ...route,
+          state: {
+            routes: [{ name: initialScreen }],
+            index: 0,
+          },
+        };
+      });
+
+      const targetIndex = newRoutes.findIndex(r => r.name === targetTabName);
+
+      navigation.reset({
+        index: targetIndex >= 0 ? targetIndex : state.index,
+        routes: newRoutes,
+      });
+    }
+  };
+
   return (
     <CartNavigationHandler>
       <Tab.Navigator
+        ref={setNavigationRef}
 
         screenOptions={({ route }) => ({
           headerShown: true, // Mostrar header a nivel de Tab
@@ -304,11 +367,41 @@ const ClientNavigator = () => {
           },
         })}
       >
-        <Tab.Screen name="Inicio" component={HomeStack} />
-        <Tab.Screen name="Buscar" component={SearchStack} />
-        <Tab.Screen name="Pedidos" component={OrdersStack} />
-        <Tab.Screen name="Favoritos" component={FavoritesStack} />
-        <Tab.Screen name="Perfil" component={ProfileStack} />
+        <Tab.Screen
+          name="Inicio"
+          component={HomeStack}
+          listeners={({ navigation }) => ({
+            tabPress: (e) => handleTabPress(e, navigation, 'Inicio')
+          })}
+        />
+        <Tab.Screen
+          name="Buscar"
+          component={SearchStack}
+          listeners={({ navigation }) => ({
+            tabPress: (e) => handleTabPress(e, navigation, 'Buscar')
+          })}
+        />
+        <Tab.Screen
+          name="Pedidos"
+          component={OrdersStack}
+          listeners={({ navigation }) => ({
+            tabPress: (e) => handleTabPress(e, navigation, 'Pedidos')
+          })}
+        />
+        <Tab.Screen
+          name="Favoritos"
+          component={FavoritesStack}
+          listeners={({ navigation }) => ({
+            tabPress: (e) => handleTabPress(e, navigation, 'Favoritos')
+          })}
+        />
+        <Tab.Screen
+          name="Perfil"
+          component={ProfileStack}
+          listeners={({ navigation }) => ({
+            tabPress: (e) => handleTabPress(e, navigation, 'Perfil')
+          })}
+        />
       </Tab.Navigator>
     </CartNavigationHandler>
   );

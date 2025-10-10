@@ -13,6 +13,7 @@ const searchRoutes = require('./routes/search');
 const placesRoutes = require('./routes/places');
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
+const restaurantAdminRoutes = require('./routes/restaurantAdmin');
 
 // Importar middleware
 const corsMiddleware = require('./middleware/cors');
@@ -58,6 +59,7 @@ app.use('/api/products', productsRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/places', placesRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/restaurant-admin', restaurantAdminRoutes);
 
 // Middleware para manejo de errores 404
 app.use('*', (req, res) => {
@@ -71,7 +73,7 @@ app.use('*', (req, res) => {
 // Middleware para manejo de errores globales
 app.use((error, req, res, next) => {
   console.error('Error:', error);
-  
+
   res.status(error.status || 500).json({
     error: error.message || 'Internal server error',
     timestamp: new Date().toISOString(),

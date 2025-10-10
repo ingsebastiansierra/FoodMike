@@ -2,13 +2,13 @@ import React, { useEffect, useRef } from 'react';
 import { View, Animated, StyleSheet } from 'react-native';
 import { COLORS } from '../../theme/colors';
 
-const SkeletonBase = ({ 
-  width = '100%', 
-  height = 20, 
-  borderRadius = 8, 
+const SkeletonBase = ({
+  width = '100%',
+  height = 20,
+  borderRadius = 8,
   style,
   animationSpeed = 1000,
-  ...props 
+  ...props
 }) => {
   const animatedValue = useRef(new Animated.Value(0)).current;
 
@@ -57,7 +57,7 @@ const SkeletonBase = ({
 
 const styles = StyleSheet.create({
   skeleton: {
-    backgroundColor: COLORS.mediumGray || '#A0A0A0',
+    backgroundColor: '#E8E8E8',
   },
 });
 

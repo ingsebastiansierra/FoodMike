@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { useNavigation } from '@react-navigation/native';
 import {
   View,
   Text,
@@ -143,6 +144,7 @@ const AUTO_CAROUSEL_PROMOS = [
 ];
 
 const HomeContentComponent = ({ user, onAddToCart, onProductPress, onRestaurantPress }) => {
+  const navigation = useNavigation();
   const [activeCategory, setActiveCategory] = useState("all");
   const [categories, setCategories] = useState([]);
   const [restaurantsList, setRestaurantsList] = useState([]);
@@ -187,7 +189,6 @@ const HomeContentComponent = ({ user, onAddToCart, onProductPress, onRestaurantP
   const loadCategories = useCallback(async () => {
     try {
       const response = await search.getCategories();
-      console.log('Categorías response:', response);
       setCategories(response.data || []);
     } catch (error) {
       console.error('Error cargando categorías:', error);
@@ -199,7 +200,6 @@ const HomeContentComponent = ({ user, onAddToCart, onProductPress, onRestaurantP
   const loadOpenRestaurants = useCallback(async () => {
     try {
       const response = await restaurantsService.getOpen();
-      console.log('Restaurantes abiertos response:', response);
       setRestaurantsList(response.data || []);
     } catch (error) {
       console.error('Error cargando restaurantes:', error);
@@ -211,11 +211,9 @@ const HomeContentComponent = ({ user, onAddToCart, onProductPress, onRestaurantP
   const loadPopularFoods = useCallback(async () => {
     try {
       const response = await search.getFeaturedProducts(8);
-      console.log('Productos populares response:', response);
       const products = Array.isArray(response.data)
         ? response.data
         : [];
-      console.log('Productos populares procesados:', products);
       setPopularFoods(products);
     } catch (error) {
       console.error('Error cargando productos populares:', error);
@@ -453,29 +451,31 @@ const HomeContentComponent = ({ user, onAddToCart, onProductPress, onRestaurantP
 
   if (loading) {
     return (
-      <ScrollView style={{ backgroundColor: COLORS.background }}>
+      <ScrollView style={{ backgroundColor: COLORS.background }} contentContainerStyle={{ paddingBottom: 20 }}>
         {/* Hero Section Skeleton */}
-        <View style={styles.heroSection}>
+        <View style={{ padding: 16, marginBottom: 16 }}>
           <SkeletonBase width="60%" height={24} borderRadius={4} style={{ marginBottom: 8 }} />
           <SkeletonBase width="80%" height={32} borderRadius={4} style={{ marginBottom: 8 }} />
           <SkeletonBase width="70%" height={16} borderRadius={4} />
         </View>
 
         {/* Promo Carousel Skeleton */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.promoCarousel}>
-          {[1, 2, 3].map(item => (
-            <SkeletonBase
-              key={item}
-              width={width * 0.7}
-              height={140}
-              borderRadius={20}
-              style={{ marginRight: 16 }}
-            />
-          ))}
-        </ScrollView>
+        <View style={{ marginBottom: 20 }}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16 }}>
+            {[1, 2, 3].map(item => (
+              <SkeletonBase
+                key={item}
+                width={width * 0.7}
+                height={140}
+                borderRadius={20}
+                style={{ marginRight: 16 }}
+              />
+            ))}
+          </ScrollView>
+        </View>
 
         {/* Categories Skeleton */}
-        <View style={styles.categoriesSection}>
+        <View style={{ paddingHorizontal: 16, marginBottom: 20 }}>
           <SkeletonBase width="50%" height={20} borderRadius={4} style={{ marginBottom: 12 }} />
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {[1, 2, 3, 4, 5].map(item => (
@@ -491,13 +491,13 @@ const HomeContentComponent = ({ user, onAddToCart, onProductPress, onRestaurantP
         </View>
 
         {/* Popular Products Skeleton */}
-        <View style={styles.popularSection}>
+        <View style={{ paddingHorizontal: 16, marginBottom: 20 }}>
           <SkeletonBase width="40%" height={20} borderRadius={4} style={{ marginBottom: 12 }} />
           <SkeletonProductList itemCount={4} />
         </View>
 
         {/* Restaurants Skeleton */}
-        <View style={styles.openRestaurantsSection}>
+        <View style={{ paddingHorizontal: 16, marginBottom: 20 }}>
           <SkeletonBase width="60%" height={20} borderRadius={4} style={{ marginBottom: 12 }} />
           <SkeletonRestaurantList itemCount={3} />
         </View>
@@ -774,6 +774,15 @@ const HomeContentComponent = ({ user, onAddToCart, onProductPress, onRestaurantP
             </TouchableOpacity>
           ))}
         </View>
+
+        {/* Botón Ver Todos centrado */}
+        <TouchableOpacity
+          style={styles.viewAllButtonCentered}
+          onPress={() => navigation.navigate('RestaurantsList')}
+        >
+          <Text style={styles.viewAllTextCentered}>Ver Todos los Restaurantes</Text>
+          <Icon name="arrow-forward" size={18} color="#FFF" />
+        </TouchableOpacity>
       </View>
 
       {/* SECCIÓN DE TESTIMONIOS MODERNA */}
@@ -1094,6 +1103,29 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
     color: COLORS.dark,
+  },
+  viewAllButtonCentered: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    paddingHorizontal: 32,
+    paddingVertical: 14,
+    borderRadius: 25,
+    backgroundColor: COLORS.primary,
+    marginTop: 20,
+    marginBottom: 10,
+    elevation: 3,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  viewAllTextCentered: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FFF',
+    marginRight: 8,
   },
 
 

@@ -16,6 +16,7 @@ import { colors, spacing, typography } from '../../../theme';
 import { formatCurrency, formatDate } from '../../../shared/utils/format';
 import ordersService from '../../../services/ordersService';
 import { showAlert } from '../../core/utils/alert';
+import { useAutoCloseCart } from '../../../hooks/useAutoCloseCart';
 
 const OrdersScreen = ({ navigation }) => {
   const { user } = useAuth();
@@ -23,6 +24,9 @@ const OrdersScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState('all');
+  
+  // Auto-close cart when this screen gains focus
+  useAutoCloseCart();
 
   useEffect(() => {
     if (user) {

@@ -9,7 +9,7 @@ const searchService = {
         .from('products')
         .select('*')
         .limit(limit);
-      
+
       if (error) throw error;
       return { data };
     } catch (error) {
@@ -23,34 +23,34 @@ const searchService = {
       let queryBuilder = supabase
         .from('products')
         .select('*');
-      
+
       // Aplicar filtros
       if (query) {
         queryBuilder = queryBuilder.ilike('name', `%${query}%`);
       }
-      
+
       if (filters.category) {
         queryBuilder = queryBuilder.eq('category', filters.category);
       }
-      
+
       if (filters.minPrice) {
         queryBuilder = queryBuilder.gte('price', filters.minPrice);
       }
-      
+
       if (filters.maxPrice) {
         queryBuilder = queryBuilder.lte('price', filters.maxPrice);
       }
-      
+
       if (filters.minStars) {
         queryBuilder = queryBuilder.gte('stars', filters.minStars);
       }
-      
+
       if (filters.limit) {
         queryBuilder = queryBuilder.limit(filters.limit);
       }
-      
+
       const { data, error } = await queryBuilder;
-      
+
       if (error) throw error;
       return { data };
     } catch (error) {
@@ -65,34 +65,34 @@ const searchService = {
       let queryBuilder = supabase
         .from('products')
         .select('*, restaurants(*)');
-      
+
       // Aplicar filtros
       if (query) {
         queryBuilder = queryBuilder.ilike('name', `%${query}%`);
       }
-      
+
       if (filters.category) {
         queryBuilder = queryBuilder.eq('category', filters.category);
       }
-      
+
       if (filters.minPrice) {
         queryBuilder = queryBuilder.gte('price', filters.minPrice);
       }
-      
+
       if (filters.maxPrice) {
         queryBuilder = queryBuilder.lte('price', filters.maxPrice);
       }
-      
+
       if (filters.minStars) {
         queryBuilder = queryBuilder.gte('stars', filters.minStars);
       }
-      
+
       if (filters.limit) {
         queryBuilder = queryBuilder.limit(filters.limit);
       }
-      
+
       const { data, error } = await queryBuilder;
-      
+
       if (error) throw error;
       return { data };
     } catch (error) {
@@ -109,7 +109,7 @@ const searchService = {
         .eq('isfeatured', true)
         .order('reviews', { ascending: false })
         .limit(limit);
-      
+
       if (error) throw error;
       return { data };
     } catch (error) {
@@ -123,20 +123,17 @@ const searchService = {
       const { data, error } = await supabase
         .from('categories')
         .select('*');
-      
+
       if (error) throw error;
       return { data };
     } catch (error) {
       handleError(error, 'getCategories');
     }
   },
-  
+
   // Obtener productos por restaurante
   getByRestaurant: async (restaurantId) => {
     try {
-      console.log('Buscando productos para el restaurante ID:', restaurantId);
-      console.log('Tipo de restaurantId:', typeof restaurantId);
-      
       // Intentar buscar por restaurantid
       let { data, error } = await supabase
         .from('products')
@@ -145,18 +142,16 @@ const searchService = {
 
       // Si no hay resultados, intentar con restaurant_id
       if ((!data || data.length === 0) && !error) {
-        console.log('No se encontraron productos con restaurantid, intentando con restaurant_id');
         const response = await supabase
           .from('products')
           .select('*')
           .eq('restaurant_id', restaurantId);
-        
+
         data = response.data;
         error = response.error;
       }
 
       if (error) throw error;
-      console.log('Productos encontrados para el restaurante:', data?.length || 0);
       return { data, error: null };
     } catch (error) {
       console.error('Error al obtener productos por restaurante:', error);

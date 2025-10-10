@@ -6,24 +6,33 @@ const CartNavigationHandler = ({ children }) => {
 
     useEffect(() => {
         const unsubscribe = navigation.addListener('tabPress', (e) => {
-            // Obtener el estado actual
             const state = navigation.getState();
-            const currentRoute = state.routes[state.index];
 
-            // Verificar si hay un carrito abierto en cualquier stack
-            if (currentRoute?.state?.routes) {
-                const hasCart = currentRoute.state.routes.some(route => route.name === 'Carrito');
+            // Buscar el carrito en TODAS las pestañas
+            let hasCartInAnyTab = false;
+            let tabWithCart = null;
 
-                if (hasCart) {
-                    // Prevenir la navegación por defecto
-                    e.preventDefault();
+            state.routes.forEach((route, index) => {
+                if (route.state?.routes) {
+                    const hasCart = route.state.routes.some(r => r.name === 'Carrito');
+                    if (hasCart) {
+                        hasCartInAnyTab = true;
+                        tabWithCart = route.name;
+                    }
+                }
+            });
 
-                    // Obtener el nombre de la pestaña objetivo
-                    const targetTabName = e.target?.split('-')[0] || currentRoute.name;
+            if (hasCartInAnyTab) {
+                // Prevenir navegación por defecto
+                e.preventDefault();
 
-                    // Determinar la pantalla inicial de la pestaña
+                // Obtener la pestaña objetivo
+                const targetTabName = e.target?.split('-')[0];
+
+                // Resetear TODAS las pestañas sin carrito
+                const newRoutes = state.routes.map(route => {
                     let initialScreen = 'HomeInitial';
-                    switch (targetTabName) {
+                    switch (route.name) {
                         case 'Inicio': initialScreen = 'HomeInitial'; break;
                         case 'Buscar': initialScreen = 'SearchInitial'; break;
                         case 'Pedidos': initialScreen = 'OrdersInitial'; break;
@@ -31,20 +40,25 @@ const CartNavigationHandler = ({ children }) => {
                         case 'Perfil': initialScreen = 'ProfileInitial'; break;
                     }
 
-                    // Resetear completamente la navegación a la pestaña deseada
-                    navigation.reset({
-                        index: 0,
-                        routes: [
-                            {
-                                name: targetTabName,
-                                state: {
-                                    routes: [{ name: initialScreen }],
-                                    index: 0,
-                                },
-                            },
-                        ],
-                    });
-                }
+                    return {
+                        ...route,
+                        state: {
+                            routes: [{ name: initialScreen }],
+                            index: 0,
+                        },
+                    };
+                });
+
+                // Encontrar el índice de la pestaña objetivo
+                const targetIndex = newRoutes.findIndex(r => r.name === targetTabName);
+
+                // Resetear con todas las pestañas limpias
+                navigation.reset({
+                    index: targetIndex >= 0 ? targetIndex : state.index,
+                    routes: newRoutes,
+                });
+
+                console.log('✅ Reset completado');
             }
         });
 

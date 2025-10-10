@@ -21,6 +21,7 @@ export const CartProvider = ({ children }) => {
   const [deliveryAddress, setDeliveryAddress] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [orderNotes, setOrderNotes] = useState('');
+  const [isCartVisible, setIsCartVisible] = useState(false);
   const { user } = useAuth();
 
   // Cargar carrito desde AsyncStorage al iniciar
@@ -96,7 +97,16 @@ export const CartProvider = ({ children }) => {
 
   const clearCart = useCallback(() => {
     setCartItems([]);
+    setIsCartVisible(false);
     AsyncStorage.removeItem(CART_STORAGE_KEY);
+  }, []);
+
+  const showCart = useCallback(() => {
+    setIsCartVisible(true);
+  }, []);
+
+  const hideCart = useCallback(() => {
+    setIsCartVisible(false);
   }, []);
 
   const updateQuantity = useCallback((itemId, newQuantity) => {
@@ -220,6 +230,7 @@ export const CartProvider = ({ children }) => {
     // Estado del carrito
     cartItems,
     isLoading,
+    isCartVisible,
     
     // Información de entrega y pago
     deliveryAddress,
@@ -236,6 +247,8 @@ export const CartProvider = ({ children }) => {
     decreaseQuantity,
     updateQuantity,
     clearCart,
+    showCart,
+    hideCart,
     
     // Checkout
     createOrder,
@@ -248,8 +261,8 @@ export const CartProvider = ({ children }) => {
     finalTotal,
     cartRestaurant,
   }), [
-    cartItems, isLoading, deliveryAddress, paymentMethod, orderNotes,
-    addToCart, removeFromCart, increaseQuantity, decreaseQuantity, updateQuantity, clearCart,
+    cartItems, isLoading, isCartVisible, deliveryAddress, paymentMethod, orderNotes,
+    addToCart, removeFromCart, increaseQuantity, decreaseQuantity, updateQuantity, clearCart, showCart, hideCart,
     createOrder, canCheckout, totalQuantity, totalPrice, deliveryFee, finalTotal, cartRestaurant
   ]);
 

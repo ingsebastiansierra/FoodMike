@@ -13,6 +13,7 @@ import { SPACING } from "../../../theme/spacing";
 import Icon from "react-native-vector-icons/FontAwesome";
 import { useAuth } from "../../../context/AuthContext";
 import { useCart } from "../../../context/CartContext";
+import { useAutoCloseCart } from "../../../hooks/useAutoCloseCart";
 import { 
   Header, 
   TabNavigator, 
@@ -38,6 +39,9 @@ import { search } from '../../../services/searchService';
 const ClientHomeScreen = ({ navigation }) => {
   const { user } = useAuth();
   const { addToCart } = useCart();
+  
+  // Auto-close cart when this screen gains focus
+  useAutoCloseCart();
 
   const handleProductPress = (product) => {
     navigation.navigate('ProductDetail', { product });

@@ -12,10 +12,10 @@ import {
   StatusBar,
   TextInput,
 } from 'react-native';
-import { 
-  SkeletonProductList, 
+import {
+  SkeletonProductList,
   SkeletonBase,
-  SkeletonSimpleList 
+  SkeletonSimpleList
 } from '../../../components/skeletons';
 import LoadingWrapper from '../../../components/LoadingWrapper';
 import { Ionicons } from '@expo/vector-icons';
@@ -24,6 +24,7 @@ import { searchService } from '../../../services/searchService';
 import ProductCard from '../../../components/ProductCard';
 import { useCart } from '../../../context/CartContext';
 import { showAlert } from '../../core/utils/alert';
+import { useAutoCloseCart } from '../../../hooks/useAutoCloseCart';
 import ModalWrapper from '../../../components/ModalWrapper';
 
 const { width, height } = Dimensions.get('window');
@@ -63,6 +64,9 @@ const SearchScreen = ({ navigation }) => {
 
   const { addToCart } = useCart();
 
+  // Auto-close cart when this screen gains focus
+  useAutoCloseCart();
+
   useEffect(() => {
     loadInitialData();
   }, []);
@@ -74,9 +78,6 @@ const SearchScreen = ({ navigation }) => {
         searchService.getCategories(),
         searchService.getAllProducts(1000),
       ]);
-
-      console.log('Categorías cargadas:', categoriesResponse);
-      console.log('Productos cargados:', productsResponse);
 
       setCategories(categoriesResponse.data || []);
       setAllProducts(productsResponse.data || []);
@@ -95,24 +96,19 @@ const SearchScreen = ({ navigation }) => {
     if (selectedCategory !== 'all') {
       const selectedCat = categories.find((cat) => cat.id === selectedCategory);
       if (selectedCat) {
-        console.log('Filtrando por categoría:', selectedCat.name);
         filtered = filtered.filter((product) => {
           if (!product.category) {
-            console.log('Producto sin categoría:', product.id, product.name);
             return false;
           }
-          
+
           // Asegurarse de que la categoría sea un string
           if (typeof product.category !== 'string') {
-            console.log('Categoría no es string:', product.id, product.name, product.category);
             return false;
           }
-          
+
           const matches = product.category.toLowerCase().includes(selectedCat.name.toLowerCase());
-          console.log(`Producto ${product.id} (${product.name}) - Categoría: ${product.category} - ¿Coincide con ${selectedCat.name}? ${matches}`);
           return matches;
         });
-        console.log('Productos filtrados por categoría:', filtered.length);
       }
     }
 
@@ -235,8 +231,8 @@ const SearchScreen = ({ navigation }) => {
     return (
       <View style={styles.container}>
         <StatusBar barStyle="dark-content" />
-        <LoadingWrapper 
-          isLoading={loading} 
+        <LoadingWrapper
+          isLoading={loading}
           skeletonType="search"
         >
           {/* Contenido vacío, el skeleton se encarga de todo */}
