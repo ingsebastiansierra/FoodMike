@@ -1,4 +1,4 @@
-package com.sebasing.foodmike
+package com.sebasing.toctoc
 
 import android.os.Build
 import android.os.Bundle

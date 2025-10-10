@@ -9,6 +9,7 @@ import { STRINGS, ICONS } from '../../../constants/strings';
 import { useCart } from '../../../context/CartContext';
 import restaurantsService from '../../../services/restaurantsService'; // 👈 corregí la ruta
 import { formatCurrency } from '../../../shared/utils/format';
+import { useFocusEffect } from '@react-navigation/native';
 
 const ProductDetailScreen = ({ route, navigation }) => {
   const { product } = route.params;
@@ -47,6 +48,8 @@ const ProductDetailScreen = ({ route, navigation }) => {
 
     fetchRestaurant();
   }, [product.restaurantid]);
+
+
 
   // Nombre del restaurante
   const restaurantName =

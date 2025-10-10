@@ -87,9 +87,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.sebasing.foodmike'
+    namespace 'com.sebasing.toctoc'
     defaultConfig {
-        applicationId 'com.sebasing.foodmike'
+        applicationId 'com.sebasing.toctoc'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

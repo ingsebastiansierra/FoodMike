@@ -21,7 +21,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.sebasing.foodmike"
+      "package": "com.sebasing.toctoc"
     },
     "web": {
       "favicon": "./assets/favicon.png"

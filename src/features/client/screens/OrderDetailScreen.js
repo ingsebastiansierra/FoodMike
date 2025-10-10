@@ -9,11 +9,13 @@ import {
   Image,
   Alert
 } from 'react-native';
+import LoadingWrapper from '../../../components/LoadingWrapper';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, typography } from '../../../theme';
 import { formatCurrency, formatDate, formatTime } from '../../../shared/utils/format';
 import ordersService from '../../../services/ordersService';
 import { showAlert, showConfirmAlert } from '../../core/utils/alert';
+import { useFocusEffect } from '@react-navigation/native';
 
 const OrderDetailScreen = ({ route, navigation }) => {
   const { orderId } = route.params;
@@ -23,6 +25,8 @@ const OrderDetailScreen = ({ route, navigation }) => {
   useEffect(() => {
     loadOrderDetail();
   }, [orderId]);
+
+
 
   const loadOrderDetail = async () => {
     try {
@@ -98,10 +102,10 @@ const OrderDetailScreen = ({ route, navigation }) => {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.loadingText}>Cargando detalle del pedido...</Text>
-      </View>
+      <LoadingWrapper 
+        isLoading={loading} 
+        skeletonType="orderDetail"
+      />
     );
   }
 
@@ -122,15 +126,6 @@ const OrderDetailScreen = ({ route, navigation }) => {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color={colors.dark} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Detalle del Pedido</Text>
-        <View style={{ width: 24 }} />
-      </View>
-
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Estado del pedido */}
         <View style={styles.statusCard}>
@@ -337,27 +332,14 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.md,
     fontWeight: 'bold',
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    backgroundColor: colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.lightGray,
-  },
-  headerTitle: {
-    fontSize: typography.sizes.lg,
-    fontWeight: 'bold',
-    color: colors.dark,
-  },
+
   scrollView: {
     flex: 1,
   },
   statusCard: {
     backgroundColor: colors.white,
     margin: spacing.lg,
+    marginTop: spacing.md, // Reducir el margen superior
     padding: spacing.lg,
     borderRadius: 12,
     alignItems: 'center',

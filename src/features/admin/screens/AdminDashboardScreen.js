@@ -99,7 +99,7 @@ const AdminDashboardScreen = () => {
       <View style={styles.header}>
         <View>
           <Text style={styles.headerRestaurant}>{restaurantName}</Text>
-          <Text style={styles.headerTitle}>FoodMike</Text>
+          <Text style={styles.headerTitle}>TOC TOC</Text>
         </View>
         <View style={styles.headerRight}>
           <Icon name="cutlery" size={22} color="#FF7043" style={{ marginRight: 10 }} />

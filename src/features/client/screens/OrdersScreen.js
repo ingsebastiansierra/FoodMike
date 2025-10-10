@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Image
 } from 'react-native';
+import LoadingWrapper from '../../../components/LoadingWrapper';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../../context/AuthContext';
 import { colors, spacing, typography } from '../../../theme';
@@ -184,10 +185,11 @@ const OrdersScreen = ({ navigation }) => {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.loadingText}>Cargando pedidos...</Text>
-      </View>
+      <LoadingWrapper 
+        isLoading={loading} 
+        skeletonType="orders" 
+        skeletonCount={5}
+      />
     );
   }
 

@@ -1,17 +1,19 @@
-import React, { useContext, useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  FlatList, 
-  TouchableOpacity, 
+import React, { useContext, useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
   ScrollView,
   StatusBar,
-  Dimensions
+  Dimensions,
+  BackHandler
 } from 'react-native';
 import { CartContext } from '../context/CartContext';
 import CartItemCard from './CartItemCard';
 import { useNavigation } from '@react-navigation/native';
+import { useCartNavigation } from '../hooks/useCartNavigation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -25,19 +27,35 @@ const { width, height } = Dimensions.get('window');
 const CarritoComponent = () => {
   const { cartItems, totalPrice, clearCart } = useContext(CartContext);
   const navigation = useNavigation();
+  const { forceCloseCart } = useCartNavigation();
   const insets = useSafeAreaInsets();
   const [showConfirmarOrden, setShowConfirmarOrden] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  
-  
+
+
   const shippingCost = totalPrice >= 50 ? 0 : 5;
   const finalTotal = totalPrice + shippingCost;
+
+
+
+  // Manejar el botón de hardware "atrás" en Android
+  useEffect(() => {
+    const backAction = () => {
+      handleBack();
+      return true; // Prevenir el comportamiento por defecto
+    };
+
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
+
+    return () => backHandler.remove();
+  }, [showConfirmarOrden]);
 
   const handleBack = () => {
     if (showConfirmarOrden) {
       setShowConfirmarOrden(false);
     } else {
-      navigation.goBack();
+      // Usar la función mejorada para cerrar el carrito
+      forceCloseCart();
     }
   };
 
@@ -76,12 +94,15 @@ const CarritoComponent = () => {
         setTimeout(() => {
           setIsProcessing(false);
           showAlert(
-            '¡Pago Exitoso!', 
+            '¡Pago Exitoso!',
             'Tu pedido ha sido procesado correctamente. Recibirás una confirmación por email.',
             () => {
               clearCart();
               setShowConfirmarOrden(false);
-              navigation.navigate('ClientDashboard');
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Inicio', params: { screen: 'HomeInitial' } }]
+              });
             }
           );
         }, 2000);
@@ -98,9 +119,14 @@ const CarritoComponent = () => {
       <Icon name="shopping-cart" size={80} color={COLORS.gray} />
       <Text style={styles.emptyTitle}>Carrito Vacío</Text>
       <Text style={styles.emptySubtitle}>No hay productos en el carrito</Text>
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.continueButton}
-        onPress={() => navigation.navigate('ClientDashboard')}
+        onPress={() => {
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'Inicio', params: { screen: 'HomeInitial' } }]
+          });
+        }}
       >
         <Text style={styles.continueButtonText}>Seguir Comprando</Text>
       </TouchableOpacity>
@@ -112,26 +138,26 @@ const CarritoComponent = () => {
       {/* Order Summary */}
       <View style={styles.summaryCard}>
         <Text style={styles.summaryTitle}>Resumen del Pedido</Text>
-        
+
         <View style={styles.summaryRow}>
           <Text style={styles.summaryLabel}>Subtotal:</Text>
           <Text style={styles.summaryValue}>{formatCurrency(totalPrice)}</Text>
         </View>
-        
+
         <View style={styles.summaryRow}>
           <Text style={styles.summaryLabel}>Envío:</Text>
           <Text style={styles.summaryValue}>
             {shippingCost === 0 ? 'Gratis' : formatCurrency(shippingCost)}
           </Text>
         </View>
-        
+
         <View style={styles.divider} />
-        
+
         <View style={styles.summaryRow}>
           <Text style={styles.totalLabel}>Total:</Text>
           <Text style={styles.totalValue}>{formatCurrency(finalTotal)}</Text>
         </View>
-        
+
         {shippingCost === 0 && (
           <Text style={styles.freeShippingText}>
             🎉 ¡Envío gratis en pedidos superiores a $50!
@@ -164,7 +190,7 @@ const CarritoComponent = () => {
               Mi Carrito ({cartItems.length} {cartItems.length === 1 ? 'producto' : 'productos'})
             </Text>
           </View>
-          
+
           <FlatList
             data={cartItems}
             renderItem={renderItem}
@@ -194,10 +220,10 @@ const CarritoComponent = () => {
                 colors={isProcessing ? [COLORS.gray, COLORS.gray] : [COLORS.primary, COLORS.accent]}
                 style={styles.paymentButtonGradient}
               >
-                <Icon 
-                  name={isProcessing ? "spinner" : "credit-card"} 
-                  size={20} 
-                  color={COLORS.white} 
+                <Icon
+                  name={isProcessing ? "spinner" : "credit-card"}
+                  size={20}
+                  color={COLORS.white}
                 />
                 <Text style={styles.paymentButtonText}>
                   {isProcessing ? 'Procesando...' : `Pagar ${formatCurrency(finalTotal)}`}

@@ -12,6 +12,12 @@ import {
   StatusBar,
   TextInput,
 } from 'react-native';
+import { 
+  SkeletonProductList, 
+  SkeletonBase,
+  SkeletonSimpleList 
+} from '../../../components/skeletons';
+import LoadingWrapper from '../../../components/LoadingWrapper';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, typography } from '../../../theme';
 import { searchService } from '../../../services/searchService';
@@ -225,6 +231,20 @@ const SearchScreen = ({ navigation }) => {
     </View>
   );
 
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <StatusBar barStyle="dark-content" />
+        <LoadingWrapper 
+          isLoading={loading} 
+          skeletonType="search"
+        >
+          {/* Contenido vacío, el skeleton se encarga de todo */}
+        </LoadingWrapper>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
@@ -264,23 +284,19 @@ const SearchScreen = ({ navigation }) => {
         />
       </View>
 
-      {loading ? (
-        <ActivityIndicator size="large" color={colors.primary} style={{ flex: 1 }} />
-      ) : (
-        <FlatList
-          data={searchResults}
-          renderItem={renderProduct}
-          keyExtractor={(item) => item.id}
-          numColumns={2}
-          contentContainerStyle={styles.productList}
-          columnWrapperStyle={styles.productRow}
-          ListHeaderComponent={renderResultsHeader}
-          ListEmptyComponent={renderEmptyState}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
-          }
-        />
-      )}
+      <FlatList
+        data={searchResults}
+        renderItem={renderProduct}
+        keyExtractor={(item) => item.id}
+        numColumns={2}
+        contentContainerStyle={styles.productList}
+        columnWrapperStyle={styles.productRow}
+        ListHeaderComponent={renderResultsHeader}
+        ListEmptyComponent={renderEmptyState}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
+        }
+      />
 
       {/* Uso correcto del componente ModalWrapper */}
       <ModalWrapper isVisible={showFilters} onClose={() => setShowFilters(false)}>

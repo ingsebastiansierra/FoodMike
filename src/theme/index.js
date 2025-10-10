@@ -1,7 +1,9 @@
-// Sistema de temas centralizado para FoodMike
+// Sistema de temas centralizado para TOC TOC
 export { COLORS } from './colors';
 export { SPACING } from './spacing';
 export { TYPOGRAPHY } from './typography';
+export { SHADOWS, getShadow, createShadow } from './shadows';
+export { GRADIENTS, getGradient, createGradient } from './gradients';
 
 // Configuración del tema
 export const THEME = {
@@ -155,7 +157,7 @@ export const getBorderRadius = (size) => {
   return THEME.borderRadius[size] || size;
 };
 
-export const getShadow = (size) => {
+export const getThemeShadow = (size) => {
   return THEME.shadows[size] || THEME.shadows.medium;
 };
 

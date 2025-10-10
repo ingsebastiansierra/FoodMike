@@ -97,26 +97,41 @@ const LoginRegisterScreen = ({ navigation }) => {
   };
 
   return (
-    <GradientBackground>
+    <GradientBackground variant="primary">
       <KeyboardAvoidingView 
         behavior={Platform.OS === "ios" ? "padding" : "height"} 
         style={{ flex: 1 }}
       >
         <StatusBar barStyle="light-content" />
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>FoodMike</Text>
-          <Text style={styles.welcomeText}>
-            {isLogin ? 'Bienvenido de nuevo' : 'Crea tu cuenta'}
-          </Text>
+          <View style={styles.logoContainer}>
+            <View style={styles.logoCircle}>
+              <Icon name="cutlery" size={24} color={COLORS.white} />
+            </View>
+            <Text style={styles.headerTitle}>TOC TOC</Text>
+          </View>
         </View>
         
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <ScrollView 
+          contentContainerStyle={styles.scrollContainer}
+          showsVerticalScrollIndicator={false}
+        >
           <View style={styles.mainCard}>
-            <Text style={styles.title}>{isLogin ? 'Iniciar Sesión' : 'Registro'}</Text>
+            <View style={styles.cardHeader}>
+              <Text style={styles.title}>
+                {isLogin ? 'Entrar' : 'Crear Cuenta'}
+              </Text>
+              <Text style={styles.subtitle}>
+                {isLogin 
+                  ? 'Ingresa tus datos para continuar' 
+                  : 'Completa tus datos para empezar'
+                }
+              </Text>
+            </View>
 
             {error ? (
               <View style={styles.errorContainer}>
-                <Icon name="exclamation-circle" size={20} color="#FF5722" />
+                <Icon name="exclamation-triangle" size={18} color={COLORS.error} />
                 <Text style={styles.errorText}>{error}</Text>
               </View>
             ) : null}
@@ -125,33 +140,37 @@ const LoginRegisterScreen = ({ navigation }) => {
               {!isLogin && (
                 <Input
                   icon="user"
-                  placeholder="Nombre Completo"
+                  placeholder="Tu nombre completo"
                   value={name}
                   onChangeText={setName}
+                  label="Nombre"
                 />
               )}
               <Input
                 icon="envelope"
-                placeholder="Correo Electrónico"
+                placeholder="tu@email.com"
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
                 autoCapitalize="none"
+                label="Correo electrónico"
               />
               <Input
                 icon="lock"
-                placeholder="Contraseña"
+                placeholder="Mínimo 6 caracteres"
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
+                label="Contraseña"
               />
               {!isLogin && (
                 <Input
                   icon="lock"
-                  placeholder="Confirmar Contraseña"
+                  placeholder="Repite tu contraseña"
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
                   secureTextEntry
+                  label="Confirmar contraseña"
                 />
               )}
             </View>
@@ -160,14 +179,16 @@ const LoginRegisterScreen = ({ navigation }) => {
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color={COLORS.primary} />
                 <Text style={styles.loadingText}>
-                  {isLogin ? 'Iniciando sesión...' : 'Registrando...'}
+                  {isLogin ? 'Iniciando sesión...' : 'Creando tu cuenta...'}
                 </Text>
               </View>
             ) : (
               <BotonEstandar
-                title={isLogin ? 'Iniciar Sesión' : 'Registrarse'}
+                title={isLogin ? 'Entrar' : 'Crear Cuenta'}
                 onPress={isLogin ? handleLogin : handleRegister}
                 style={styles.mainButton}
+                size="medium"
+                icon={isLogin ? 'sign-in' : 'user-plus'}
               />
             )}
 
@@ -179,13 +200,11 @@ const LoginRegisterScreen = ({ navigation }) => {
               }}
             >
               <Text style={styles.switchModeText}>
-                {isLogin ? '¿No tienes cuenta?' : '¿Ya tienes cuenta?'}
+                {isLogin ? '¿Nuevo en TOC TOC?' : '¿Ya tienes cuenta?'}
               </Text>
-              <Icon 
-                name={isLogin ? "arrow-right" : "arrow-left"} 
-                size={16} 
-                color={COLORS.primary} 
-              />
+              <Text style={styles.switchModeAction}>
+                {isLogin ? 'Crear cuenta' : 'Iniciar sesión'}
+              </Text>
             </TouchableOpacity>
 
             {isLogin && (
@@ -206,11 +225,11 @@ const LoginRegisterScreen = ({ navigation }) => {
               <View style={styles.divider} />
             </View>
             <View style={styles.socialButtonsContainer}>
-              <TouchableOpacity style={[styles.socialButton, { backgroundColor: '#4285F4' }]}>
+              <TouchableOpacity style={[styles.socialButton, styles.googleButton]}>
                 <Icon name="google" size={20} color={COLORS.white} />
                 <Text style={styles.socialButtonText}>Google</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.socialButton, { backgroundColor: '#1877F2' }]}>
+              <TouchableOpacity style={[styles.socialButton, styles.facebookButton]}>
                 <Icon name="facebook" size={20} color={COLORS.white} />
                 <Text style={styles.socialButtonText}>Facebook</Text>
               </TouchableOpacity>
@@ -224,24 +243,34 @@ const LoginRegisterScreen = ({ navigation }) => {
 
 const styles = StyleSheet.create({
   header: {
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight + 20 : 60,
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight + 20 : 50,
     paddingHorizontal: SPACING.lg,
-    paddingBottom: SPACING.xl * 2,
+    paddingBottom: SPACING.lg,
     alignItems: 'center',
   },
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  logoCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: SPACING.md,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
   headerTitle: {
-    fontSize: 36,
-    fontWeight: 'bold',
+    fontSize: 32,
+    fontWeight: '800',
     color: COLORS.white,
-    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 4,
-  },
-  welcomeText: {
-    fontSize: 18,
-    color: COLORS.white,
-    opacity: 0.9,
-    textAlign: 'center',
+    letterSpacing: 0.5,
   },
   scrollContainer: {
     flexGrow: 1,
@@ -253,74 +282,94 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     padding: SPACING.xl,
     marginBottom: SPACING.lg,
+    shadowColor: COLORS.shadow?.dark || '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
     elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
+  },
+  cardHeader: {
+    alignItems: 'center',
+    marginBottom: SPACING.lg,
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-    marginBottom: SPACING.lg,
+    fontWeight: '800',
+    color: COLORS.text.primary,
+    marginBottom: SPACING.sm,
     textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 14,
+    color: COLORS.text.secondary,
+    textAlign: 'center',
+    fontWeight: '500',
   },
   errorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFEBEE',
+    backgroundColor: COLORS.lightPrimary,
     padding: SPACING.md,
-    borderRadius: 12,
-    marginBottom: SPACING.md,
+    borderRadius: 16,
+    marginBottom: SPACING.lg,
     borderLeftWidth: 4,
-    borderLeftColor: '#FF5722',
+    borderLeftColor: COLORS.error,
   },
   errorText: {
-    color: '#FF5722',
+    color: COLORS.error,
     marginLeft: SPACING.sm,
     fontWeight: '600',
     flex: 1,
+    fontSize: 14,
   },
   inputContainer: {
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.sm,
   },
   mainButton: {
-    marginTop: SPACING.lg,
-    marginBottom: SPACING.md,
+    marginTop: SPACING.xs,
+    marginBottom: SPACING.sm,
   },
   loadingContainer: {
     alignItems: 'center',
-    marginTop: SPACING.md,
+    marginTop: SPACING.lg,
+    paddingVertical: SPACING.xl,
   },
   loadingText: {
     color: COLORS.primary,
-    marginTop: SPACING.sm,
+    marginTop: SPACING.md,
     fontWeight: '600',
+    fontSize: 16,
   },
   switchModeButton: {
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: SPACING.md,
-    marginTop: SPACING.sm,
+    paddingVertical: SPACING.sm,
+    marginTop: SPACING.xs,
   },
   switchModeText: {
+    color: COLORS.text.secondary,
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  switchModeAction: {
     color: COLORS.primary,
-    fontWeight: 'bold',
-    marginRight: SPACING.xs,
+    fontSize: 16,
+    fontWeight: '700',
+    textDecorationLine: 'underline',
   },
   forgotPasswordButton: {
     alignItems: 'center',
     paddingVertical: SPACING.sm,
+    marginTop: SPACING.xs,
   },
   forgotPasswordText: {
     color: COLORS.primary,
     fontWeight: '600',
+    fontSize: 14,
     textDecorationLine: 'underline',
   },
   socialContainer: {
-    marginTop: SPACING.lg,
+    marginTop: SPACING.md,
   },
   dividerContainer: {
     flexDirection: 'row',
@@ -329,35 +378,49 @@ const styles = StyleSheet.create({
   },
   divider: {
     flex: 1,
-    height: 1,
+    height: 2,
     backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: 1,
   },
   dividerText: {
     color: COLORS.white,
-    paddingHorizontal: SPACING.md,
+    paddingHorizontal: SPACING.lg,
     fontSize: 14,
     fontWeight: '600',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    paddingVertical: SPACING.sm,
+    borderRadius: 20,
   },
   socialButtonsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
+    gap: SPACING.md,
   },
   socialButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.xl,
-    borderRadius: 25,
-    elevation: 4,
+    paddingHorizontal: SPACING.lg,
+    borderRadius: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
-    shadowRadius: 4,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  googleButton: {
+    backgroundColor: '#EA4335',
+  },
+  facebookButton: {
+    backgroundColor: '#1877F2',
   },
   socialButtonText: {
     color: COLORS.white,
-    fontWeight: 'bold',
+    fontWeight: '700',
     marginLeft: SPACING.sm,
+    fontSize: 14,
   },
 });
 

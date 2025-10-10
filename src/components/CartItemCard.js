@@ -14,7 +14,7 @@ const CartItemCard = ({ item, index }) => {
   const handleRemoveItem = () => {
     showConfirmAlert(
       'Eliminar Producto',
-      `¿Estás seguro de que quieres eliminar "${item.title}" del carrito?`,
+      `¿Estás seguro de que quieres eliminar "${item.name || item.title}" del carrito?`,
       () => removeFromCart(item.id)
     );
   };
@@ -44,10 +44,10 @@ const CartItemCard = ({ item, index }) => {
         )}
         <View style={styles.categoryBadge}>
           <Text style={styles.categoryText}>
-            {item.category === '1' ? 'Hamburguesas' : 
-             item.category === '2' ? 'Pizzas' : 
-             item.category === '3' ? 'Alitas' : 
-             item.category === '4' ? 'Bebidas' : 'Otros'}
+            {item.category === '1' ? 'Hamburguesas' :
+              item.category === '2' ? 'Pizzas' :
+                item.category === '3' ? 'Alitas' :
+                  item.category === '4' ? 'Bebidas' : 'Otros'}
           </Text>
         </View>
       </View>
@@ -55,9 +55,9 @@ const CartItemCard = ({ item, index }) => {
       <View style={styles.contentContainer}>
         <View style={styles.headerRow}>
           <Text style={styles.title} numberOfLines={2}>
-            {item.title}
+            {item.name || item.title}
           </Text>
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={handleRemoveItem}
             style={styles.removeButton}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -77,9 +77,9 @@ const CartItemCard = ({ item, index }) => {
 
         <View style={styles.quantityContainer}>
           <Text style={styles.quantityLabel}>Cantidad:</Text>
-          
+
           <View style={styles.quantityControls}>
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={handleDecreaseQuantity}
               style={[
                 styles.quantityButton,
@@ -87,10 +87,10 @@ const CartItemCard = ({ item, index }) => {
               ]}
               activeOpacity={0.7}
             >
-              <Icon 
-                name={item.quantity === 1 ? "trash" : "minus"} 
-                size={12} 
-                color={item.quantity === 1 ? COLORS.white : COLORS.primary} 
+              <Icon
+                name={item.quantity === 1 ? "trash" : "minus"}
+                size={12}
+                color={item.quantity === 1 ? COLORS.white : COLORS.primary}
               />
             </TouchableOpacity>
 
@@ -98,7 +98,7 @@ const CartItemCard = ({ item, index }) => {
               <Text style={styles.quantityText}>{item.quantity}</Text>
             </View>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => increaseQuantity(item.id)}
               style={styles.quantityButton}
               activeOpacity={0.7}

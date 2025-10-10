@@ -13,7 +13,7 @@ export const useCart = () => {
   return context;
 };
 
-const CART_STORAGE_KEY = '@foodmike_cart';
+const CART_STORAGE_KEY = '@toctoc_cart';
 
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);

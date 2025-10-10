@@ -14,9 +14,9 @@ export default function App() {
       <AuthProvider>
         <CartProvider>
           <NavigationContainer>
-            <StatusBar 
-              barStyle="dark-content" 
-              backgroundColor={COLORS.background.primary} 
+            <StatusBar
+              barStyle="dark-content"
+              backgroundColor={COLORS.background.primary}
             />
             <AppNavigator />
           </NavigationContainer>

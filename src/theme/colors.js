@@ -1,47 +1,112 @@
 export const COLORS = {
-  // Brand colors
-  primary: '#FF6B00',
-  primaryDark: '#E55A00',
-  accent: '#FF6B00',
+  // 🔥 Brand Colors - Inspirados en comida y apetito
+  primary: '#FF4757',        // Rojo vibrante (tomate fresco)
+  primaryDark: '#FF3742',    // Rojo más intenso
+  primaryLight: '#FF6B7A',   // Rojo suave
+  secondary: '#FFA502',      // Naranja dorado (queso cheddar)
+  secondaryDark: '#FF8C00',  // Naranja más profundo
+  secondaryLight: '#FFB84D', // Naranja claro
+  accent: '#2ED573',         // Verde fresco (lechuga/hierbas)
+  accentDark: '#26C65B',     // Verde más intenso
+  accentLight: '#4FE085',    // Verde suave
   
-  // Base colors
-  white: '#FFFFFF',
-  black: '#000000',
-  gray: '#878787',
-  darkGray: '#333333',
-  mediumGray: '#666666',
-  lightGray: '#F5F5F5',
-  lightPrimary: '#FFF3E0',
+  // 🎨 Colores de apoyo
+  tertiary: '#5352ED',       // Púrpura moderno
+  quaternary: '#FF6348',     // Coral vibrante
   
-  // Text colors
-  text: {
-    primary: '#0F0F0F',
-    secondary: '#878787',
-    disabled: '#A5A5A5',
+  // 🌈 Paleta extendida para categorías
+  categories: {
+    pizza: '#FF4757',        // Rojo tomate
+    burger: '#FFA502',       // Naranja queso
+    sushi: '#2ED573',        // Verde wasabi
+    dessert: '#FF6B9D',      // Rosa fresa
+    drinks: '#3742FA',       // Azul refrescante
+    healthy: '#26C65B',      // Verde saludable
+    mexican: '#FF7675',      // Rojo chile
+    asian: '#FDCB6E',        // Amarillo curry
   },
   
-  // Background colors
+  // 🎯 Base colors mejorados
+  white: '#FFFFFF',
+  black: '#2C2C54',          // Negro más suave
+  gray: '#747D8C',           // Gris balanceado
+  darkGray: '#2F3542',       // Gris oscuro moderno
+  mediumGray: '#57606F',     // Gris medio
+  lightGray: '#F1F2F6',     // Gris muy claro
+  lightPrimary: '#FFF5F5',   // Fondo suave rojo
+  lightSecondary: '#FFF8E1', // Fondo suave naranja
+  lightAccent: '#F0FFF4',    // Fondo suave verde
+  
+  // 📝 Text colors mejorados
+  text: {
+    primary: '#2C2C54',      // Texto principal más suave
+    secondary: '#747D8C',     // Texto secundario
+    disabled: '#A4B0BE',      // Texto deshabilitado
+    inverse: '#FFFFFF',       // Texto sobre fondos oscuros
+    accent: '#FF4757',        // Texto de acento
+  },
+  
+  // 🏠 Background colors renovados
   background: {
-    primary: '#FFFFFF',
-    secondary: '#FAFAFA',
-    divider: '#D6D6D6',
+    primary: '#FFFFFF',       // Fondo principal
+    secondary: '#F8F9FA',     // Fondo secundario
+    tertiary: '#F1F2F6',      // Fondo terciario
+    card: '#FFFFFF',          // Fondo de tarjetas
+    modal: 'rgba(44, 44, 84, 0.8)', // Fondo de modales
+    divider: '#DDD6FE',       // Divisores
+    overlay: 'rgba(0, 0, 0, 0.5)', // Overlay
   },
 
-  // Shadow colors
+  // 🌟 Shadow colors mejorados
   shadow: {
-    light: '#0000000D',
+    light: 'rgba(255, 71, 87, 0.1)',    // Sombra suave roja
+    medium: 'rgba(255, 71, 87, 0.15)',   // Sombra media roja
+    dark: 'rgba(44, 44, 84, 0.2)',       // Sombra oscura
+    colored: 'rgba(255, 165, 2, 0.3)',   // Sombra naranja
   },
-  onboardingBackground: '#FF6B00',
   
-  // Status colors
-  success: '#4CAF50',
-  error: '#F44336',
-  warning: '#FF9800',
-  info: '#2196F3',
+  // 🎪 Gradients para fondos atractivos
+  gradients: {
+    primary: ['#FF4757', '#FF3742'],
+    secondary: ['#FFA502', '#FF8C00'],
+    accent: ['#2ED573', '#26C65B'],
+    sunset: ['#FF6B7A', '#FFA502'],
+    ocean: ['#3742FA', '#2ED573'],
+    fire: ['#FF4757', '#FF6348'],
+    warm: ['#FFA502', '#FF6B9D'],
+  },
   
-  // Alias for compatibility
-  dark: '#333333',
-  background: '#FAFAFA',
+  onboardingBackground: '#FF4757',
+  
+  // ✅ Status colors más vibrantes
+  success: '#2ED573',        // Verde éxito
+  error: '#FF4757',          // Rojo error (consistente con primary)
+  warning: '#FFA502',        // Naranja advertencia
+  info: '#3742FA',           // Azul información
+  
+  // 🏷️ Estados interactivos
+  states: {
+    active: '#FF4757',
+    inactive: '#A4B0BE',
+    hover: '#FF6B7A',
+    pressed: '#FF3742',
+    selected: '#FFF5F5',
+    disabled: '#F1F2F6',
+  },
+  
+  // 🛍️ E-commerce específicos
+  ecommerce: {
+    price: '#2ED573',         // Verde para precios
+    discount: '#FF4757',      // Rojo para descuentos
+    outOfStock: '#A4B0BE',    // Gris para sin stock
+    inStock: '#2ED573',       // Verde para en stock
+    rating: '#FFA502',        // Naranja para calificaciones
+    delivery: '#3742FA',      // Azul para delivery
+  },
+  
+  // 🎨 Alias para compatibilidad
+  dark: '#2F3542',
+  background: '#F8F9FA',
 };
 
 // Utility function to get shadow style

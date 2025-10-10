@@ -8,87 +8,99 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform
+  StatusBar,
+  Dimensions,
+  Animated,
+  BackHandler
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing, typography } from '../../../theme';
+import { LinearGradient } from 'expo-linear-gradient';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import { COLORS } from '../../../theme/colors';
+import { SPACING } from '../../../theme/spacing';
 import { useCart } from '../../../context/CartContext';
 import { useAuth } from '../../../context/AuthContext';
 import { formatCurrency } from '../../../shared/utils/format';
-import CartItemCard from '../../../components/CartItemCard';
+import { showAlert } from '../../core/utils/alert';
 import locationService from '../../../services/locationService';
 
+const { width, height } = Dimensions.get('window');
+
 const CheckoutScreen = ({ navigation }) => {
-  const { 
-    cartItems, 
-    totalPrice, 
-    deliveryFee, 
+  const {
+    cartItems,
+    totalPrice,
+    deliveryFee,
     finalTotal,
-    deliveryAddress,
     setDeliveryAddress,
     paymentMethod,
     setPaymentMethod,
     orderNotes,
     setOrderNotes,
     createOrder,
-    canCheckout,
-    isLoading,
-    cartRestaurant
+    isLoading
   } = useCart();
-  
+
   const { user } = useAuth();
+  const [currentStep, setCurrentStep] = useState(0);
   const [address, setAddress] = useState('');
   const [phone, setPhone] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [currentLocation, setCurrentLocation] = useState(null);
+  const [slideAnim] = useState(new Animated.Value(0));
+
+  const steps = [
+    { title: 'Dirección', icon: 'location-on' },
+    { title: 'Pago', icon: 'payment' },
+    { title: 'Confirmar', icon: 'check-circle' }
+  ];
 
   useEffect(() => {
-    // Cargar dirección guardada del usuario si existe
-    if (user?.user_metadata?.address) {
-      setAddress(user.user_metadata.address);
-    }
-    if (user?.user_metadata?.phone) {
-      setPhone(user.user_metadata.phone);
-    }
+    if (user?.user_metadata?.address) setAddress(user.user_metadata.address);
+    if (user?.user_metadata?.phone) setPhone(user.user_metadata.phone);
   }, [user]);
 
   useEffect(() => {
-    // Actualizar dirección de entrega en el contexto
-    if (address.trim()) {
-      setDeliveryAddress({
-        street: address,
-        phone: phone,
-        instructions: orderNotes,
-        coordinates: currentLocation?.coordinates || null
-      });
-    }
-  }, [address, phone, orderNotes, currentLocation, setDeliveryAddress]);
+    Animated.spring(slideAnim, {
+      toValue: currentStep,
+      useNativeDriver: true,
+    }).start();
+  }, [currentStep]);
+
+  // Manejar el botón de hardware "atrás" en Android
+  useEffect(() => {
+    const backAction = () => {
+      handleBack();
+      return true; // Prevenir el comportamiento por defecto
+    };
+
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
+
+    return () => backHandler.remove();
+  }, [currentStep]);
 
   const handleGetCurrentLocation = async () => {
     try {
       setIsGettingLocation(true);
-      
+
       const locationData = await locationService.getCompleteLocation();
-      
+
       setCurrentLocation(locationData);
-      
+
       if (locationData.address) {
         setAddress(locationData.address.formattedAddress);
       }
-      
-      Alert.alert(
-        'Ubicación Obtenida',
-        'Tu ubicación actual ha sido detectada y agregada como dirección de entrega.',
-        [{ text: 'OK' }]
+
+      showAlert(
+        '📍 Ubicación Obtenida',
+        'Tu ubicación actual ha sido detectada y agregada como dirección de entrega.'
       );
-      
+
     } catch (error) {
       console.error('Error obteniendo ubicación:', error);
-      
+
       let errorMessage = 'No se pudo obtener tu ubicación. ';
-      
+
       if (error.message.includes('denegados')) {
         errorMessage += 'Por favor habilita los permisos de ubicación en la configuración de tu dispositivo.';
       } else if (error.message.includes('timeout')) {
@@ -96,38 +108,59 @@ const CheckoutScreen = ({ navigation }) => {
       } else {
         errorMessage += 'Verifica que tengas GPS activado e intenta nuevamente.';
       }
-      
-      Alert.alert('Error de Ubicación', errorMessage, [
+
+      Alert.alert('❌ Error de Ubicación', errorMessage, [
         { text: 'Cancelar' },
-        { text: 'Reintentar', onPress: handleGetCurrentLocation }
+        { text: '🔄 Reintentar', onPress: handleGetCurrentLocation }
       ]);
     } finally {
       setIsGettingLocation(false);
     }
   };
 
+  const handleNext = () => {
+    if (currentStep === 0) {
+      if (!address.trim()) {
+        showAlert('Error', 'Por favor ingresa tu dirección');
+        return;
+      }
+      if (!phone.trim()) {
+        showAlert('Error', 'Por favor ingresa tu teléfono');
+        return;
+      }
+      setDeliveryAddress({ street: address, phone, instructions: orderNotes });
+    }
+
+    if (currentStep < steps.length - 1) {
+      setCurrentStep(currentStep + 1);
+    } else {
+      handlePlaceOrder();
+    }
+  };
+
+  const handleBack = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    } else {
+      // Si estamos en el primer paso, volver al carrito o inicio
+      if (navigation.canGoBack()) {
+        navigation.goBack();
+      } else {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Inicio', params: { screen: 'HomeInitial' } }]
+        });
+      }
+    }
+  };
+
   const handlePlaceOrder = async () => {
-    if (!canCheckout) {
-      Alert.alert('Error', 'Por favor completa todos los campos requeridos');
-      return;
-    }
-
-    if (!address.trim()) {
-      Alert.alert('Error', 'Por favor ingresa tu dirección de entrega');
-      return;
-    }
-
-    if (!phone.trim()) {
-      Alert.alert('Error', 'Por favor ingresa tu número de teléfono');
-      return;
-    }
-
     Alert.alert(
-      'Confirmar Pedido',
+      '🎉 Confirmar Pedido',
       `¿Confirmas tu pedido por ${formatCurrency(finalTotal)}?`,
       [
         { text: 'Cancelar', style: 'cancel' },
-        { text: 'Confirmar', onPress: processOrder }
+        { text: '✅ Confirmar', onPress: processOrder }
       ]
     );
   };
@@ -136,457 +169,712 @@ const CheckoutScreen = ({ navigation }) => {
     setIsProcessing(true);
     try {
       const result = await createOrder();
-      
+
       Alert.alert(
-        '¡Pedido Confirmado!',
-        'Tu pedido ha sido enviado al restaurante. Te notificaremos cuando esté listo.',
+        '🎉 ¡Pedido Confirmado!',
+        'Tu pedido ha sido enviado. Te notificaremos cuando esté listo.',
         [
-          { 
-            text: 'Ver Pedido', 
-            onPress: () => navigation.navigate('OrderDetail', { orderId: result.data.id })
+          {
+            text: '📋 Ver Pedido',
+            onPress: () => {
+              navigation.reset({
+                index: 1,
+                routes: [
+                  { name: 'Inicio', params: { screen: 'HomeInitial' } },
+                  { name: 'OrderDetail', params: { orderId: result.data.id } }
+                ]
+              });
+            }
           },
-          { 
-            text: 'Ir a Inicio', 
-            onPress: () => navigation.navigate('ClientHome')
+          {
+            text: '🏠 Ir a Inicio',
+            onPress: () => {
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Inicio', params: { screen: 'HomeInitial' } }]
+              });
+            }
           }
         ]
       );
     } catch (error) {
-      console.error('Error procesando pedido:', error);
-      Alert.alert(
-        'Error',
-        'No se pudo procesar tu pedido. Por favor intenta nuevamente.',
-        [{ text: 'OK' }]
-      );
+      showAlert('❌ Error', 'No se pudo procesar tu pedido. Intenta nuevamente.');
     } finally {
       setIsProcessing(false);
     }
   };
 
+  const renderStepIndicator = () => (
+    <View style={styles.stepContainer}>
+      {steps.map((step, index) => (
+        <View key={index} style={styles.stepItem}>
+          <View style={[
+            styles.stepCircle,
+            index <= currentStep && styles.stepCircleActive
+          ]}>
+            <Icon
+              name={step.icon}
+              size={20}
+              color={index <= currentStep ? COLORS.white : COLORS.gray}
+            />
+          </View>
+          <Text style={[
+            styles.stepText,
+            index <= currentStep && styles.stepTextActive
+          ]}>
+            {step.title}
+          </Text>
+          {index < steps.length - 1 && (
+            <View style={[
+              styles.stepLine,
+              index < currentStep && styles.stepLineActive
+            ]} />
+          )}
+        </View>
+      ))}
+    </View>
+  );
+
+  const renderAddressStep = () => (
+    <View style={styles.stepContent}>
+      <Text style={styles.stepTitle}>📍 Dirección de Entrega</Text>
+
+      {/* Botón de ubicación actual */}
+      <TouchableOpacity
+        style={styles.locationButton}
+        onPress={handleGetCurrentLocation}
+        disabled={isGettingLocation}
+      >
+        <View style={styles.locationButtonGradient}>
+          {isGettingLocation ? (
+            <ActivityIndicator size="small" color={COLORS.white} />
+          ) : (
+            <Icon name="my-location" size={20} color={COLORS.white} />
+          )}
+          <Text style={styles.locationButtonText}>
+            {isGettingLocation ? 'Obteniendo ubicación...' : '📍 Usar mi ubicación actual'}
+          </Text>
+        </View>
+      </TouchableOpacity>
+
+      {/* Información de ubicación detectada */}
+      {currentLocation && (
+        <View style={styles.locationInfo}>
+          <Icon name="check-circle" size={16} color={COLORS.primary} />
+          <Text style={styles.locationInfoText}>
+            ✅ Ubicación GPS detectada ({currentLocation.coordinates.accuracy?.toFixed(0)}m de precisión)
+          </Text>
+        </View>
+      )}
+
+      <View style={styles.inputGroup}>
+        <View style={styles.inputContainer}>
+          <Icon name="location-on" size={24} color={COLORS.primary} />
+          <TextInput
+            style={styles.input}
+            placeholder="Dirección completa (Calle, número, barrio)"
+            value={address}
+            onChangeText={setAddress}
+            multiline
+            placeholderTextColor={COLORS.gray}
+          />
+        </View>
+
+        <View style={styles.inputContainer}>
+          <Icon name="phone" size={24} color={COLORS.primary} />
+          <TextInput
+            style={styles.input}
+            placeholder="Número de teléfono"
+            value={phone}
+            onChangeText={setPhone}
+            keyboardType="phone-pad"
+            placeholderTextColor={COLORS.gray}
+          />
+        </View>
+
+        <View style={styles.inputContainer}>
+          <Icon name="note" size={24} color={COLORS.primary} />
+          <TextInput
+            style={styles.input}
+            placeholder="Instrucciones adicionales (opcional)"
+            value={orderNotes}
+            onChangeText={setOrderNotes}
+            multiline
+            placeholderTextColor={COLORS.gray}
+          />
+        </View>
+      </View>
+    </View>
+  );
+
+  const renderPaymentStep = () => (
+    <View style={styles.stepContent}>
+      <Text style={styles.stepTitle}>💳 Método de Pago</Text>
+
+      <TouchableOpacity
+        style={[styles.paymentOption, paymentMethod === 'cash' && styles.paymentOptionActive]}
+        onPress={() => setPaymentMethod('cash')}
+      >
+        <LinearGradient
+          colors={paymentMethod === 'cash' ? [COLORS.primary, COLORS.primary] : ['#f8f9fa', '#f8f9fa']}
+          style={styles.paymentGradient}
+        >
+          <Icon name="money" size={32} color={paymentMethod === 'cash' ? COLORS.white : COLORS.primary} />
+          <View style={styles.paymentInfo}>
+            <Text style={[styles.paymentTitle, paymentMethod === 'cash' && styles.paymentTitleActive]}>
+              💵 Efectivo
+            </Text>
+            <Text style={[styles.paymentSubtitle, paymentMethod === 'cash' && styles.paymentSubtitleActive]}>
+              Paga al recibir tu pedido
+            </Text>
+          </View>
+          {paymentMethod === 'cash' && (
+            <Icon name="check-circle" size={24} color={COLORS.white} />
+          )}
+        </LinearGradient>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.paymentOption, paymentMethod === 'card' && styles.paymentOptionActive]}
+        onPress={() => setPaymentMethod('card')}
+      >
+        <LinearGradient
+          colors={paymentMethod === 'card' ? [COLORS.primary, COLORS.primary] : ['#f8f9fa', '#f8f9fa']}
+          style={styles.paymentGradient}
+        >
+          <Icon name="credit-card" size={32} color={paymentMethod === 'card' ? COLORS.white : COLORS.gray} />
+          <View style={styles.paymentInfo}>
+            <Text style={[styles.paymentTitle, paymentMethod === 'card' && styles.paymentTitleActive, paymentMethod !== 'card' && styles.paymentDisabled]}>
+              💳 Tarjeta
+            </Text>
+            <Text style={[styles.paymentSubtitle, paymentMethod === 'card' && styles.paymentSubtitleActive, paymentMethod !== 'card' && styles.paymentDisabled]}>
+              Próximamente disponible
+            </Text>
+          </View>
+          {paymentMethod === 'card' && (
+            <Icon name="check-circle" size={24} color={COLORS.white} />
+          )}
+        </LinearGradient>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderConfirmStep = () => (
+    <View style={styles.stepContent}>
+      <Text style={styles.stepTitle}>✅ Confirmar Pedido</Text>
+
+      {/* Resumen del pedido */}
+      <View style={styles.summaryCard}>
+        <Text style={styles.summaryTitle}>📋 Resumen</Text>
+
+        <View style={styles.summaryRow}>
+          <Text style={styles.summaryLabel}>🍽️ Productos ({cartItems.length})</Text>
+          <Text style={styles.summaryValue}>{formatCurrency(totalPrice)}</Text>
+        </View>
+
+        <View style={styles.summaryRow}>
+          <Text style={styles.summaryLabel}>🚚 Envío</Text>
+          <Text style={[styles.summaryValue, deliveryFee === 0 && styles.freeShipping]}>
+            {deliveryFee === 0 ? '¡Gratis!' : formatCurrency(deliveryFee)}
+          </Text>
+        </View>
+
+        <View style={styles.divider} />
+
+        <View style={styles.summaryRow}>
+          <Text style={styles.totalLabel}>💰 Total</Text>
+          <Text style={styles.totalValue}>{formatCurrency(finalTotal)}</Text>
+        </View>
+      </View>
+
+      {/* Información de entrega */}
+      <View style={styles.infoCard}>
+        <Text style={styles.infoTitle}>📍 Entrega</Text>
+        <Text style={styles.infoText}>{address}</Text>
+        <Text style={styles.infoText}>📞 {phone}</Text>
+      </View>
+
+      {/* Método de pago */}
+      <View style={styles.infoCard}>
+        <Text style={styles.infoTitle}>💳 Pago</Text>
+        <Text style={styles.infoText}>
+          {paymentMethod === 'cash' ? '💵 Efectivo al recibir' : '💳 Tarjeta de crédito'}
+        </Text>
+      </View>
+
+      {orderNotes && (
+        <View style={styles.infoCard}>
+          <Text style={styles.infoTitle}>📝 Notas</Text>
+          <Text style={styles.infoText}>{orderNotes}</Text>
+        </View>
+      )}
+    </View>
+  );
+
   if (cartItems.length === 0) {
     return (
-      <View style={styles.emptyContainer}>
-        <Ionicons name="basket-outline" size={80} color={colors.gray} />
-        <Text style={styles.emptyTitle}>Tu carrito está vacío</Text>
-        <Text style={styles.emptySubtitle}>Agrega algunos productos para continuar</Text>
-        <TouchableOpacity 
-          style={styles.shopButton}
-          onPress={() => navigation.navigate('ClientHome')}
-        >
-          <Text style={styles.shopButtonText}>Explorar Restaurantes</Text>
-        </TouchableOpacity>
+      <View style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
+        <LinearGradient colors={[COLORS.primary, COLORS.accent]} style={styles.emptyContainer}>
+          <Icon name="shopping-cart" size={80} color={COLORS.white} />
+          <Text style={styles.emptyTitle}>🛒 Carrito Vacío</Text>
+          <Text style={styles.emptySubtitle}>Agrega productos para continuar</Text>
+          <TouchableOpacity
+            style={styles.shopButton}
+            onPress={() => {
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Inicio', params: { screen: 'HomeInitial' } }]
+              });
+            }}
+          >
+            <Text style={styles.shopButtonText}>🍽️ Explorar Restaurantes</Text>
+          </TouchableOpacity>
+        </LinearGradient>
       </View>
     );
   }
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
+
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+          <Icon name="arrow-back" size={24} color={COLORS.white} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>🛒 Checkout</Text>
+        <View style={styles.headerSpacer} />
+      </View>
+
+      {/* Indicador de pasos */}
+      {renderStepIndicator()}
+
+      {/* Contenido del paso actual */}
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={24} color={colors.dark} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Checkout</Text>
-          <View style={{ width: 24 }} />
-        </View>
-
-        {/* Restaurante */}
-        {cartRestaurant && (
-          <View style={styles.restaurantCard}>
-            <Text style={styles.restaurantName}>{cartRestaurant.name}</Text>
-            <Text style={styles.restaurantAddress}>{cartRestaurant.address}</Text>
-          </View>
-        )}
-
-        {/* Items del carrito */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Tu Pedido</Text>
-          {cartItems.map((item, index) => (
-            <CartItemCard key={item.id} item={item} index={index} />
-          ))}
-        </View>
-
-        {/* Dirección de entrega */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Dirección de Entrega</Text>
-            <TouchableOpacity 
-              style={styles.locationButton}
-              onPress={handleGetCurrentLocation}
-              disabled={isGettingLocation}
-            >
-              {isGettingLocation ? (
-                <ActivityIndicator size="small" color={colors.white} />
-              ) : (
-                <Ionicons name="location" size={16} color={colors.white} />
-              )}
-              <Text style={styles.locationButtonText}>
-                {isGettingLocation ? 'Obteniendo...' : 'Mi Ubicación'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-          
-          {currentLocation && (
-            <View style={styles.locationInfo}>
-              <Ionicons name="checkmark-circle" size={16} color={colors.success} />
-              <Text style={styles.locationInfoText}>
-                Ubicación GPS detectada ({currentLocation.coordinates.accuracy?.toFixed(0)}m de precisión)
-              </Text>
-            </View>
-          )}
-          
-          <View style={styles.inputContainer}>
-            <Ionicons name="location-outline" size={20} color={colors.primary} />
-            <TextInput
-              style={styles.input}
-              placeholder="Ingresa tu dirección completa o usa 'Mi Ubicación'"
-              value={address}
-              onChangeText={setAddress}
-              multiline
-            />
-          </View>
-          <View style={styles.inputContainer}>
-            <Ionicons name="call-outline" size={20} color={colors.primary} />
-            <TextInput
-              style={styles.input}
-              placeholder="Número de teléfono"
-              value={phone}
-              onChangeText={setPhone}
-              keyboardType="phone-pad"
-            />
-          </View>
-        </View>
-
-        {/* Método de pago */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Método de Pago</Text>
-          <TouchableOpacity 
-            style={[styles.paymentOption, paymentMethod === 'cash' && styles.paymentOptionActive]}
-            onPress={() => setPaymentMethod('cash')}
-          >
-            <Ionicons name="cash-outline" size={24} color={paymentMethod === 'cash' ? colors.white : colors.primary} />
-            <Text style={[styles.paymentText, paymentMethod === 'cash' && styles.paymentTextActive]}>
-              Efectivo
-            </Text>
-            {paymentMethod === 'cash' && (
-              <Ionicons name="checkmark-circle" size={20} color={colors.white} />
-            )}
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={[styles.paymentOption, paymentMethod === 'card' && styles.paymentOptionActive]}
-            onPress={() => setPaymentMethod('card')}
-          >
-            <Ionicons name="card-outline" size={24} color={paymentMethod === 'card' ? colors.white : colors.primary} />
-            <Text style={[styles.paymentText, paymentMethod === 'card' && styles.paymentTextActive]}>
-              Tarjeta (Próximamente)
-            </Text>
-            {paymentMethod === 'card' && (
-              <Ionicons name="checkmark-circle" size={20} color={colors.white} />
-            )}
-          </TouchableOpacity>
-        </View>
-
-        {/* Notas adicionales */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Notas Adicionales (Opcional)</Text>
-          <TextInput
-            style={styles.notesInput}
-            placeholder="Instrucciones especiales para tu pedido..."
-            value={orderNotes}
-            onChangeText={setOrderNotes}
-            multiline
-            numberOfLines={3}
-          />
-        </View>
-
-        {/* Resumen de precios */}
-        <View style={styles.summaryCard}>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Subtotal</Text>
-            <Text style={styles.summaryValue}>{formatCurrency(totalPrice)}</Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Envío</Text>
-            <Text style={styles.summaryValue}>
-              {deliveryFee === 0 ? 'Gratis' : formatCurrency(deliveryFee)}
-            </Text>
-          </View>
-          <View style={[styles.summaryRow, styles.totalRow]}>
-            <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalValue}>{formatCurrency(finalTotal)}</Text>
-          </View>
-        </View>
+        <Animated.View style={[
+          styles.stepWrapper,
+          {
+            transform: [{
+              translateX: slideAnim.interpolate({
+                inputRange: [0, 1, 2],
+                outputRange: [0, -width, -width * 2],
+              })
+            }]
+          }
+        ]}>
+          {currentStep === 0 && renderAddressStep()}
+          {currentStep === 1 && renderPaymentStep()}
+          {currentStep === 2 && renderConfirmStep()}
+        </Animated.View>
       </ScrollView>
 
-      {/* Botón de confirmar pedido */}
+      {/* Botón inferior */}
       <View style={styles.bottomContainer}>
         <TouchableOpacity
-          style={[styles.orderButton, (!canCheckout || isProcessing) && styles.orderButtonDisabled]}
-          onPress={handlePlaceOrder}
-          disabled={!canCheckout || isProcessing}
+          style={[styles.nextButton, isProcessing && styles.nextButtonDisabled]}
+          onPress={handleNext}
+          disabled={isProcessing}
         >
-          {isProcessing ? (
-            <ActivityIndicator color={colors.white} />
-          ) : (
-            <>
-              <Ionicons name="checkmark-circle-outline" size={24} color={colors.white} />
-              <Text style={styles.orderButtonText}>
-                Confirmar Pedido • {formatCurrency(finalTotal)}
-              </Text>
-            </>
-          )}
+          <View style={styles.nextButtonGradient}>
+            {isProcessing ? (
+              <ActivityIndicator color={COLORS.white} />
+            ) : (
+              <>
+                <Text style={styles.nextButtonText}>
+                  {currentStep === steps.length - 1 ? '🎉 Confirmar Pedido' : '➡️ Continuar'}
+                </Text>
+                {currentStep === steps.length - 1 && (
+                  <Text style={styles.nextButtonPrice}>{formatCurrency(finalTotal)}</Text>
+                )}
+              </>
+            )}
+          </View>
         </TouchableOpacity>
       </View>
-    </KeyboardAvoidingView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: COLORS.background,
   },
-  scrollView: {
-    flex: 1,
-  },
+
+  // Header
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    backgroundColor: colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.lightGray,
+    paddingTop: 40,
+    paddingBottom: SPACING.lg,
+    paddingHorizontal: SPACING.lg,
+    backgroundColor: COLORS.primary,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   headerTitle: {
-    fontSize: typography.sizes.lg,
+    flex: 1,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: colors.dark,
+    color: COLORS.white,
+    textAlign: 'center',
   },
-  restaurantCard: {
-    backgroundColor: colors.white,
-    padding: spacing.lg,
-    marginHorizontal: spacing.lg,
-    marginTop: spacing.md,
-    borderRadius: 12,
-    elevation: 2,
-    shadowColor: colors.black,
+  headerSpacer: {
+    width: 40,
+  },
+
+  // Step Indicator
+  stepContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: SPACING.lg,
+    backgroundColor: COLORS.white,
+    marginHorizontal: SPACING.lg,
+    marginTop: -20,
+    borderRadius: 16,
+    elevation: 4,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: 8,
   },
-  restaurantName: {
-    fontSize: typography.sizes.lg,
-    fontWeight: 'bold',
-    color: colors.dark,
-    marginBottom: spacing.xs,
-  },
-  restaurantAddress: {
-    fontSize: typography.sizes.sm,
-    color: colors.gray,
-  },
-  section: {
-    backgroundColor: colors.white,
-    marginHorizontal: spacing.lg,
-    marginTop: spacing.md,
-    padding: spacing.lg,
-    borderRadius: 12,
-    elevation: 2,
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  sectionTitle: {
-    fontSize: typography.sizes.md,
-    fontWeight: 'bold',
-    color: colors.dark,
-    marginBottom: spacing.md,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  stepItem: {
     alignItems: 'center',
-    marginBottom: spacing.md,
+    flex: 1,
+    position: 'relative',
   },
-  locationButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+  stepCircle: {
+    width: 40,
+    height: 40,
     borderRadius: 20,
-  },
-  locationButtonText: {
-    color: colors.white,
-    fontSize: typography.sizes.sm,
-    fontWeight: '600',
-    marginLeft: spacing.xs,
-  },
-  locationInfo: {
-    flexDirection: 'row',
+    backgroundColor: COLORS.lightGray,
+    justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.success + '20',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: 8,
-    marginBottom: spacing.md,
+    marginBottom: SPACING.xs,
   },
-  locationInfoText: {
-    color: colors.success,
-    fontSize: typography.sizes.sm,
+  stepCircleActive: {
+    backgroundColor: COLORS.primary,
+  },
+  stepText: {
+    fontSize: 12,
+    color: COLORS.gray,
     fontWeight: '600',
-    marginLeft: spacing.sm,
+  },
+  stepTextActive: {
+    color: COLORS.primary,
+  },
+  stepLine: {
+    position: 'absolute',
+    top: 20,
+    left: '70%',
+    width: '60%',
+    height: 2,
+    backgroundColor: COLORS.lightGray,
+  },
+  stepLineActive: {
+    backgroundColor: COLORS.primary,
+  },
+
+  // Content
+  scrollView: {
+    flex: 1,
+  },
+  stepWrapper: {
+    width: width * 3,
+    flexDirection: 'row',
+  },
+  stepContent: {
+    width: width,
+    padding: SPACING.lg,
+  },
+  stepTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: COLORS.dark,
+    marginBottom: SPACING.lg,
+    textAlign: 'center',
+  },
+
+  // Input Group
+  inputGroup: {
+    gap: SPACING.md,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.lightGray,
-    borderRadius: 8,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    marginBottom: spacing.md,
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   input: {
     flex: 1,
-    marginLeft: spacing.sm,
-    fontSize: typography.sizes.md,
-    color: colors.dark,
+    marginLeft: SPACING.md,
+    fontSize: 16,
+    color: COLORS.dark,
+    minHeight: 20,
   },
-  paymentOption: {
+
+  // Location Button
+  locationButton: {
+    alignSelf: 'center',
+    borderRadius: 25,
+    overflow: 'hidden',
+    marginBottom: SPACING.lg,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+  },
+  locationButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.lightGray,
-    borderRadius: 8,
-    marginBottom: spacing.sm,
+    justifyContent: 'center',
+    paddingHorizontal: SPACING.xl,
+    paddingVertical: SPACING.md,
+    minWidth: 200,
+    backgroundColor: COLORS.primary,
   },
-  paymentOptionActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+  locationButtonText: {
+    color: COLORS.white,
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: SPACING.sm,
   },
-  paymentText: {
-    flex: 1,
-    marginLeft: spacing.md,
-    fontSize: typography.sizes.md,
-    color: colors.dark,
-  },
-  paymentTextActive: {
-    color: colors.white,
-  },
-  notesInput: {
-    borderWidth: 1,
-    borderColor: colors.lightGray,
-    borderRadius: 8,
-    padding: spacing.md,
-    fontSize: typography.sizes.md,
-    color: colors.dark,
-    textAlignVertical: 'top',
-  },
-  summaryCard: {
-    backgroundColor: colors.white,
-    marginHorizontal: spacing.lg,
-    marginTop: spacing.md,
-    marginBottom: spacing.xl,
-    padding: spacing.lg,
+
+  // Location Info
+  locationInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.primary + '15',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
     borderRadius: 12,
+    marginBottom: SPACING.lg,
+    borderWidth: 1,
+    borderColor: COLORS.primary + '30',
+  },
+  locationInfoText: {
+    color: COLORS.primary,
+    fontSize: 12,
+    fontWeight: '600',
+    marginLeft: SPACING.sm,
+    flex: 1,
+  },
+
+  // Payment Options
+  paymentOption: {
+    marginBottom: SPACING.md,
+    borderRadius: 16,
+    overflow: 'hidden',
     elevation: 2,
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 2 },
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+  },
+  paymentOptionActive: {
+    elevation: 4,
+    shadowOpacity: 0.2,
+  },
+  paymentGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: SPACING.lg,
+  },
+  paymentInfo: {
+    flex: 1,
+    marginLeft: SPACING.lg,
+  },
+  paymentTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.dark,
+    marginBottom: 4,
+  },
+  paymentTitleActive: {
+    color: COLORS.white,
+  },
+  paymentSubtitle: {
+    fontSize: 14,
+    color: COLORS.gray,
+  },
+  paymentSubtitleActive: {
+    color: 'rgba(255,255,255,0.8)',
+  },
+  paymentDisabled: {
+    color: COLORS.gray,
+  },
+
+  // Summary Cards
+  summaryCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    padding: SPACING.lg,
+    marginBottom: SPACING.md,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  summaryTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.dark,
+    marginBottom: SPACING.md,
   },
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: spacing.sm,
+    marginBottom: SPACING.sm,
   },
   summaryLabel: {
-    fontSize: typography.sizes.md,
-    color: colors.gray,
+    fontSize: 16,
+    color: COLORS.gray,
   },
   summaryValue: {
-    fontSize: typography.sizes.md,
-    color: colors.dark,
+    fontSize: 16,
     fontWeight: '600',
+    color: COLORS.dark,
   },
-  totalRow: {
-    borderTopWidth: 1,
-    borderTopColor: colors.lightGray,
-    marginTop: spacing.sm,
-    paddingTop: spacing.md,
+  freeShipping: {
+    color: COLORS.primary,
+    fontWeight: 'bold',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: COLORS.lightGray,
+    marginVertical: SPACING.md,
   },
   totalLabel: {
-    fontSize: typography.sizes.lg,
+    fontSize: 18,
     fontWeight: 'bold',
-    color: colors.dark,
+    color: COLORS.primary,
   },
   totalValue: {
-    fontSize: typography.sizes.lg,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: colors.primary,
+    color: COLORS.primary,
   },
+
+  // Info Cards
+  infoCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    padding: SPACING.md,
+    marginBottom: SPACING.sm,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+  },
+  infoTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+    marginBottom: SPACING.xs,
+  },
+  infoText: {
+    fontSize: 14,
+    color: COLORS.dark,
+    lineHeight: 20,
+  },
+
+  // Bottom Button
   bottomContainer: {
-    backgroundColor: colors.white,
-    padding: spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: colors.lightGray,
+    backgroundColor: COLORS.white,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.lg,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
   },
-  orderButton: {
-    backgroundColor: colors.primary,
+  nextButton: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+  },
+  nextButtonDisabled: {
+    elevation: 0,
+    shadowOpacity: 0,
+  },
+  nextButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: spacing.lg,
-    borderRadius: 12,
-    elevation: 2,
+    paddingVertical: SPACING.lg,
+    paddingHorizontal: SPACING.xl,
+    backgroundColor: COLORS.primary,
   },
-  orderButtonDisabled: {
-    backgroundColor: colors.gray,
-  },
-  orderButtonText: {
-    color: colors.white,
-    fontSize: typography.sizes.lg,
+  nextButtonText: {
+    color: COLORS.white,
+    fontSize: 16,
     fontWeight: 'bold',
-    marginLeft: spacing.sm,
+    textAlign: 'center',
   },
+  nextButtonPrice: {
+    color: COLORS.white,
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: SPACING.sm,
+    opacity: 0.9,
+  },
+
+  // Empty State
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: spacing.xl,
+    paddingHorizontal: SPACING.xl,
   },
   emptyTitle: {
-    fontSize: typography.sizes.xl,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: colors.dark,
-    marginTop: spacing.lg,
-    marginBottom: spacing.sm,
+    color: COLORS.white,
+    marginTop: SPACING.lg,
+    marginBottom: SPACING.sm,
   },
   emptySubtitle: {
-    fontSize: typography.sizes.md,
-    color: colors.gray,
+    fontSize: 16,
+    color: 'rgba(255,255,255,0.8)',
     textAlign: 'center',
-    marginBottom: spacing.xl,
+    marginBottom: SPACING.xl,
   },
   shopButton: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.lg,
-    borderRadius: 12,
+    backgroundColor: COLORS.white,
+    paddingHorizontal: SPACING.xl,
+    paddingVertical: SPACING.lg,
+    borderRadius: 16,
   },
   shopButtonText: {
-    color: colors.white,
-    fontSize: typography.sizes.md,
+    color: COLORS.primary,
+    fontSize: 16,
     fontWeight: 'bold',
   },
 });

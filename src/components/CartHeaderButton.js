@@ -6,16 +6,16 @@ import {
   StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
 import { useCart } from '../context/CartContext';
+import { useCartNavigation } from '../hooks/useCartNavigation';
 import { COLORS } from '../theme';
 
 const CartHeaderButton = () => {
   const { totalQuantity } = useCart();
-  const navigation = useNavigation();
+  const { navigateToCart } = useCartNavigation();
 
   const handleCartPress = () => {
-    navigation.navigate('Carrito');
+    navigateToCart();
   };
 
   return (

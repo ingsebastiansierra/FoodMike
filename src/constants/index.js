@@ -1,4 +1,4 @@
-// Constantes de la aplicación FoodMike
+// Constantes de la aplicación TOC TOC
 
 // Roles de usuario
 export const USER_ROLES = {
@@ -37,11 +37,11 @@ export const FOOD_CATEGORIES = {
 
 // Configuración de la aplicación
 export const APP_CONFIG = {
-  NAME: 'FoodMike',
+  NAME: 'TOC TOC',
   VERSION: '1.0.0',
   DESCRIPTION: 'Aplicación de delivery de comida',
-  SUPPORT_EMAIL: 'support@foodmike.com',
-  SUPPORT_PHONE: '+1-800-FOODMIKE',
+  SUPPORT_EMAIL: 'support@toctoc.com',
+  SUPPORT_PHONE: '+1-800-TOCTOC',
 };
 
 // Configuración de Firebase

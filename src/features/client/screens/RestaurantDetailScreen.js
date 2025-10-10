@@ -11,6 +11,7 @@ import {
   Dimensions,
   StatusBar,
 } from 'react-native';
+import LoadingWrapper from '../../../components/LoadingWrapper';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, typography } from '../../../theme';
@@ -18,6 +19,7 @@ import ProductCard from '../../../components/ProductCard';
 import { searchService } from '../../../services/searchService';
 import { useCart } from '../../../context/CartContext';
 import { showAlert } from '../../core/utils/alert';
+import { useFocusEffect } from '@react-navigation/native';
 
 const { width } = Dimensions.get('window');
 
@@ -32,6 +34,8 @@ const RestaurantDetailScreen = ({ route, navigation }) => {
   useEffect(() => {
     loadProducts();
   }, []);
+
+
 
   const loadProducts = async () => {
     setLoading(true);
@@ -171,22 +175,26 @@ const RestaurantDetailScreen = ({ route, navigation }) => {
 
         {/* Productos */}
         <View style={styles.productsSection}>
-          {loading ? (
-            <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
-          ) : filteredProducts.length === 0 ? (
-            <Text style={styles.emptyText}>No hay productos en esta categoría.</Text>
-          ) : (
-            <FlatList
-              data={filteredProducts}
-              renderItem={renderProduct}
-              keyExtractor={item => item.id}
-              numColumns={2}
-              columnWrapperStyle={styles.productRow}
-              contentContainerStyle={styles.productList}
-              showsVerticalScrollIndicator={false}
-              scrollEnabled={false}
-            />
-          )}
+          <LoadingWrapper 
+            isLoading={loading} 
+            skeletonType="products" 
+            skeletonCount={6}
+          >
+            {filteredProducts.length === 0 ? (
+              <Text style={styles.emptyText}>No hay productos en esta categoría.</Text>
+            ) : (
+              <FlatList
+                data={filteredProducts}
+                renderItem={renderProduct}
+                keyExtractor={item => item.id}
+                numColumns={2}
+                columnWrapperStyle={styles.productRow}
+                contentContainerStyle={styles.productList}
+                showsVerticalScrollIndicator={false}
+                scrollEnabled={false}
+              />
+            )}
+          </LoadingWrapper>
         </View>
       </ScrollView>
 
