@@ -64,6 +64,7 @@ import ProfileScreen from '../features/client/screens/ProfileScreen';
 import RestaurantDetailScreen from '../features/client/screens/RestaurantDetailScreen';
 import RestaurantsListScreen from '../screens/RestaurantsListScreen';
 import ProductDetailScreen from '../features/client/screens/ProductDetailScreen';
+import CartProductDetailScreen from '../features/client/screens/CartProductDetailScreen';
 import CheckoutScreen from '../features/client/screens/CheckoutScreen';
 import OrderDetailScreen from '../features/client/screens/OrderDetailScreen';
 import CarritoComponent from '../components/CarritoComponent';
@@ -74,7 +75,7 @@ const Stack = createStackNavigator();
 // Opciones básicas para los stacks (sin header)
 const stackScreenOptions = {
   headerShown: false,
-  gestureEnabled: true,
+  gestureEnabled: false,
   cardOverlayEnabled: true,
 };
 
@@ -108,8 +109,16 @@ const HomeStack = () => (
         headerRight: () => null,
         headerTitle: 'Mi Carrito',
         presentation: 'modal',
-        gestureEnabled: true,
+        gestureEnabled: false,
         animationTypeForReplace: 'push',
+      }}
+    />
+    <Stack.Screen
+      name="CartProductDetail"
+      component={CartProductDetailScreen}
+      options={{
+        headerShown: false,
+        gestureEnabled: false,
       }}
     />
     <Stack.Screen
@@ -117,7 +126,7 @@ const HomeStack = () => (
       component={CheckoutScreen}
       options={{
         headerRight: () => null,
-        gestureEnabled: true,
+        gestureEnabled: false,
       }}
     />
     <Stack.Screen
@@ -125,7 +134,7 @@ const HomeStack = () => (
       component={OrderDetailScreen}
       options={{
         headerRight: () => null,
-        gestureEnabled: true,
+        gestureEnabled: false,
       }}
     />
   </Stack.Navigator>
@@ -143,7 +152,15 @@ const SearchStack = () => (
         headerRight: () => null,
         headerTitle: 'Mi Carrito',
         presentation: 'modal',
-        gestureEnabled: true,
+        gestureEnabled: false,
+      }}
+    />
+    <Stack.Screen
+      name="CartProductDetail"
+      component={CartProductDetailScreen}
+      options={{
+        headerShown: false,
+        gestureEnabled: false,
       }}
     />
     <Stack.Screen
@@ -164,8 +181,16 @@ const OrdersStack = () => (
         headerRight: () => null,
         headerTitle: 'Mi Carrito',
         presentation: 'modal',
-        gestureEnabled: true,
+        gestureEnabled: false,
         animationTypeForReplace: 'push',
+      }}
+    />
+    <Stack.Screen
+      name="CartProductDetail"
+      component={CartProductDetailScreen}
+      options={{
+        headerShown: false,
+        gestureEnabled: false,
       }}
     />
     <Stack.Screen
@@ -173,7 +198,7 @@ const OrdersStack = () => (
       component={CheckoutScreen}
       options={{
         headerRight: () => null,
-        gestureEnabled: true,
+        gestureEnabled: false,
       }}
     />
     <Stack.Screen
@@ -194,7 +219,7 @@ const OrdersStack = () => (
           fontSize: 20,
           color: COLORS.white,
         },
-        gestureEnabled: true,
+        gestureEnabled: false,
       }}
     />
   </Stack.Navigator>
@@ -212,8 +237,16 @@ const FavoritesStack = () => (
         headerRight: () => null,
         headerTitle: 'Mi Carrito',
         presentation: 'modal',
-        gestureEnabled: true,
+        gestureEnabled: false,
         animationTypeForReplace: 'push',
+      }}
+    />
+    <Stack.Screen
+      name="CartProductDetail"
+      component={CartProductDetailScreen}
+      options={{
+        headerShown: false,
+        gestureEnabled: false,
       }}
     />
     <Stack.Screen
@@ -221,7 +254,7 @@ const FavoritesStack = () => (
       component={CheckoutScreen}
       options={{
         headerRight: () => null,
-        gestureEnabled: true,
+        gestureEnabled: false,
       }}
     />
   </Stack.Navigator>
@@ -237,8 +270,16 @@ const ProfileStack = () => (
         headerRight: () => null,
         headerTitle: 'Mi Carrito',
         presentation: 'modal',
-        gestureEnabled: true,
+        gestureEnabled: false,
         animationTypeForReplace: 'push',
+      }}
+    />
+    <Stack.Screen
+      name="CartProductDetail"
+      component={CartProductDetailScreen}
+      options={{
+        headerShown: false,
+        gestureEnabled: false,
       }}
     />
     <Stack.Screen
@@ -246,7 +287,7 @@ const ProfileStack = () => (
       component={CheckoutScreen}
       options={{
         headerRight: () => null,
-        gestureEnabled: true,
+        gestureEnabled: false,
       }}
     />
   </Stack.Navigator>

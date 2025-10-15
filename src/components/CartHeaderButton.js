@@ -18,13 +18,15 @@ const CartHeaderButton = () => {
     navigateToCart();
   };
 
+  const displayQuantity = totalQuantity > 99 ? '99+' : totalQuantity.toString();
+
   return (
     <TouchableOpacity style={styles.container} onPress={handleCartPress}>
       <View style={styles.cartBtn}>
         <Ionicons name="cart-outline" size={28} color={COLORS.primary} />
         {totalQuantity > 0 && (
           <View style={styles.cartBadge}>
-            <Text style={styles.cartBadgeText}>{totalQuantity}</Text>
+            <Text style={styles.cartBadgeText}>{displayQuantity}</Text>
           </View>
         )}
       </View>
@@ -54,20 +56,23 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -4,
     right: -4,
-    backgroundColor: COLORS.accent, // Red color for the badge
-    borderRadius: 12,
-    height: 24,
-    minWidth: 24,
+    backgroundColor: COLORS.accent,
+    borderRadius: 10,
+    minHeight: 20,
+    minWidth: 20,
+    maxWidth: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 6,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
     borderWidth: 2,
     borderColor: '#fff',
   },
   cartBadgeText: {
     color: '#fff',
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: 'bold',
+    textAlign: 'center',
   },
 });
 

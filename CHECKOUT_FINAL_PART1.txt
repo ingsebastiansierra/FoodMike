@@ -1,0 +1,80 @@
+// PARTE 1: Imports y Setup (Líneas 1-80)
+
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+  StatusBar,
+  Dimensions
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import { COLORS } from '../../../theme/colors';
+import { SPACING } from '../../../theme/spacing';
+import { useCart } from '../../../context/CartContext';
+import { useAuth } from '../../../context/AuthContext';
+import { formatCurrency } from '../../../shared/utils/format';
+import { showAlert } from '../../core/utils/alert';
+import locationService from '../../../services/locationService';
+import wompiService from '../../../services/wompiService';
+
+// Componentes de Checkout
+import AddressSection from '../components/checkout/AddressSection';
+import PaymentSection from '../components/checkout/PaymentSection';
+import ConfirmSection from '../components/checkout/ConfirmSection';
+
+const { width, height } = Dimensions.get('window');
+
+const CheckoutScreen = ({ navigation }) => {
+  const {
+    cartItems,
+    totalPrice,
+    deliveryFee,
+    finalTotal,
+    setDeliveryAddress,
+    paymentMethod,
+    setPaymentMethod,
+    orderNotes,
+    setOrderNotes,
+    createOrder,
+  } = useCart();
+
+  const { user } = useAuth();
+  const [address, setAddress] = useState('');
+  const [phone, setPhone] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [currentLocation, setCurrentLocation] = useState(null);
+  const [showMap, setShowMap] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState({
+    latitude: 5.4894,
+    longitude: -73.4894,
+  });
+  
+  // Estados para el acordeón
+  const [expandedSection, setExpandedSection] = useState('address');
+  const [completedSections, setCompletedSections] = useState({
+    address: false,
+    payment: false,
+  });
+  
+  const mapRef = useRef(null);
+
+  // Coordenadas de Samacá, Boyacá
+  const SAMACA_REGION = {
+    latitude: 5.4894,
+    longitude: -73.4894,
+    latitudeDelta: 0.05,
+    longitudeDelta: 0.05,
+  };
+
+  useEffect(() => {
+    if (user?.user_metadata?.address) setAddress(user.user_metadata.address);
+    if (user?.user_metadata?.phone) setPhone(user.user_metadata.phone);
+  }, [user]);

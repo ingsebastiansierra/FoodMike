@@ -1,0 +1,170 @@
+// PARTE 2: Funciones del Acordeón y Handlers
+
+  // Funciones para manejar el acordeón
+  const handleCompleteAddress = () => {
+    if (!address.trim()) {
+      showAlert('Error', 'Por favor ingresa tu dirección');
+      return;
+    }
+    if (!phone.trim()) {
+      showAlert('Error', 'Por favor ingresa tu teléfono');
+      return;
+    }
+    setDeliveryAddress({ street: address, phone, instructions: orderNotes });
+    setCompletedSections({ ...completedSections, address: true });
+    setExpandedSection('payment');
+  };
+
+  const handleCompletePayment = () => {
+    if (!paymentMethod) {
+      showAlert('Error', 'Por favor selecciona un método de pago');
+      return;
+    }
+    setCompletedSections({ ...completedSections, payment: true });
+    setExpandedSection('confirm');
+  };
+
+  const toggleSection = (section) => {
+    if (section === 'address' || 
+        (section === 'payment' && completedSections.address) ||
+        (section === 'confirm' && completedSections.address && completedSections.payment)) {
+      setExpandedSection(expandedSection === section ? null : section);
+    }
+  };
+
+  const handleBack = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Inicio', params: { screen: 'HomeInitial' } }]
+      });
+    }
+  };
+
+  const handleGetCurrentLocation = async () => {
+    try {
+      setIsGettingLocation(true);
+      const locationData = await locationService.getCompleteLocation();
+      setCurrentLocation(locationData);
+      if (locationData.address) {
+        setAddress(locationData.address.formattedAddress);
+      }
+      showAlert('📍 Ubicación Obtenida', 'Tu ubicación actual ha sido detectada.');
+    } catch (error) {
+      console.error('Error obteniendo ubicación:', error);
+      Alert.alert('❌ Error de Ubicación', 'No se pudo obtener tu ubicación.');
+    } finally {
+      setIsGettingLocation(false);
+    }
+  };
+
+  const handleMapPress = (event) => {
+    const { latitude, longitude } = event.nativeEvent.coordinate;
+    setSelectedLocation({ latitude, longitude });
+    locationService.reverseGeocode(latitude, longitude)
+      .then((addressInfo) => {
+        if (addressInfo) {
+          setAddress(addressInfo.formattedAddress);
+          setCurrentLocation({
+            coordinates: { latitude, longitude },
+            address: addressInfo
+          });
+        }
+      })
+      .catch((error) => console.error('Error:', error));
+  };
+
+  const handleConfirmLocation = () => {
+    if (selectedLocation) {
+      setShowMap(false);
+      showAlert('✅ Ubicación Confirmada', 'La ubicación ha sido seleccionada.');
+    }
+  };
+
+  const handlePlaceOrder = async () => {
+    Alert.alert(
+      '🎉 Confirmar Pedido',
+      `¿Confirmas tu pedido por ${formatCurrency(finalTotal)}?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: '✅ Confirmar', onPress: processOrder }
+      ]
+    );
+  };
+
+  const processOrder = async () => {
+    setIsProcessing(true);
+    try {
+      if (paymentMethod === 'wompi') {
+        await handleWompiPayment();
+        return;
+      }
+
+      const result = await createOrder();
+      let message = 'Tu pedido ha sido enviado. Te notificaremos cuando esté listo.';
+      if (paymentMethod === 'transfer') {
+        message = 'Recibirás los datos bancarios por correo para completar el pago.';
+      }
+
+      Alert.alert('🎉 ¡Pedido Confirmado!', message, [
+        {
+          text: '📋 Ver Pedido',
+          onPress: () => {
+            navigation.reset({
+              index: 1,
+              routes: [
+                { name: 'Inicio', params: { screen: 'HomeInitial' } },
+                { name: 'OrderDetail', params: { orderId: result.data.id } }
+              ]
+            });
+          }
+        },
+        {
+          text: '🏠 Ir a Inicio',
+          onPress: () => {
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Inicio', params: { screen: 'HomeInitial' } }]
+            });
+          }
+        }
+      ]);
+    } catch (error) {
+      showAlert('❌ Error', 'No se pudo procesar tu pedido.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleWompiPayment = async () => {
+    try {
+      const reference = wompiService.generateReference();
+      const orderData = {
+        amount: finalTotal,
+        reference: reference,
+        email: user.email,
+        name: user.user_metadata?.full_name || user.email,
+        phone: phone,
+        redirectUrl: 'https://tuapp.com/payment-success'
+      };
+
+      showAlert('💳 Redirigiendo a Wompi', 'Serás redirigido al checkout seguro.', [
+        {
+          text: 'Continuar',
+          onPress: async () => {
+            try {
+              await wompiService.openCheckout(orderData);
+              showAlert('ℹ️ Pago en proceso', 'Una vez completes el pago, tu pedido será confirmado.');
+            } catch (error) {
+              showAlert('❌ Error', 'No se pudo abrir el checkout de Wompi.');
+            }
+          }
+        },
+        { text: 'Cancelar', style: 'cancel' }
+      ]);
+    } catch (error) {
+      showAlert('❌ Error', 'Hubo un problema al procesar el pago.');
+    }
+  };

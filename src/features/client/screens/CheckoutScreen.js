@@ -1,20 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  TextInput,
   Alert,
   ActivityIndicator,
   StatusBar,
-  Dimensions,
-  Animated,
-  BackHandler
+  Dimensions
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { COLORS } from '../../../theme/colors';
 import { SPACING } from '../../../theme/spacing';
 import { useCart } from '../../../context/CartContext';
@@ -22,6 +20,12 @@ import { useAuth } from '../../../context/AuthContext';
 import { formatCurrency } from '../../../shared/utils/format';
 import { showAlert } from '../../core/utils/alert';
 import locationService from '../../../services/locationService';
+import wompiService from '../../../services/wompiService';
+
+// Componentes de Checkout
+import AddressSection from '../components/checkout/AddressSection';
+import PaymentSection from '../components/checkout/PaymentSection';
+import ConfirmSection from '../components/checkout/ConfirmSection';
 
 const { width, height } = Dimensions.get('window');
 
@@ -37,120 +41,122 @@ const CheckoutScreen = ({ navigation }) => {
     orderNotes,
     setOrderNotes,
     createOrder,
-    isLoading
   } = useCart();
 
   const { user } = useAuth();
-  const [currentStep, setCurrentStep] = useState(0);
   const [address, setAddress] = useState('');
   const [phone, setPhone] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [currentLocation, setCurrentLocation] = useState(null);
-  const [slideAnim] = useState(new Animated.Value(0));
+  const [showMap, setShowMap] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState({
+    latitude: 5.4894,
+    longitude: -73.4894,
+  });
 
-  const steps = [
-    { title: 'Dirección', icon: 'location-on' },
-    { title: 'Pago', icon: 'payment' },
-    { title: 'Confirmar', icon: 'check-circle' }
-  ];
+  // Estados para el acordeón
+  const [expandedSection, setExpandedSection] = useState('address');
+  const [completedSections, setCompletedSections] = useState({
+    address: false,
+    payment: false,
+  });
+
+  const mapRef = useRef(null);
+
+  // Coordenadas de Samacá, Boyacá
+  const SAMACA_REGION = {
+    latitude: 5.4894,
+    longitude: -73.4894,
+    latitudeDelta: 0.05,
+    longitudeDelta: 0.05,
+  };
 
   useEffect(() => {
     if (user?.user_metadata?.address) setAddress(user.user_metadata.address);
     if (user?.user_metadata?.phone) setPhone(user.user_metadata.phone);
   }, [user]);
 
-  useEffect(() => {
-    Animated.spring(slideAnim, {
-      toValue: currentStep,
-      useNativeDriver: true,
-    }).start();
-  }, [currentStep]);
+  // Funciones para manejar el acordeón
+  const handleCompleteAddress = () => {
+    if (!address.trim()) {
+      showAlert('Error', 'Por favor ingresa tu dirección');
+      return;
+    }
+    if (!phone.trim()) {
+      showAlert('Error', 'Por favor ingresa tu teléfono');
+      return;
+    }
+    setDeliveryAddress({ street: address, phone, instructions: orderNotes });
+    setCompletedSections({ ...completedSections, address: true });
+    setExpandedSection('payment');
+  };
 
-  // Manejar el botón de hardware "atrás" en Android
-  useEffect(() => {
-    const backAction = () => {
-      handleBack();
-      return true; // Prevenir el comportamiento por defecto
-    };
+  const handleCompletePayment = () => {
+    if (!paymentMethod) {
+      showAlert('Error', 'Por favor selecciona un método de pago');
+      return;
+    }
+    setCompletedSections({ ...completedSections, payment: true });
+    setExpandedSection('confirm');
+  };
 
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
+  const toggleSection = (section) => {
+    if (section === 'address' ||
+      (section === 'payment' && completedSections.address) ||
+      (section === 'confirm' && completedSections.address && completedSections.payment)) {
+      setExpandedSection(expandedSection === section ? null : section);
+    }
+  };
 
-    return () => backHandler.remove();
-  }, [currentStep]);
+  const handleBack = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Inicio', params: { screen: 'HomeInitial' } }]
+      });
+    }
+  };
 
   const handleGetCurrentLocation = async () => {
     try {
       setIsGettingLocation(true);
-
       const locationData = await locationService.getCompleteLocation();
-
       setCurrentLocation(locationData);
-
       if (locationData.address) {
         setAddress(locationData.address.formattedAddress);
       }
-
-      showAlert(
-        '📍 Ubicación Obtenida',
-        'Tu ubicación actual ha sido detectada y agregada como dirección de entrega.'
-      );
-
+      showAlert('📍 Ubicación Obtenida', 'Tu ubicación actual ha sido detectada.');
     } catch (error) {
       console.error('Error obteniendo ubicación:', error);
-
-      let errorMessage = 'No se pudo obtener tu ubicación. ';
-
-      if (error.message.includes('denegados')) {
-        errorMessage += 'Por favor habilita los permisos de ubicación en la configuración de tu dispositivo.';
-      } else if (error.message.includes('timeout')) {
-        errorMessage += 'La búsqueda de ubicación tardó demasiado. Intenta nuevamente.';
-      } else {
-        errorMessage += 'Verifica que tengas GPS activado e intenta nuevamente.';
-      }
-
-      Alert.alert('❌ Error de Ubicación', errorMessage, [
-        { text: 'Cancelar' },
-        { text: '🔄 Reintentar', onPress: handleGetCurrentLocation }
-      ]);
+      Alert.alert('❌ Error de Ubicación', 'No se pudo obtener tu ubicación.');
     } finally {
       setIsGettingLocation(false);
     }
   };
 
-  const handleNext = () => {
-    if (currentStep === 0) {
-      if (!address.trim()) {
-        showAlert('Error', 'Por favor ingresa tu dirección');
-        return;
-      }
-      if (!phone.trim()) {
-        showAlert('Error', 'Por favor ingresa tu teléfono');
-        return;
-      }
-      setDeliveryAddress({ street: address, phone, instructions: orderNotes });
-    }
-
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
-    } else {
-      handlePlaceOrder();
-    }
+  const handleMapPress = (event) => {
+    const { latitude, longitude } = event.nativeEvent.coordinate;
+    setSelectedLocation({ latitude, longitude });
+    locationService.reverseGeocode(latitude, longitude)
+      .then((addressInfo) => {
+        if (addressInfo) {
+          setAddress(addressInfo.formattedAddress);
+          setCurrentLocation({
+            coordinates: { latitude, longitude },
+            address: addressInfo
+          });
+        }
+      })
+      .catch((error) => console.error('Error:', error));
   };
 
-  const handleBack = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
-    } else {
-      // Si estamos en el primer paso, volver al carrito o inicio
-      if (navigation.canGoBack()) {
-        navigation.goBack();
-      } else {
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'Inicio', params: { screen: 'HomeInitial' } }]
-        });
-      }
+  const handleConfirmLocation = () => {
+    if (selectedLocation) {
+      setShowMap(false);
+      showAlert('✅ Ubicación Confirmada', 'La ubicación ha sido seleccionada.');
     }
   };
 
@@ -168,249 +174,147 @@ const CheckoutScreen = ({ navigation }) => {
   const processOrder = async () => {
     setIsProcessing(true);
     try {
-      const result = await createOrder();
+      if (paymentMethod === 'wompi') {
+        await handleWompiPayment();
+        return;
+      }
 
-      Alert.alert(
-        '🎉 ¡Pedido Confirmado!',
-        'Tu pedido ha sido enviado. Te notificaremos cuando esté listo.',
-        [
-          {
-            text: '📋 Ver Pedido',
-            onPress: () => {
-              navigation.reset({
-                index: 1,
-                routes: [
-                  { name: 'Inicio', params: { screen: 'HomeInitial' } },
-                  { name: 'OrderDetail', params: { orderId: result.data.id } }
-                ]
-              });
-            }
-          },
-          {
-            text: '🏠 Ir a Inicio',
-            onPress: () => {
-              navigation.reset({
-                index: 0,
-                routes: [{ name: 'Inicio', params: { screen: 'HomeInitial' } }]
-              });
-            }
+      const result = await createOrder();
+      let message = 'Tu pedido ha sido enviado. Te notificaremos cuando esté listo.';
+      if (paymentMethod === 'transfer') {
+        message = 'Recibirás los datos bancarios por correo para completar el pago.';
+      }
+
+      Alert.alert('🎉 ¡Pedido Confirmado!', message, [
+        {
+          text: '📋 Ver Pedido',
+          onPress: () => {
+            navigation.reset({
+              index: 1,
+              routes: [
+                { name: 'Inicio', params: { screen: 'HomeInitial' } },
+                { name: 'OrderDetail', params: { orderId: result.data.id } }
+              ]
+            });
           }
-        ]
-      );
+        },
+        {
+          text: '🏠 Ir a Inicio',
+          onPress: () => {
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Inicio', params: { screen: 'HomeInitial' } }]
+            });
+          }
+        }
+      ]);
     } catch (error) {
-      showAlert('❌ Error', 'No se pudo procesar tu pedido. Intenta nuevamente.');
+      showAlert('❌ Error', 'No se pudo procesar tu pedido.');
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const renderStepIndicator = () => (
-    <View style={styles.stepContainer}>
-      {steps.map((step, index) => (
-        <View key={index} style={styles.stepItem}>
-          <View style={[
-            styles.stepCircle,
-            index <= currentStep && styles.stepCircleActive
-          ]}>
-            <Icon
-              name={step.icon}
-              size={20}
-              color={index <= currentStep ? COLORS.white : COLORS.gray}
-            />
+  const handleWompiPayment = async () => {
+    try {
+      console.log('🎯 Iniciando pago con Wompi...');
+
+      const reference = wompiService.generateReference();
+      console.log('📝 Referencia generada:', reference);
+
+      const orderData = {
+        amount: finalTotal,
+        reference: reference,
+        email: user.email,
+        name: user.user_metadata?.full_name || user.email,
+        phone: phone,
+        redirectUrl: 'https://tuapp.com/payment-success'
+      };
+
+      console.log('📦 Datos del pedido:', orderData);
+
+      // Abrir Wompi directamente sin alert intermedio
+      Alert.alert(
+        '💳 Pago con Wompi',
+        `Se abrirá el navegador para completar el pago de ${formatCurrency(finalTotal)}`,
+        [
+          {
+            text: 'Abrir Wompi',
+            onPress: async () => {
+              try {
+                console.log('🚀 Abriendo checkout de Wompi...');
+                const result = await wompiService.openCheckout(orderData);
+                console.log('✅ Checkout abierto:', result);
+
+                // Esperar un momento antes de mostrar el siguiente mensaje
+                setTimeout(() => {
+                  Alert.alert(
+                    'ℹ️ Pago en proceso',
+                    'Completa el pago en la ventana del navegador. Tu pedido será confirmado automáticamente.',
+                    [{ text: 'Entendido' }]
+                  );
+                }, 1000);
+              } catch (error) {
+                console.error('❌ Error abriendo Wompi:', error);
+                Alert.alert('❌ Error', `No se pudo abrir Wompi: ${error.message}`);
+              }
+            }
+          },
+          { text: 'Cancelar', style: 'cancel' }
+        ]
+      );
+    } catch (error) {
+      console.error('❌ Error en handleWompiPayment:', error);
+      Alert.alert('❌ Error', 'Hubo un problema al procesar el pago.');
+    }
+  };
+
+  const renderMapModal = () => {
+    if (!showMap) return null;
+
+    return (
+      <View style={styles.mapModalContainer}>
+        <View style={styles.mapModalContent}>
+          <View style={styles.mapHeader}>
+            <Text style={styles.mapTitle}>📍 Selecciona la ubicación</Text>
+            <TouchableOpacity onPress={() => setShowMap(false)} style={styles.mapCloseButton}>
+              <Icon name="close" size={24} color={COLORS.dark} />
+            </TouchableOpacity>
           </View>
-          <Text style={[
-            styles.stepText,
-            index <= currentStep && styles.stepTextActive
-          ]}>
-            {step.title}
-          </Text>
-          {index < steps.length - 1 && (
-            <View style={[
-              styles.stepLine,
-              index < currentStep && styles.stepLineActive
-            ]} />
-          )}
-        </View>
-      ))}
-    </View>
-  );
 
-  const renderAddressStep = () => (
-    <View style={styles.stepContent}>
-      <Text style={styles.stepTitle}>📍 Dirección de Entrega</Text>
-
-      {/* Botón de ubicación actual */}
-      <TouchableOpacity
-        style={styles.locationButton}
-        onPress={handleGetCurrentLocation}
-        disabled={isGettingLocation}
-      >
-        <View style={styles.locationButtonGradient}>
-          {isGettingLocation ? (
-            <ActivityIndicator size="small" color={COLORS.white} />
-          ) : (
-            <Icon name="my-location" size={20} color={COLORS.white} />
-          )}
-          <Text style={styles.locationButtonText}>
-            {isGettingLocation ? 'Obteniendo ubicación...' : '📍 Usar mi ubicación actual'}
-          </Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* Información de ubicación detectada */}
-      {currentLocation && (
-        <View style={styles.locationInfo}>
-          <Icon name="check-circle" size={16} color={COLORS.primary} />
-          <Text style={styles.locationInfoText}>
-            ✅ Ubicación GPS detectada ({currentLocation.coordinates.accuracy?.toFixed(0)}m de precisión)
-          </Text>
-        </View>
-      )}
-
-      <View style={styles.inputGroup}>
-        <View style={styles.inputContainer}>
-          <Icon name="location-on" size={24} color={COLORS.primary} />
-          <TextInput
-            style={styles.input}
-            placeholder="Dirección completa (Calle, número, barrio)"
-            value={address}
-            onChangeText={setAddress}
-            multiline
-            placeholderTextColor={COLORS.gray}
-          />
-        </View>
-
-        <View style={styles.inputContainer}>
-          <Icon name="phone" size={24} color={COLORS.primary} />
-          <TextInput
-            style={styles.input}
-            placeholder="Número de teléfono"
-            value={phone}
-            onChangeText={setPhone}
-            keyboardType="phone-pad"
-            placeholderTextColor={COLORS.gray}
-          />
-        </View>
-
-        <View style={styles.inputContainer}>
-          <Icon name="note" size={24} color={COLORS.primary} />
-          <TextInput
-            style={styles.input}
-            placeholder="Instrucciones adicionales (opcional)"
-            value={orderNotes}
-            onChangeText={setOrderNotes}
-            multiline
-            placeholderTextColor={COLORS.gray}
-          />
-        </View>
-      </View>
-    </View>
-  );
-
-  const renderPaymentStep = () => (
-    <View style={styles.stepContent}>
-      <Text style={styles.stepTitle}>💳 Método de Pago</Text>
-
-      <TouchableOpacity
-        style={[styles.paymentOption, paymentMethod === 'cash' && styles.paymentOptionActive]}
-        onPress={() => setPaymentMethod('cash')}
-      >
-        <LinearGradient
-          colors={paymentMethod === 'cash' ? [COLORS.primary, COLORS.primary] : ['#f8f9fa', '#f8f9fa']}
-          style={styles.paymentGradient}
-        >
-          <Icon name="money" size={32} color={paymentMethod === 'cash' ? COLORS.white : COLORS.primary} />
-          <View style={styles.paymentInfo}>
-            <Text style={[styles.paymentTitle, paymentMethod === 'cash' && styles.paymentTitleActive]}>
-              💵 Efectivo
-            </Text>
-            <Text style={[styles.paymentSubtitle, paymentMethod === 'cash' && styles.paymentSubtitleActive]}>
-              Paga al recibir tu pedido
-            </Text>
+          <View style={styles.mapContainer}>
+            <MapView
+              ref={mapRef}
+              provider={PROVIDER_GOOGLE}
+              style={styles.map}
+              initialRegion={SAMACA_REGION}
+              onPress={handleMapPress}
+              showsUserLocation
+              showsMyLocationButton
+            >
+              <Marker
+                coordinate={selectedLocation}
+                title="Ubicación de entrega"
+                description={address || "Toca el mapa para seleccionar"}
+                pinColor={COLORS.primary}
+              />
+            </MapView>
           </View>
-          {paymentMethod === 'cash' && (
-            <Icon name="check-circle" size={24} color={COLORS.white} />
-          )}
-        </LinearGradient>
-      </TouchableOpacity>
 
-      <TouchableOpacity
-        style={[styles.paymentOption, paymentMethod === 'card' && styles.paymentOptionActive]}
-        onPress={() => setPaymentMethod('card')}
-      >
-        <LinearGradient
-          colors={paymentMethod === 'card' ? [COLORS.primary, COLORS.primary] : ['#f8f9fa', '#f8f9fa']}
-          style={styles.paymentGradient}
-        >
-          <Icon name="credit-card" size={32} color={paymentMethod === 'card' ? COLORS.white : COLORS.gray} />
-          <View style={styles.paymentInfo}>
-            <Text style={[styles.paymentTitle, paymentMethod === 'card' && styles.paymentTitleActive, paymentMethod !== 'card' && styles.paymentDisabled]}>
-              💳 Tarjeta
+          <View style={styles.mapFooter}>
+            <Text style={styles.mapAddressText} numberOfLines={2}>
+              {address || 'Toca el mapa para seleccionar una ubicación'}
             </Text>
-            <Text style={[styles.paymentSubtitle, paymentMethod === 'card' && styles.paymentSubtitleActive, paymentMethod !== 'card' && styles.paymentDisabled]}>
-              Próximamente disponible
-            </Text>
+            <TouchableOpacity style={styles.confirmLocationButton} onPress={handleConfirmLocation}>
+              <Text style={styles.confirmLocationText}>✅ Confirmar Ubicación</Text>
+            </TouchableOpacity>
           </View>
-          {paymentMethod === 'card' && (
-            <Icon name="check-circle" size={24} color={COLORS.white} />
-          )}
-        </LinearGradient>
-      </TouchableOpacity>
-    </View>
-  );
-
-  const renderConfirmStep = () => (
-    <View style={styles.stepContent}>
-      <Text style={styles.stepTitle}>✅ Confirmar Pedido</Text>
-
-      {/* Resumen del pedido */}
-      <View style={styles.summaryCard}>
-        <Text style={styles.summaryTitle}>📋 Resumen</Text>
-
-        <View style={styles.summaryRow}>
-          <Text style={styles.summaryLabel}>🍽️ Productos ({cartItems.length})</Text>
-          <Text style={styles.summaryValue}>{formatCurrency(totalPrice)}</Text>
-        </View>
-
-        <View style={styles.summaryRow}>
-          <Text style={styles.summaryLabel}>🚚 Envío</Text>
-          <Text style={[styles.summaryValue, deliveryFee === 0 && styles.freeShipping]}>
-            {deliveryFee === 0 ? '¡Gratis!' : formatCurrency(deliveryFee)}
-          </Text>
-        </View>
-
-        <View style={styles.divider} />
-
-        <View style={styles.summaryRow}>
-          <Text style={styles.totalLabel}>💰 Total</Text>
-          <Text style={styles.totalValue}>{formatCurrency(finalTotal)}</Text>
         </View>
       </View>
+    );
+  };
 
-      {/* Información de entrega */}
-      <View style={styles.infoCard}>
-        <Text style={styles.infoTitle}>📍 Entrega</Text>
-        <Text style={styles.infoText}>{address}</Text>
-        <Text style={styles.infoText}>📞 {phone}</Text>
-      </View>
-
-      {/* Método de pago */}
-      <View style={styles.infoCard}>
-        <Text style={styles.infoTitle}>💳 Pago</Text>
-        <Text style={styles.infoText}>
-          {paymentMethod === 'cash' ? '💵 Efectivo al recibir' : '💳 Tarjeta de crédito'}
-        </Text>
-      </View>
-
-      {orderNotes && (
-        <View style={styles.infoCard}>
-          <Text style={styles.infoTitle}>📝 Notas</Text>
-          <Text style={styles.infoText}>{orderNotes}</Text>
-        </View>
-      )}
-    </View>
-  );
-
+  // Carrito vacío
   if (cartItems.length === 0) {
     return (
       <View style={styles.container}>
@@ -435,6 +339,7 @@ const CheckoutScreen = ({ navigation }) => {
     );
   }
 
+  // UI Principal con Acordeón
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
@@ -444,55 +349,173 @@ const CheckoutScreen = ({ navigation }) => {
         <TouchableOpacity style={styles.backButton} onPress={handleBack}>
           <Icon name="arrow-back" size={24} color={COLORS.white} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>🛒 Checkout</Text>
+        <Text style={styles.headerTitle}>💳 Verificación del Pago</Text>
         <View style={styles.headerSpacer} />
       </View>
 
-      {/* Indicador de pasos */}
-      {renderStepIndicator()}
+      {/* Contenido en Acordeón */}
+      <ScrollView
+        style={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+        bounces={true}
+        scrollEventThrottle={16}
+        nestedScrollEnabled={true}
+      >
 
-      {/* Contenido del paso actual */}
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        <Animated.View style={[
-          styles.stepWrapper,
-          {
-            transform: [{
-              translateX: slideAnim.interpolate({
-                inputRange: [0, 1, 2],
-                outputRange: [0, -width, -width * 2],
-              })
-            }]
-          }
-        ]}>
-          {currentStep === 0 && renderAddressStep()}
-          {currentStep === 1 && renderPaymentStep()}
-          {currentStep === 2 && renderConfirmStep()}
-        </Animated.View>
-      </ScrollView>
-
-      {/* Botón inferior */}
-      <View style={styles.bottomContainer}>
+        {/* Sección 1: Dirección */}
         <TouchableOpacity
-          style={[styles.nextButton, isProcessing && styles.nextButtonDisabled]}
-          onPress={handleNext}
-          disabled={isProcessing}
+          style={styles.accordionSection}
+          onPress={() => toggleSection('address')}
+          activeOpacity={0.9}
         >
-          <View style={styles.nextButtonGradient}>
-            {isProcessing ? (
-              <ActivityIndicator color={COLORS.white} />
-            ) : (
-              <>
-                <Text style={styles.nextButtonText}>
-                  {currentStep === steps.length - 1 ? '🎉 Confirmar Pedido' : '➡️ Continuar'}
-                </Text>
-                {currentStep === steps.length - 1 && (
-                  <Text style={styles.nextButtonPrice}>{formatCurrency(finalTotal)}</Text>
+          <View style={[styles.accordionHeader, completedSections.address && styles.accordionHeaderCompleted]}>
+            <View style={styles.accordionHeaderLeft}>
+              <View style={[styles.accordionNumber, completedSections.address && styles.accordionNumberCompleted]}>
+                {completedSections.address ? (
+                  <Icon name="check" size={20} color={COLORS.white} />
+                ) : (
+                  <Text style={styles.accordionNumberText}>1</Text>
                 )}
-              </>
-            )}
+              </View>
+              <Text style={styles.accordionTitle}>Dirección de Entrega</Text>
+            </View>
+            <Icon
+              name={expandedSection === 'address' ? 'expand-less' : 'expand-more'}
+              size={24}
+              color={COLORS.dark}
+            />
+          </View>
+
+          {completedSections.address && expandedSection !== 'address' && (
+            <View style={styles.accordionSummary}>
+              <Text style={styles.accordionSummaryText}>📍 {address}</Text>
+              <Text style={styles.accordionSummaryText}>📞 {phone}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+
+        {expandedSection === 'address' && (
+          <AddressSection
+            address={address}
+            setAddress={setAddress}
+            phone={phone}
+            setPhone={setPhone}
+            orderNotes={orderNotes}
+            setOrderNotes={setOrderNotes}
+            currentLocation={currentLocation}
+            isGettingLocation={isGettingLocation}
+            onGetLocation={handleGetCurrentLocation}
+            onOpenMap={() => setShowMap(true)}
+            onContinue={handleCompleteAddress}
+          />
+        )}
+
+        {/* Sección 2: Pago */}
+        <TouchableOpacity
+          style={[styles.accordionSection, !completedSections.address && styles.accordionSectionDisabled]}
+          onPress={() => toggleSection('payment')}
+          activeOpacity={0.9}
+          disabled={!completedSections.address}
+        >
+          <View style={[styles.accordionHeader, completedSections.payment && styles.accordionHeaderCompleted]}>
+            <View style={styles.accordionHeaderLeft}>
+              <View style={[styles.accordionNumber, completedSections.payment && styles.accordionNumberCompleted]}>
+                {completedSections.payment ? (
+                  <Icon name="check" size={20} color={COLORS.white} />
+                ) : (
+                  <Text style={styles.accordionNumberText}>2</Text>
+                )}
+              </View>
+              <Text style={styles.accordionTitle}>Método de Pago</Text>
+            </View>
+            <Icon
+              name={expandedSection === 'payment' ? 'expand-less' : 'expand-more'}
+              size={24}
+              color={completedSections.address ? COLORS.dark : COLORS.gray}
+            />
+          </View>
+
+          {completedSections.payment && expandedSection !== 'payment' && (
+            <View style={styles.accordionSummary}>
+              <Text style={styles.accordionSummaryText}>
+                {paymentMethod === 'cash' && '💵 Efectivo'}
+                {paymentMethod === 'transfer' && '🏦 Nequi / Transferencia'}
+                {paymentMethod === 'wompi' && '💳 Tarjeta (Wompi)'}
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
+
+        {expandedSection === 'payment' && (
+          <PaymentSection
+            paymentMethod={paymentMethod}
+            setPaymentMethod={setPaymentMethod}
+            finalTotal={finalTotal}
+            cartItems={cartItems}
+            onContinue={handleCompletePayment}
+          />
+        )}
+
+        {/* Sección 3: Confirmar */}
+        <TouchableOpacity
+          style={[styles.accordionSection, (!completedSections.address || !completedSections.payment) && styles.accordionSectionDisabled]}
+          onPress={() => toggleSection('confirm')}
+          activeOpacity={0.9}
+          disabled={!completedSections.address || !completedSections.payment}
+        >
+          <View style={styles.accordionHeader}>
+            <View style={styles.accordionHeaderLeft}>
+              <View style={styles.accordionNumber}>
+                <Text style={styles.accordionNumberText}>3</Text>
+              </View>
+              <Text style={styles.accordionTitle}>Confirmar Pedido</Text>
+            </View>
+            <Icon
+              name={expandedSection === 'confirm' ? 'expand-less' : 'expand-more'}
+              size={24}
+              color={completedSections.address && completedSections.payment ? COLORS.dark : COLORS.gray}
+            />
           </View>
         </TouchableOpacity>
-      </View>
+
+        {expandedSection === 'confirm' && (
+          <ConfirmSection
+            cartItems={cartItems}
+            totalPrice={totalPrice}
+            deliveryFee={deliveryFee}
+            finalTotal={finalTotal}
+            address={address}
+            phone={phone}
+            paymentMethod={paymentMethod}
+            orderNotes={orderNotes}
+          />
+        )}
+      </ScrollView>
+
+      {/* Botón inferior fijo */}
+      {completedSections.address && completedSections.payment && (
+        <View style={styles.bottomContainer}>
+          <TouchableOpacity
+            style={[styles.nextButton, isProcessing && styles.nextButtonDisabled]}
+            onPress={handlePlaceOrder}
+            disabled={isProcessing}
+          >
+            <View style={styles.nextButtonGradient}>
+              {isProcessing ? (
+                <ActivityIndicator color={COLORS.white} />
+              ) : (
+                <>
+                  <Text style={styles.nextButtonText}>🎉 Confirmar Pedido</Text>
+                  <Text style={styles.nextButtonPrice}>{formatCurrency(finalTotal)}</Text>
+                </>
+              )}
+            </View>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Modal del mapa */}
+      {renderMapModal()}
     </View>
   );
 };
@@ -502,8 +525,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
-
-  // Header
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -530,275 +551,144 @@ const styles = StyleSheet.create({
   headerSpacer: {
     width: 40,
   },
-
-  // Step Indicator
-  stepContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: SPACING.lg,
-    backgroundColor: COLORS.white,
+  scrollContainer: {
+    flex: 1,
+  },
+  // Acordeón
+  accordionSection: {
     marginHorizontal: SPACING.lg,
-    marginTop: -20,
+    marginTop: SPACING.md,
+    marginBottom: SPACING.sm,
+    backgroundColor: COLORS.white,
     borderRadius: 16,
-    elevation: 4,
+    elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
-  },
-  stepItem: {
-    alignItems: 'center',
-    flex: 1,
-    position: 'relative',
-  },
-  stepCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORS.lightGray,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: SPACING.xs,
-  },
-  stepCircleActive: {
-    backgroundColor: COLORS.primary,
-  },
-  stepText: {
-    fontSize: 12,
-    color: COLORS.gray,
-    fontWeight: '600',
-  },
-  stepTextActive: {
-    color: COLORS.primary,
-  },
-  stepLine: {
-    position: 'absolute',
-    top: 20,
-    left: '70%',
-    width: '60%',
-    height: 2,
-    backgroundColor: COLORS.lightGray,
-  },
-  stepLineActive: {
-    backgroundColor: COLORS.primary,
-  },
-
-  // Content
-  scrollView: {
-    flex: 1,
-  },
-  stepWrapper: {
-    width: width * 3,
-    flexDirection: 'row',
-  },
-  stepContent: {
-    width: width,
-    padding: SPACING.lg,
-  },
-  stepTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: COLORS.dark,
-    marginBottom: SPACING.lg,
-    textAlign: 'center',
-  },
-
-  // Input Group
-  inputGroup: {
-    gap: SPACING.md,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.white,
-    borderRadius: 16,
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  input: {
-    flex: 1,
-    marginLeft: SPACING.md,
-    fontSize: 16,
-    color: COLORS.dark,
-    minHeight: 20,
-  },
-
-  // Location Button
-  locationButton: {
-    alignSelf: 'center',
-    borderRadius: 25,
     overflow: 'hidden',
-    marginBottom: SPACING.lg,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
   },
-  locationButtonGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: SPACING.xl,
-    paddingVertical: SPACING.md,
-    minWidth: 200,
-    backgroundColor: COLORS.primary,
+  accordionSectionDisabled: {
+    opacity: 0.5,
   },
-  locationButtonText: {
-    color: COLORS.white,
-    fontSize: 14,
-    fontWeight: '600',
-    marginLeft: SPACING.sm,
-  },
-
-  // Location Info
-  locationInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.primary + '15',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: 12,
-    marginBottom: SPACING.lg,
-    borderWidth: 1,
-    borderColor: COLORS.primary + '30',
-  },
-  locationInfoText: {
-    color: COLORS.primary,
-    fontSize: 12,
-    fontWeight: '600',
-    marginLeft: SPACING.sm,
-    flex: 1,
-  },
-
-  // Payment Options
-  paymentOption: {
-    marginBottom: SPACING.md,
-    borderRadius: 16,
-    overflow: 'hidden',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  paymentOptionActive: {
-    elevation: 4,
-    shadowOpacity: 0.2,
-  },
-  paymentGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: SPACING.lg,
-  },
-  paymentInfo: {
-    flex: 1,
-    marginLeft: SPACING.lg,
-  },
-  paymentTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.dark,
-    marginBottom: 4,
-  },
-  paymentTitleActive: {
-    color: COLORS.white,
-  },
-  paymentSubtitle: {
-    fontSize: 14,
-    color: COLORS.gray,
-  },
-  paymentSubtitleActive: {
-    color: 'rgba(255,255,255,0.8)',
-  },
-  paymentDisabled: {
-    color: COLORS.gray,
-  },
-
-  // Summary Cards
-  summaryCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: 16,
-    padding: SPACING.lg,
-    marginBottom: SPACING.md,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  summaryTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.dark,
-    marginBottom: SPACING.md,
-  },
-  summaryRow: {
+  accordionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: SPACING.sm,
+    padding: SPACING.lg,
+    backgroundColor: COLORS.white,
   },
-  summaryLabel: {
-    fontSize: 16,
-    color: COLORS.gray,
+  accordionHeaderCompleted: {
+    backgroundColor: COLORS.primary + '10',
   },
-  summaryValue: {
+  accordionHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  accordionNumber: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: COLORS.lightGray,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: SPACING.md,
+  },
+  accordionNumberCompleted: {
+    backgroundColor: COLORS.primary,
+  },
+  accordionNumberText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: 'bold',
     color: COLORS.dark,
   },
-  freeShipping: {
-    color: COLORS.primary,
+  accordionTitle: {
+    fontSize: 16,
     fontWeight: 'bold',
+    color: COLORS.dark,
   },
-  divider: {
-    height: 1,
-    backgroundColor: COLORS.lightGray,
-    marginVertical: SPACING.md,
+  accordionSummary: {
+    paddingHorizontal: SPACING.lg,
+    paddingBottom: SPACING.md,
+    backgroundColor: COLORS.background,
   },
-  totalLabel: {
+  accordionSummaryText: {
+    fontSize: 14,
+    color: COLORS.gray,
+    marginBottom: 4,
+  },
+  // Mapa Modal
+  mapModalContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  mapModalContent: {
+    width: width * 0.95,
+    height: height * 0.8,
+    backgroundColor: COLORS.white,
+    borderRadius: 20,
+    overflow: 'hidden',
+    elevation: 10,
+  },
+  mapHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: SPACING.lg,
+    backgroundColor: COLORS.primary,
+  },
+  mapTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: COLORS.primary,
+    color: COLORS.white,
   },
-  totalValue: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: COLORS.primary,
+  mapCloseButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-
-  // Info Cards
-  infoCard: {
+  mapContainer: {
+    flex: 1,
+  },
+  map: {
+    width: '100%',
+    height: '100%',
+  },
+  mapFooter: {
+    padding: SPACING.lg,
     backgroundColor: COLORS.white,
-    borderRadius: 12,
-    padding: SPACING.md,
-    marginBottom: SPACING.sm,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.lightGray,
   },
-  infoTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-    marginBottom: SPACING.xs,
-  },
-  infoText: {
+  mapAddressText: {
     fontSize: 14,
     color: COLORS.dark,
-    lineHeight: 20,
+    marginBottom: SPACING.md,
+    textAlign: 'center',
   },
-
-  // Bottom Button
+  confirmLocationButton: {
+    backgroundColor: COLORS.primary,
+    paddingVertical: SPACING.md,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  confirmLocationText: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  // Botón inferior
   bottomContainer: {
     backgroundColor: COLORS.white,
     paddingHorizontal: SPACING.lg,
@@ -845,7 +735,6 @@ const styles = StyleSheet.create({
     marginLeft: SPACING.sm,
     opacity: 0.9,
   },
-
   // Empty State
   emptyContainer: {
     flex: 1,

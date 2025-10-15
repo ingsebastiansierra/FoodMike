@@ -12,7 +12,7 @@ import { formatCurrency } from '../../../shared/utils/format';
 import { useFocusEffect } from '@react-navigation/native';
 
 const ProductDetailScreen = ({ route, navigation }) => {
-  const { product } = route.params;
+  const { product, fromCart } = route.params;
 
   // DEBUG: Ver el producto recibido
   console.log('DEBUG ProductDetailScreen product:', product);
@@ -94,19 +94,33 @@ const ProductDetailScreen = ({ route, navigation }) => {
             <Ionicons name="arrow-back" size={20} color="#222" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Detalle del Producto</Text>
-          <TouchableOpacity
-            style={styles.backBtn}
-            onPress={() => setIsFavorite(!isFavorite)}
-          >
-            <Ionicons
-              name={isFavorite ? 'heart' : 'heart-outline'}
-              size={20}
-              color={isFavorite ? '#ff4757' : '#222'}
-            />
-          </TouchableOpacity>
+          {fromCart ? (
+            <TouchableOpacity
+              style={styles.backBtn}
+              onPress={() => navigation.navigate('Carrito')}
+            >
+              <Ionicons name="cart" size={20} color={COLORS.primary} />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={styles.backBtn}
+              onPress={() => setIsFavorite(!isFavorite)}
+            >
+              <Ionicons
+                name={isFavorite ? 'heart' : 'heart-outline'}
+                size={20}
+                color={isFavorite ? '#ff4757' : '#222'}
+              />
+            </TouchableOpacity>
+          )}
         </View>
 
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          nestedScrollEnabled={true}
+        >
           <ProductImage uri={product.image} />
 
           <Text style={styles.restaurantText}>{restaurantName}</Text>
@@ -180,7 +194,13 @@ const styles = StyleSheet.create({
   // 👇 mantuve todos tus estilos tal cual
   safeArea: { flex: 1, backgroundColor: '#fff' },
   container: { flex: 1, backgroundColor: '#fff' },
-  scrollContent: { paddingHorizontal: SPACING.md, paddingBottom: 80, alignItems: 'center' },
+  scrollView: { flex: 1 },
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: SPACING.md,
+    paddingBottom: 120,
+    alignItems: 'center'
+  },
   addToCartBtnWrapper: {
     position: 'absolute',
     bottom: 0,

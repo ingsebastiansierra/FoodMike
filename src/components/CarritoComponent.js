@@ -1,68 +1,32 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  ScrollView,
   StatusBar,
-  Dimensions,
-  BackHandler
 } from 'react-native';
 import { CartContext } from '../context/CartContext';
 import CartItemCard from './CartItemCard';
 import { useNavigation } from '@react-navigation/native';
-import { useCartNavigation } from '../hooks/useCartNavigation';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../theme/colors';
 import { SPACING } from '../theme/spacing';
 import { showAlert, showConfirmAlert } from '../features/core/utils/alert';
 import { formatCurrency } from '../shared/utils/format';
 
-const { width, height } = Dimensions.get('window');
-
 const CarritoComponent = () => {
   const { cartItems, totalPrice, clearCart } = useContext(CartContext);
   const navigation = useNavigation();
-  const { forceCloseCart } = useCartNavigation();
-  const insets = useSafeAreaInsets();
-  const [showConfirmarOrden, setShowConfirmarOrden] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-
 
   const shippingCost = totalPrice >= 50 ? 0 : 5;
   const finalTotal = totalPrice + shippingCost;
 
-
-
-  // Manejar el botón de hardware "atrás" en Android
-  useEffect(() => {
-    const backAction = () => {
-      handleBack();
-      return true; // Prevenir el comportamiento por defecto
-    };
-
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
-
-    return () => backHandler.remove();
-  }, [showConfirmarOrden]);
-
-  const handleBack = () => {
-    if (showConfirmarOrden) {
-      setShowConfirmarOrden(false);
-    } else {
-      // Usar la función mejorada para cerrar el carrito
-      forceCloseCart();
-    }
-  };
-
   const handleClearCart = () => {
     showConfirmAlert(
       'Vaciar Carrito',
-      '¿Estáss seguro de que quieres vaciar todo el carrito?',
+      '¿Estás seguro de que quieres vaciar todo el carrito?',
       () => {
         clearCart();
         showAlert('Carrito Vacío', 'Se han eliminado todos los productos del carrito.');
@@ -75,43 +39,27 @@ const CarritoComponent = () => {
       showAlert('Carrito Vacío', 'No hay productos en el carrito para confirmar.');
       return;
     }
-    // Navegar a la pantalla de checkout
     navigation.navigate('Checkout');
   };
 
-  const handlePayment = () => {
-    if (cartItems.length === 0) {
-      showAlert('Carrito Vacío', 'No hay productos en el carrito para procesar.');
-      return;
-    }
+  const renderItem = ({ item }) => (
+    <CartItemCard item={item} />
+  );
 
-    showConfirmAlert(
-      'Confirmar Pago',
-      `¿Estás seguro de que quieres procesar el pago por ${formatCurrency(finalTotal)}?`,
-      () => {
-        setIsProcessing(true);
-        // Simular procesamiento de pago
-        setTimeout(() => {
-          setIsProcessing(false);
-          showAlert(
-            '¡Pago Exitoso!',
-            'Tu pedido ha sido procesado correctamente. Recibirás una confirmación por email.',
-            () => {
-              clearCart();
-              setShowConfirmarOrden(false);
-              navigation.reset({
-                index: 0,
-                routes: [{ name: 'Inicio', params: { screen: 'HomeInitial' } }]
-              });
-            }
-          );
-        }, 2000);
-      }
-    );
-  };
-
-  const renderItem = ({ item, index }) => (
-    <CartItemCard item={item} index={index} />
+  const renderHeader = () => (
+    <View style={styles.header}>
+      <View style={styles.headerTop}>
+        <Text style={styles.headerTitle}>
+          Mi Carrito ({cartItems.length})
+        </Text>
+        {cartItems.length > 0 && (
+          <TouchableOpacity onPress={handleClearCart} style={styles.clearButton}>
+            <Icon name="trash" size={18} color={COLORS.error} />
+            <Text style={styles.clearButtonText}>Vaciar</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
   );
 
   const renderEmptyCart = () => (
@@ -121,131 +69,70 @@ const CarritoComponent = () => {
       <Text style={styles.emptySubtitle}>No hay productos en el carrito</Text>
       <TouchableOpacity
         style={styles.continueButton}
-        onPress={() => {
-          navigation.reset({
-            index: 0,
-            routes: [{ name: 'Inicio', params: { screen: 'HomeInitial' } }]
-          });
-        }}
+        onPress={() => navigation.goBack()}
       >
         <Text style={styles.continueButtonText}>Seguir Comprando</Text>
       </TouchableOpacity>
     </View>
   );
 
-  const renderConfirmarOrden = () => (
-    <View style={styles.content}>
-      {/* Order Summary */}
-      <View style={styles.summaryCard}>
-        <Text style={styles.summaryTitle}>Resumen del Pedido</Text>
-
-        <View style={styles.summaryRow}>
-          <Text style={styles.summaryLabel}>Subtotal:</Text>
-          <Text style={styles.summaryValue}>{formatCurrency(totalPrice)}</Text>
-        </View>
-
-        <View style={styles.summaryRow}>
-          <Text style={styles.summaryLabel}>Envío:</Text>
-          <Text style={styles.summaryValue}>
-            {shippingCost === 0 ? 'Gratis' : formatCurrency(shippingCost)}
-          </Text>
-        </View>
-
-        <View style={styles.divider} />
-
-        <View style={styles.summaryRow}>
-          <Text style={styles.totalLabel}>Total:</Text>
-          <Text style={styles.totalValue}>{formatCurrency(finalTotal)}</Text>
-        </View>
-
-        {shippingCost === 0 && (
-          <Text style={styles.freeShippingText}>
-            🎉 ¡Envío gratis en pedidos superiores a $50!
-          </Text>
-        )}
-      </View>
-
-      {/* Items List */}
-      <View style={styles.itemsContainer}>
-        <Text style={styles.itemsTitle}>Productos ({cartItems.length})</Text>
-        <FlatList
-          data={cartItems}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.id.toString()}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.itemsList}
-        />
-      </View>
-    </View>
+  const renderFooter = () => (
+    <View style={styles.footerSpace} />
   );
 
-  const renderCarrito = () => (
-    <View style={styles.content}>
-      {cartItems.length === 0 ? (
-        renderEmptyCart()
-      ) : (
-        <>
-          <View style={styles.listHeader}>
-            <Text style={styles.listHeaderTitle}>
-              Mi Carrito ({cartItems.length} {cartItems.length === 1 ? 'producto' : 'productos'})
-            </Text>
-          </View>
-
-          <FlatList
-            data={cartItems}
-            renderItem={renderItem}
-            keyExtractor={(item) => item.id.toString()}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.cartList}
-          />
-        </>
-      )}
-    </View>
-  );
+  if (cartItems.length === 0) {
+    return (
+      <View style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
+        {renderHeader()}
+        {renderEmptyCart()}
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" />
-      {showConfirmarOrden ? renderConfirmarOrden() : renderCarrito()}
-      {/* Bottom Container */}
-      {cartItems.length > 0 && (
-        <View style={styles.bottomContainer}>
-          {showConfirmarOrden ? (
-            <TouchableOpacity
-              style={[styles.paymentButton, isProcessing && styles.paymentButtonDisabled]}
-              onPress={handlePayment}
-              disabled={isProcessing}
-            >
-              <LinearGradient
-                colors={isProcessing ? [COLORS.gray, COLORS.gray] : [COLORS.primary, COLORS.accent]}
-                style={styles.paymentButtonGradient}
-              >
-                <Icon
-                  name={isProcessing ? "spinner" : "credit-card"}
-                  size={20}
-                  color={COLORS.white}
-                />
-                <Text style={styles.paymentButtonText}>
-                  {isProcessing ? 'Procesando...' : `Pagar ${formatCurrency(finalTotal)}`}
-                </Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              style={styles.confirmButton}
-              onPress={handleConfirmOrder}
-            >
-              <View
-                style={styles.confirmButtonGradient}
-              >
-                <Text style={styles.confirmButtonText}>
-                  Confirmar Pedido • {formatCurrency(finalTotal)}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          )}
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
+      {renderHeader()}
+
+      <FlatList
+        data={cartItems}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id.toString()}
+        contentContainerStyle={styles.listContent}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        ListFooterComponent={renderFooter}
+      />
+
+      <View style={styles.bottomContainer}>
+        <View style={styles.totalSection}>
+          <View style={styles.totalRow}>
+            <Text style={styles.totalLabel}>Subtotal:</Text>
+            <Text style={styles.totalValue}>{formatCurrency(totalPrice)}</Text>
+          </View>
+          <View style={styles.totalRow}>
+            <Text style={styles.totalLabel}>Envío:</Text>
+            <Text style={styles.totalValue}>
+              {shippingCost === 0 ? 'Gratis' : formatCurrency(shippingCost)}
+            </Text>
+          </View>
+          <View style={styles.divider} />
+          <View style={styles.totalRow}>
+            <Text style={styles.finalTotalLabel}>Total:</Text>
+            <Text style={styles.finalTotalValue}>{formatCurrency(finalTotal)}</Text>
+          </View>
         </View>
-      )}
+
+        <TouchableOpacity
+          style={styles.confirmButton}
+          onPress={handleConfirmOrder}
+        >
+          <Text style={styles.confirmButtonText}>
+            Confirmar Pedido
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -255,10 +142,42 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
-  content: {
-    flex: 1,
+  header: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.lg,
+    paddingBottom: SPACING.md,
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: COLORS.white,
+  },
+  clearButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.white,
     paddingHorizontal: SPACING.md,
-    paddingTop: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: 20,
+  },
+  clearButtonText: {
+    color: COLORS.error,
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: SPACING.xs,
+  },
+  listContent: {
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.md,
+  },
+  footerSpace: {
+    width: SPACING.md,
   },
   emptyContainer: {
     flex: 1,
@@ -290,48 +209,37 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-  listHeader: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.xs,
-    marginBottom: SPACING.xs,
-  },
-  listHeaderTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-  },
-  cartList: {
-    flexGrow: 1,
-    paddingBottom: SPACING.xl,
-  },
-  summaryCard: {
+  bottomContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     backgroundColor: COLORS.white,
-    borderRadius: 16,
-    padding: SPACING.lg,
-    marginBottom: SPACING.lg,
-    elevation: 4,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.lg,
+    paddingBottom: SPACING.lg,
+    elevation: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
+    shadowRadius: 12,
   },
-  summaryTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.primary,
+  totalSection: {
     marginBottom: SPACING.md,
   },
-  summaryRow: {
+  totalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: SPACING.sm,
   },
-  summaryLabel: {
+  totalLabel: {
     fontSize: 16,
     color: COLORS.gray,
   },
-  summaryValue: {
+  totalValue: {
     fontSize: 16,
     fontWeight: '600',
     color: COLORS.dark,
@@ -341,84 +249,26 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.lightGray,
     marginVertical: SPACING.sm,
   },
-  totalLabel: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-  },
-  totalValue: {
+  finalTotalLabel: {
     fontSize: 20,
     fontWeight: 'bold',
     color: COLORS.primary,
   },
-  freeShippingText: {
-    fontSize: 12,
-    color: COLORS.success,
-    textAlign: 'center',
-    marginTop: SPACING.sm,
-    fontWeight: '600',
-  },
-  itemsContainer: {
-    flex: 1,
-  },
-  itemsTitle: {
-    fontSize: 16,
+  finalTotalValue: {
+    fontSize: 22,
     fontWeight: 'bold',
     color: COLORS.primary,
-    marginBottom: SPACING.md,
-  },
-  itemsList: {
-    paddingBottom: SPACING.xl,
-  },
-  bottomContainer: {
-    backgroundColor: COLORS.white,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.md,
-    paddingBottom: SPACING.lg,
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
   },
   confirmButton: {
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  confirmButtonGradient: {
-    alignItems: 'center',
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.xl,
     backgroundColor: COLORS.primary,
     borderRadius: 12,
+    paddingVertical: SPACING.md,
+    alignItems: 'center',
   },
   confirmButtonText: {
     color: COLORS.white,
-    fontSize: 15,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  paymentButton: {
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  paymentButtonDisabled: {
-    opacity: 0.7,
-  },
-  paymentButtonGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: SPACING.lg,
-    paddingHorizontal: SPACING.xl,
-  },
-  paymentButtonText: {
-    color: COLORS.white,
     fontSize: 18,
     fontWeight: 'bold',
-    marginLeft: SPACING.sm,
   },
 });
 

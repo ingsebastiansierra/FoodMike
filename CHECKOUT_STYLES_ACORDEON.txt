@@ -1,0 +1,68 @@
+// ESTILOS DEL ACORDEÓN - Agregar al StyleSheet.create
+
+  // Acordeón
+  scrollContainer: {
+    flex: 1,
+  },
+  accordionSection: {
+    marginHorizontal: SPACING.lg,
+    marginBottom: SPACING.md,
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    overflow: 'hidden',
+  },
+  accordionSectionDisabled: {
+    opacity: 0.5,
+  },
+  accordionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: SPACING.lg,
+    backgroundColor: COLORS.white,
+  },
+  accordionHeaderCompleted: {
+    backgroundColor: COLORS.primary + '10',
+  },
+  accordionHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  accordionNumber: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: COLORS.lightGray,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: SPACING.md,
+  },
+  accordionNumberCompleted: {
+    backgroundColor: COLORS.primary,
+  },
+  accordionNumberText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: COLORS.dark,
+  },
+  accordionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: COLORS.dark,
+  },
+  accordionSummary: {
+    paddingHorizontal: SPACING.lg,
+    paddingBottom: SPACING.md,
+    backgroundColor: COLORS.background,
+  },
+  accordionSummaryText: {
+    fontSize: 14,
+    color: COLORS.gray,
+    marginBottom: 4,
+  },
