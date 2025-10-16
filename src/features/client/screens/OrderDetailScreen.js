@@ -279,7 +279,10 @@ const OrderDetailScreen = ({ route, navigation }) => {
                     order.wompi_payment_method === 'PSE' ? 'business-outline' :
                       order.wompi_payment_method === 'BANCOLOMBIA_TRANSFER' ? 'swap-horizontal-outline' :
                         order.wompi_payment_method === 'BANCOLOMBIA_COLLECT' ? 'wallet-outline' :
-                          'card-outline'
+                          order.wompi_payment_method === 'CARD' ? 'card-outline' :
+                            (order.payment_method === 'wompi' || order.payment_method === 'online') ? 'card-outline' :
+                              order.payment_method === 'transfer' ? 'swap-horizontal-outline' :
+                                'cash-outline'
               }
               size={20}
               color={colors.primary}
@@ -292,11 +295,21 @@ const OrderDetailScreen = ({ route, navigation }) => {
                       order.wompi_payment_method === 'CARD' ? 'Tarjeta de Crédito/Débito' :
                         order.wompi_payment_method === 'BANCOLOMBIA_TRANSFER' ? 'Transferencia Bancolombia' :
                           order.wompi_payment_method === 'BANCOLOMBIA_COLLECT' ? 'Botón Bancolombia' :
-                            order.payment_method === 'online' ? 'Pago en línea' :
-                              'Efectivo'
+                            (order.payment_method === 'wompi' || order.payment_method === 'online') ? 'Pago en línea (Procesando...)' :
+                              order.payment_method === 'transfer' ? 'Nequi / Transferencia' :
+                                'Efectivo'
               }
             </Text>
           </View>
+          {order.wompi_reference && !order.wompi_transaction_id && (
+            <View style={styles.transactionInfo}>
+              <Text style={styles.transactionLabel}>Referencia de pago:</Text>
+              <Text style={styles.transactionId}>{order.wompi_reference}</Text>
+              <Text style={styles.paymentPendingNote}>
+                ⏳ Esperando confirmación del pago...
+              </Text>
+            </View>
+          )}
           {order.wompi_transaction_id && (
             <View style={styles.transactionInfo}>
               <Text style={styles.transactionLabel}>ID de transacción:</Text>
@@ -620,6 +633,12 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.sm,
     color: colors.dark,
     fontFamily: 'monospace',
+  },
+  paymentPendingNote: {
+    fontSize: typography.sizes.sm,
+    color: colors.warning,
+    marginTop: spacing.sm,
+    fontStyle: 'italic',
   },
   paymentStatusBadge: {
     marginTop: spacing.sm,

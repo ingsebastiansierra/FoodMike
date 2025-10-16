@@ -1,5 +1,5 @@
 // Supabase Edge Function para recibir webhooks de Wompi
-// Despliega con: supabase functions deploy wompi-webhook
+// Despliega con: supabase functions deploy wompi-webhook --no-verify-jwt
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
@@ -30,11 +30,21 @@ interface WompiEvent {
 }
 
 serve(async (req) => {
-  // Solo aceptar POST
+  // Configurar CORS para permitir requests de Wompi
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  };
+
+  // Manejar preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
+  }
+  // Solo aceptar POST (además de OPTIONS que ya manejamos)
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
       status: 405,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 
@@ -48,7 +58,7 @@ serve(async (req) => {
       console.log('⚠️ Evento ignorado:', event.event);
       return new Response(JSON.stringify({ message: 'Event ignored' }), {
         status: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
@@ -101,7 +111,7 @@ serve(async (req) => {
         JSON.stringify({ error: 'Database error', details: error.message }),
         {
           status: 500,
-          headers: { 'Content-Type': 'application/json' },
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         }
       );
     }
@@ -115,10 +125,12 @@ serve(async (req) => {
         message: 'Webhook processed successfully',
         orderId,
         paymentStatus,
+        transactionId: transaction.id,
+        paymentMethod: transaction.payment_method_type,
       }),
       {
         status: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
   } catch (error) {
@@ -127,7 +139,7 @@ serve(async (req) => {
       JSON.stringify({ error: 'Internal server error', details: error.message }),
       {
         status: 500,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
   }

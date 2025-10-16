@@ -231,7 +231,8 @@ const CheckoutScreen = ({ navigation }) => {
 
       // 3. Actualizar el pedido con la referencia de Wompi
       await ordersService.updateOrder(orderId, {
-        wompi_reference: reference
+        wompi_reference: reference,
+        payment_method: 'wompi'
       });
       console.log('✅ Referencia guardada en el pedido');
 
@@ -241,57 +242,35 @@ const CheckoutScreen = ({ navigation }) => {
         email: user.email,
         name: user.user_metadata?.full_name || user.email,
         phone: phone,
-        redirectUrl: 'https://tuapp.com/payment-success'
+        redirectUrl: 'https://toctoc-payment.vercel.app'
       };
 
       console.log('📦 Datos del pedido:', orderData);
 
       // 4. Abrir Wompi para el pago
-      Alert.alert(
-        '💳 Pago con Wompi',
-        `Se abrirá el navegador para completar el pago de ${formatCurrency(finalTotal)}`,
-        [
-          {
-            text: 'Abrir Wompi',
-            onPress: async () => {
-              try {
-                console.log('🚀 Abriendo checkout de Wompi...');
-                const result = await wompiService.openCheckout(orderData);
-                console.log('✅ Checkout abierto:', result);
+      console.log('🚀 Abriendo checkout de Wompi...');
+      const result = await wompiService.openCheckout(orderData);
+      console.log('✅ Checkout abierto:', result);
 
-                // 5. Mostrar instrucciones al usuario
-                setTimeout(() => {
-                  Alert.alert(
-                    'ℹ️ Completa tu pago',
-                    'Después de pagar en Wompi, regresa a la app y ve a "Mis Pedidos" para ver el estado de tu orden.',
-                    [
-                      {
-                        text: '🏠 Ir a Inicio',
-                        onPress: () => {
-                          navigation.reset({
-                            index: 0,
-                            routes: [{ name: 'Inicio', params: { screen: 'HomeInitial' } }]
-                          });
-                        }
-                      },
-                      {
-                        text: '📋 Mis Pedidos',
-                        onPress: () => {
-                          navigation.navigate('Profile', { screen: 'Orders' });
-                        }
-                      }
-                    ]
-                  );
-                }, 1500);
-              } catch (error) {
-                console.error('❌ Error abriendo Wompi:', error);
-                Alert.alert('❌ Error', `No se pudo abrir Wompi: ${error.message}`);
-              }
-            }
-          },
-          { text: 'Cancelar', style: 'cancel' }
-        ]
+      // 5. Navegar inmediatamente al detalle del pedido
+      // El usuario verá el estado "Procesando..." hasta que el webhook actualice
+      setTimeout(() => {
+        navigation.reset({
+          index: 1,
+          routes: [
+            { name: 'Inicio', params: { screen: 'HomeInitial' } },
+            { name: 'OrderDetail', params: { orderId: orderId } }
+          ]
+        });
+      }, 2000);
+
+      // Mostrar mensaje informativo
+      Alert.alert(
+        '💳 Pago en Proceso',
+        'Completa tu pago en el navegador. Tu pedido se actualizará automáticamente cuando se confirme el pago.',
+        [{ text: 'Entendido' }]
       );
+
     } catch (error) {
       console.error('❌ Error en handleWompiPayment:', error);
       Alert.alert('❌ Error', 'No se pudo procesar tu pedido: ' + error.message);

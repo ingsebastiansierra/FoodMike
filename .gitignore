@@ -101,3 +101,5 @@ yarn-error.log
 # Service account keys
 serviceAccountKey.json
 *.service-account.json
+
+.vercel

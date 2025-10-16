@@ -72,6 +72,9 @@ export const wompiService = {
             console.log('🔐 Firma de integridad generada:', integrity);
 
             // Construir URL de checkout con firma de integridad
+            // URL de redirección - Wompi redirige aquí después del pago
+            const redirectUrl = orderData.redirectUrl || 'https://toctoc-payment.vercel.app';
+
             const params = new URLSearchParams({
                 'public-key': WOMPI_PUBLIC_KEY,
                 'currency': currency,
@@ -81,7 +84,7 @@ export const wompiService = {
                 'customer-data:email': orderData.email,
                 'customer-data:full-name': orderData.name,
                 'customer-data:phone-number': orderData.phone,
-                'redirect-url': orderData.redirectUrl || 'https://tuapp.com/payment-success',
+                'redirect-url': redirectUrl,
             });
 
             const checkoutUrl = `https://checkout.wompi.co/p/?${params.toString()}`;
