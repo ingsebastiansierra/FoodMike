@@ -13,6 +13,7 @@ import { COLORS } from '../theme/colors';
 import { SPACING } from '../theme/spacing';
 import restaurantAdminService from '../services/restaurantAdminService';
 import { formatCurrency } from '../shared/utils/format';
+import { OrderCardSkeleton } from '../components/AdminSkeleton';
 
 const RestaurantOrdersScreen = ({ navigation }) => {
     const [orders, setOrders] = useState([]);
@@ -67,46 +68,115 @@ const RestaurantOrdersScreen = ({ navigation }) => {
         return texts[status] || status;
     };
 
-    const renderOrder = ({ item }) => (
-        <TouchableOpacity
-            style={styles.orderCard}
-            onPress={() => navigation.navigate('OrderDetail', { order: item })}
-        >
-            <View style={styles.orderHeader}>
-                <View>
-                    <Text style={styles.orderId}>Pedido #{item.id.slice(0, 8)}</Text>
-                    <Text style={styles.orderDate}>
-                        {new Date(item.created_at).toLocaleString()}
-                    </Text>
-                </View>
-                <View
-                    style={[
-                        styles.statusBadge,
-                        { backgroundColor: getStatusColor(item.status) },
-                    ]}
-                >
-                    <Text style={styles.statusText}>{getStatusText(item.status)}</Text>
-                </View>
-            </View>
+    const getTimeElapsed = (createdAt) => {
+        const now = new Date();
+        const created = new Date(createdAt);
+        const diffMs = now - created;
+        const diffMins = Math.floor(diffMs / 60000);
 
-            <View style={styles.orderBody}>
-                <View style={styles.orderInfo}>
-                    <Icon name="shopping-cart" size={20} color={COLORS.textSecondary} />
-                    <Text style={styles.orderInfoText}>
-                        {item.order_items?.length || 0} productos
-                    </Text>
-                </View>
-                <View style={styles.orderInfo}>
-                    <Icon name="attach-money" size={20} color={COLORS.textSecondary} />
-                    <Text style={styles.orderTotal}>{formatCurrency(item.total)}</Text>
-                </View>
-            </View>
+        if (diffMins < 1) return 'Recién llegado';
+        if (diffMins < 60) return `Hace ${diffMins} min`;
+        const diffHours = Math.floor(diffMins / 60);
+        if (diffHours < 24) return `Hace ${diffHours}h ${diffMins % 60}min`;
+        return `Hace ${Math.floor(diffHours / 24)} días`;
+    };
 
-            <View style={styles.orderFooter}>
-                <Icon name="chevron-right" size={24} color={COLORS.textSecondary} />
-            </View>
-        </TouchableOpacity>
-    );
+    const getPriorityColor = (createdAt) => {
+        const now = new Date();
+        const created = new Date(createdAt);
+        const diffMins = Math.floor((now - created) / 60000);
+
+        if (diffMins > 60) return '#FF6B6B'; // Rojo - Urgente (más de 1 hora)
+        if (diffMins > 30) return '#FFD93D'; // Amarillo - Atención (más de 30 min)
+        return '#4ECDC4'; // Verde - Normal
+    };
+
+    const getPaymentMethodIcon = (method) => {
+        if (method === 'wompi') return 'credit-card';
+        if (method === 'transfer') return 'account-balance';
+        return 'money';
+    };
+
+    const renderOrder = ({ item, index }) => {
+        const timeElapsed = getTimeElapsed(item.created_at);
+        const priorityColor = getPriorityColor(item.created_at);
+        const isPaid = item.payment_status === 'paid';
+
+        return (
+            <TouchableOpacity
+                style={[styles.orderCard, { borderLeftColor: priorityColor, borderLeftWidth: 4 }]}
+                onPress={() => navigation.navigate('OrderDetail', { orderId: item.id })}
+            >
+                {/* Número de orden en la cola */}
+                <View style={[styles.queueNumber, { backgroundColor: priorityColor }]}>
+                    <Text style={styles.queueNumberText}>#{index + 1}</Text>
+                </View>
+
+                <View style={styles.orderHeader}>
+                    <View style={styles.orderHeaderLeft}>
+                        <Text style={styles.orderId}>Pedido #{item.id.slice(0, 8)}</Text>
+                        <View style={styles.timeContainer}>
+                            <Icon name="schedule" size={14} color={priorityColor} />
+                            <Text style={[styles.timeText, { color: priorityColor }]}>
+                                {timeElapsed}
+                            </Text>
+                        </View>
+                    </View>
+                    <View
+                        style={[
+                            styles.statusBadge,
+                            { backgroundColor: getStatusColor(item.status) },
+                        ]}
+                    >
+                        <Text style={styles.statusText}>{getStatusText(item.status)}</Text>
+                    </View>
+                </View>
+
+                {/* Estado de pago */}
+                <View style={styles.paymentRow}>
+                    <Icon
+                        name={getPaymentMethodIcon(item.payment_method)}
+                        size={16}
+                        color={COLORS.textSecondary}
+                    />
+                    <Text style={styles.paymentMethod}>
+                        {item.payment_method === 'wompi' ? 'Wompi' :
+                            item.payment_method === 'transfer' ? 'Transferencia' :
+                                'Efectivo'}
+                    </Text>
+                    {isPaid && (
+                        <>
+                            <Icon name="check-circle" size={16} color="#4ECDC4" />
+                            <Text style={styles.paidText}>Pagado</Text>
+                        </>
+                    )}
+                    {!isPaid && item.payment_method !== 'cash' && (
+                        <>
+                            <Icon name="schedule" size={16} color="#FFD93D" />
+                            <Text style={styles.pendingText}>Pendiente</Text>
+                        </>
+                    )}
+                </View>
+
+                <View style={styles.orderBody}>
+                    <View style={styles.orderInfo}>
+                        <Icon name="restaurant" size={18} color={COLORS.textSecondary} />
+                        <Text style={styles.orderInfoText}>
+                            {item.order_items?.length || 0} productos
+                        </Text>
+                    </View>
+                    <View style={styles.orderInfo}>
+                        <Icon name="attach-money" size={20} color={COLORS.primary} />
+                        <Text style={styles.orderTotal}>{formatCurrency(item.total)}</Text>
+                    </View>
+                </View>
+
+                <View style={styles.orderFooter}>
+                    <Icon name="chevron-right" size={24} color={COLORS.textSecondary} />
+                </View>
+            </TouchableOpacity>
+        );
+    };
 
     const FilterButton = ({ label, value }) => (
         <TouchableOpacity
@@ -126,9 +196,19 @@ const RestaurantOrdersScreen = ({ navigation }) => {
 
     if (loading) {
         return (
-            <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={COLORS.primary} />
-                <Text style={styles.loadingText}>Cargando pedidos...</Text>
+            <View style={styles.container}>
+                <View style={styles.filtersContainer}>
+                    <View style={[styles.filterButton, styles.filterButtonActive]}>
+                        <Text style={styles.filterButtonTextActive}>Cargando...</Text>
+                    </View>
+                </View>
+                <View style={styles.listContainer}>
+                    <OrderCardSkeleton />
+                    <OrderCardSkeleton />
+                    <OrderCardSkeleton />
+                    <OrderCardSkeleton />
+                    <OrderCardSkeleton />
+                </View>
             </View>
         );
     }
@@ -211,27 +291,51 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         padding: SPACING.md,
         marginBottom: SPACING.md,
-        elevation: 2,
+        elevation: 3,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 4,
+        position: 'relative',
+    },
+    queueNumber: {
+        position: 'absolute',
+        top: -8,
+        left: 12,
+        paddingHorizontal: 12,
+        paddingVertical: 4,
+        borderRadius: 12,
+        elevation: 2,
+    },
+    queueNumberText: {
+        fontSize: 12,
+        fontWeight: 'bold',
+        color: '#FFF',
     },
     orderHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'flex-start',
         marginBottom: SPACING.sm,
+        marginTop: 8,
+    },
+    orderHeaderLeft: {
+        flex: 1,
     },
     orderId: {
         fontSize: 16,
         fontWeight: 'bold',
         color: COLORS.text,
     },
-    orderDate: {
+    timeContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 4,
+        gap: 4,
+    },
+    timeText: {
         fontSize: 12,
-        color: COLORS.textSecondary,
-        marginTop: 2,
+        fontWeight: '600',
     },
     statusBadge: {
         paddingHorizontal: SPACING.sm,
@@ -243,6 +347,33 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: '#FFF',
     },
+    paymentRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: SPACING.sm,
+        paddingVertical: SPACING.xs,
+        paddingHorizontal: SPACING.sm,
+        backgroundColor: COLORS.background,
+        borderRadius: 8,
+        gap: 6,
+    },
+    paymentMethod: {
+        fontSize: 13,
+        color: COLORS.textSecondary,
+        fontWeight: '600',
+    },
+    paidText: {
+        fontSize: 12,
+        color: '#4ECDC4',
+        fontWeight: 'bold',
+        marginLeft: 'auto',
+    },
+    pendingText: {
+        fontSize: 12,
+        color: '#FFD93D',
+        fontWeight: 'bold',
+        marginLeft: 'auto',
+    },
     orderBody: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -251,17 +382,18 @@ const styles = StyleSheet.create({
     orderInfo: {
         flexDirection: 'row',
         alignItems: 'center',
+        gap: 4,
     },
     orderInfoText: {
-        fontSize: 14,
+        fontSize: 13,
         color: COLORS.textSecondary,
-        marginLeft: 4,
+        marginLeft: 2,
     },
     orderTotal: {
         fontSize: 18,
         fontWeight: 'bold',
         color: COLORS.primary,
-        marginLeft: 4,
+        marginLeft: 2,
     },
     orderFooter: {
         alignItems: 'flex-end',

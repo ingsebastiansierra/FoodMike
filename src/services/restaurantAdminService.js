@@ -5,11 +5,16 @@ const getCurrentRestaurantId = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Usuario no autenticado');
 
+    console.log('👤 Usuario actual:', user.email);
+
     const { data: profile, error } = await supabase
         .from('profiles')
-        .select('restaurant_id')
+        .select('restaurant_id, role, email')
         .eq('id', user.id)
         .single();
+
+    console.log('👤 Perfil obtenido:', profile);
+    console.log('❌ Error obteniendo perfil:', error);
 
     if (error || !profile?.restaurant_id) {
         throw new Error('No tienes un restaurante asignado');
@@ -25,6 +30,8 @@ const restaurantAdminService = {
     getDashboard: async () => {
         try {
             const restaurantId = await getCurrentRestaurantId();
+            console.log('🏪 Restaurant ID del admin:', restaurantId);
+            console.log('🏪 Tipo de restaurant ID:', typeof restaurantId);
 
             // Obtener estadísticas
             const { data: stats } = await supabase
@@ -33,13 +40,33 @@ const restaurantAdminService = {
                 .eq('restaurant_id', restaurantId)
                 .single();
 
-            // Obtener pedidos recientes
-            const { data: recentOrders } = await supabase
+            console.log('📊 Stats obtenidas:', stats);
+
+            // Obtener pedidos recientes con información de pago
+            const { data: recentOrders, error: ordersError } = await supabase
                 .from('orders')
-                .select('id, total, status, created_at')
+                .select(`
+                    id, 
+                    total, 
+                    status, 
+                    created_at,
+                    payment_method,
+                    payment_status,
+                    wompi_transaction_id,
+                    wompi_reference,
+                    wompi_payment_method,
+                    paid_at,
+                    restaurant_id
+                `)
                 .eq('restaurant_id', restaurantId)
                 .order('created_at', { ascending: false })
                 .limit(10);
+
+            console.log('📦 Pedidos encontrados:', recentOrders?.length || 0);
+            console.log('❌ Error en pedidos:', ordersError);
+            if (recentOrders && recentOrders.length > 0) {
+                console.log('📦 Primer pedido:', recentOrders[0]);
+            }
 
             // Obtener productos destacados
             const { data: topProducts } = await supabase

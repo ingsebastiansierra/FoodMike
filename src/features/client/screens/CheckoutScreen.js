@@ -21,6 +21,7 @@ import { formatCurrency } from '../../../shared/utils/format';
 import { showAlert } from '../../core/utils/alert';
 import locationService from '../../../services/locationService';
 import wompiService from '../../../services/wompiService';
+import ordersService from '../../../services/ordersService';
 
 // Componentes de Checkout
 import AddressSection from '../components/checkout/AddressSection';
@@ -219,8 +220,20 @@ const CheckoutScreen = ({ navigation }) => {
     try {
       console.log('🎯 Iniciando pago con Wompi...');
 
-      const reference = wompiService.generateReference();
+      // 1. Crear el pedido primero
+      const orderResult = await createOrder();
+      const orderId = orderResult.data.id;
+      console.log('📝 Pedido creado con ID:', orderId);
+
+      // 2. Generar referencia con el ID del pedido
+      const reference = `ORDER-${orderId}`;
       console.log('📝 Referencia generada:', reference);
+
+      // 3. Actualizar el pedido con la referencia de Wompi
+      await ordersService.updateOrder(orderId, {
+        wompi_reference: reference
+      });
+      console.log('✅ Referencia guardada en el pedido');
 
       const orderData = {
         amount: finalTotal,
@@ -233,7 +246,7 @@ const CheckoutScreen = ({ navigation }) => {
 
       console.log('📦 Datos del pedido:', orderData);
 
-      // Abrir Wompi directamente sin alert intermedio
+      // 4. Abrir Wompi para el pago
       Alert.alert(
         '💳 Pago con Wompi',
         `Se abrirá el navegador para completar el pago de ${formatCurrency(finalTotal)}`,
@@ -246,14 +259,30 @@ const CheckoutScreen = ({ navigation }) => {
                 const result = await wompiService.openCheckout(orderData);
                 console.log('✅ Checkout abierto:', result);
 
-                // Esperar un momento antes de mostrar el siguiente mensaje
+                // 5. Mostrar instrucciones al usuario
                 setTimeout(() => {
                   Alert.alert(
-                    'ℹ️ Pago en proceso',
-                    'Completa el pago en la ventana del navegador. Tu pedido será confirmado automáticamente.',
-                    [{ text: 'Entendido' }]
+                    'ℹ️ Completa tu pago',
+                    'Después de pagar en Wompi, regresa a la app y ve a "Mis Pedidos" para ver el estado de tu orden.',
+                    [
+                      {
+                        text: '🏠 Ir a Inicio',
+                        onPress: () => {
+                          navigation.reset({
+                            index: 0,
+                            routes: [{ name: 'Inicio', params: { screen: 'HomeInitial' } }]
+                          });
+                        }
+                      },
+                      {
+                        text: '📋 Mis Pedidos',
+                        onPress: () => {
+                          navigation.navigate('Profile', { screen: 'Orders' });
+                        }
+                      }
+                    ]
                   );
-                }, 1000);
+                }, 1500);
               } catch (error) {
                 console.error('❌ Error abriendo Wompi:', error);
                 Alert.alert('❌ Error', `No se pudo abrir Wompi: ${error.message}`);
@@ -265,7 +294,7 @@ const CheckoutScreen = ({ navigation }) => {
       );
     } catch (error) {
       console.error('❌ Error en handleWompiPayment:', error);
-      Alert.alert('❌ Error', 'Hubo un problema al procesar el pago.');
+      Alert.alert('❌ Error', 'No se pudo procesar tu pedido: ' + error.message);
     }
   };
 

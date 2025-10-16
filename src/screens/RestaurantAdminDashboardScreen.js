@@ -8,6 +8,7 @@ import {
     RefreshControl,
     ActivityIndicator,
     Dimensions,
+    Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -15,7 +16,7 @@ import { COLORS } from '../theme/colors';
 import { SPACING } from '../theme/spacing';
 import restaurantAdminService from '../services/restaurantAdminService';
 import { formatCurrency } from '../shared/utils/format';
-import { DashboardCardSkeleton, ListItemSkeleton } from '../components/SkeletonLoader';
+import { StatCardSkeleton, OrderCardSkeleton, ProductCardSkeleton } from '../components/AdminSkeleton';
 
 const { width } = Dimensions.get('window');
 
@@ -23,6 +24,7 @@ const RestaurantAdminDashboardScreen = ({ navigation }) => {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [dashboardData, setDashboardData] = useState(null);
+    const [orderFilter, setOrderFilter] = useState('all'); // all, paid, pending
 
     useEffect(() => {
         loadDashboard();
@@ -46,32 +48,61 @@ const RestaurantAdminDashboardScreen = ({ navigation }) => {
         setRefreshing(false);
     };
 
+    const getFilteredOrders = () => {
+        if (!dashboardData?.recentOrders) return [];
+        if (orderFilter === 'all') return dashboardData.recentOrders;
+        if (orderFilter === 'paid') {
+            return dashboardData.recentOrders.filter(o => o.payment_status === 'paid');
+        }
+        if (orderFilter === 'pending') {
+            return dashboardData.recentOrders.filter(o => o.payment_status === 'pending');
+        }
+        return dashboardData.recentOrders;
+    };
+
     if (loading) {
         return (
             <ScrollView style={styles.container}>
-                <LinearGradient
-                    colors={[COLORS.primary, COLORS.secondary || COLORS.primary]}
-                    style={styles.header}
-                >
-                    <View style={{ opacity: 0.5 }}>
-                        <Text style={styles.greeting}>Cargando...</Text>
-                        <Text style={styles.restaurantName}>Dashboard</Text>
+                {/* Header skeleton */}
+                <View style={styles.header}>
+                    <LinearGradient colors={['#667eea', '#764ba2']} style={styles.headerBackgroundGradient} />
+                    <View style={styles.headerOverlay} />
+                    <View style={styles.headerContent}>
+                        <View style={styles.restaurantIconContainer}>
+                            <Icon name="restaurant" size={40} color="#FFF" />
+                        </View>
+                        <Text style={styles.restaurantName}>Cargando...</Text>
                     </View>
-                </LinearGradient>
+                </View>
 
-                <View style={styles.content}>
-                    <View style={styles.statsGrid}>
-                        {[1, 2, 3, 4].map((item) => (
-                            <DashboardCardSkeleton key={item} />
-                        ))}
+                {/* Stats skeleton */}
+                <View style={styles.statsContainer}>
+                    <View style={styles.statsRow}>
+                        <StatCardSkeleton />
+                        <StatCardSkeleton />
                     </View>
+                    <View style={styles.statsRow}>
+                        <StatCardSkeleton />
+                        <StatCardSkeleton />
+                    </View>
+                </View>
 
-                    <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>Pedidos Recientes</Text>
-                        {[1, 2, 3].map((item) => (
-                            <ListItemSkeleton key={item} />
-                        ))}
-                    </View>
+                {/* Orders skeleton */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Pedidos Recientes</Text>
+                    <OrderCardSkeleton />
+                    <OrderCardSkeleton />
+                    <OrderCardSkeleton />
+                </View>
+
+                {/* Products skeleton */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Productos Destacados</Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                        <ProductCardSkeleton />
+                        <ProductCardSkeleton />
+                        <ProductCardSkeleton />
+                    </ScrollView>
                 </View>
             </ScrollView>
         );
@@ -87,18 +118,33 @@ const RestaurantAdminDashboardScreen = ({ navigation }) => {
                 <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
             }
         >
-            {/* Header con información del restaurante */}
-            <LinearGradient
-                colors={['#667eea', '#764ba2']}
-                style={styles.header}
-            >
+            {/* Header con imagen de fondo del restaurante */}
+            <View style={styles.header}>
+                {restaurant.image ? (
+                    <Image
+                        source={{ uri: restaurant.image }}
+                        style={styles.headerBackgroundImage}
+                        blurRadius={2}
+                    />
+                ) : (
+                    <LinearGradient
+                        colors={['#667eea', '#764ba2']}
+                        style={styles.headerBackgroundGradient}
+                    />
+                )}
+                {/* Overlay oscuro para mejorar legibilidad */}
+                <View style={styles.headerOverlay} />
+
                 <View style={styles.headerContent}>
-                    <Text style={styles.restaurantName}>{restaurant.name}</Text>
+                    <View style={styles.restaurantIconContainer}>
+                        <Icon name="restaurant" size={40} color="#FFF" />
+                    </View>
+                    <Text style={styles.restaurantName}>{restaurant.name || 'Mi Restaurante'}</Text>
                     <Text style={styles.restaurantStatus}>
                         {restaurant.status === 'active' ? '🟢 Activo' : '🔴 Inactivo'}
                     </Text>
                 </View>
-            </LinearGradient>
+            </View>
 
             {/* Estadísticas principales */}
             <View style={styles.statsContainer}>
@@ -171,12 +217,47 @@ const RestaurantAdminDashboardScreen = ({ navigation }) => {
                         <Text style={styles.seeAllText}>Ver todos</Text>
                     </TouchableOpacity>
                 </View>
-                {dashboardData?.recentOrders?.length > 0 ? (
-                    dashboardData.recentOrders.slice(0, 5).map((order) => (
-                        <OrderCard key={order.id} order={order} />
+
+                {/* Filtros de pedidos */}
+                <View style={styles.filterContainer}>
+                    <TouchableOpacity
+                        style={[styles.filterButton, orderFilter === 'all' && styles.filterButtonActive]}
+                        onPress={() => setOrderFilter('all')}
+                    >
+                        <Text style={[styles.filterText, orderFilter === 'all' && styles.filterTextActive]}>
+                            Todos
+                        </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.filterButton, orderFilter === 'paid' && styles.filterButtonActive]}
+                        onPress={() => setOrderFilter('paid')}
+                    >
+                        <Icon name="check-circle" size={16} color={orderFilter === 'paid' ? '#FFF' : '#4ECDC4'} />
+                        <Text style={[styles.filterText, orderFilter === 'paid' && styles.filterTextActive]}>
+                            Pagados
+                        </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.filterButton, orderFilter === 'pending' && styles.filterButtonActive]}
+                        onPress={() => setOrderFilter('pending')}
+                    >
+                        <Icon name="schedule" size={16} color={orderFilter === 'pending' ? '#FFF' : '#FFD93D'} />
+                        <Text style={[styles.filterText, orderFilter === 'pending' && styles.filterTextActive]}>
+                            Pendientes
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+
+                {getFilteredOrders().length > 0 ? (
+                    getFilteredOrders().slice(0, 5).map((order) => (
+                        <OrderCard key={order.id} order={order} navigation={navigation} />
                     ))
                 ) : (
-                    <Text style={styles.emptyText}>No hay pedidos recientes</Text>
+                    <Text style={styles.emptyText}>
+                        {orderFilter === 'all' ? 'No hay pedidos recientes' :
+                            orderFilter === 'paid' ? 'No hay pedidos pagados' :
+                                'No hay pedidos pendientes'}
+                    </Text>
                 )}
             </View>
 
@@ -188,10 +269,32 @@ const RestaurantAdminDashboardScreen = ({ navigation }) => {
                         <Text style={styles.seeAllText}>Ver todos</Text>
                     </TouchableOpacity>
                 </View>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                    {dashboardData?.topProducts?.map((product) => (
-                        <ProductCard key={product.id} product={product} />
-                    ))}
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.productsScrollContent}
+                >
+                    {dashboardData?.topProducts && dashboardData.topProducts.length > 0 ? (
+                        dashboardData.topProducts.map((product) => (
+                            <AdminProductCard
+                                key={product.id}
+                                product={product}
+                                onPress={() => navigation.navigate('Products', {
+                                    screen: 'EditProduct',
+                                    params: { product: product }
+                                })}
+                                onEdit={() => navigation.navigate('Products', {
+                                    screen: 'EditProduct',
+                                    params: { product: product }
+                                })}
+                            />
+                        ))
+                    ) : (
+                        <View style={styles.emptyProducts}>
+                            <Icon name="inventory-2" size={40} color={COLORS.textSecondary} />
+                            <Text style={styles.emptyProductsText}>No hay productos destacados</Text>
+                        </View>
+                    )}
                 </ScrollView>
             </View>
         </ScrollView>
@@ -223,7 +326,7 @@ const ActionButton = ({ icon, label, color, onPress }) => (
 );
 
 // Componente de tarjeta de pedido
-const OrderCard = ({ order }) => {
+const OrderCard = ({ order, navigation }) => {
     const getStatusColor = (status) => {
         const colors = {
             pending: '#FFD93D',
@@ -248,40 +351,80 @@ const OrderCard = ({ order }) => {
         return texts[status] || status;
     };
 
+    const getPaymentStatusIcon = (paymentStatus) => {
+        if (paymentStatus === 'paid') return 'check-circle';
+        if (paymentStatus === 'failed') return 'cancel';
+        return 'schedule';
+    };
+
+    const getPaymentStatusColor = (paymentStatus) => {
+        if (paymentStatus === 'paid') return '#4ECDC4';
+        if (paymentStatus === 'failed') return '#FF6B6B';
+        return '#FFD93D';
+    };
+
+    const getPaymentMethodText = (method) => {
+        const methods = {
+            cash: '💵 Efectivo',
+            transfer: '🏦 Transferencia',
+            wompi: '💳 Wompi',
+        };
+        return methods[method] || method;
+    };
+
     return (
-        <View style={styles.orderCard}>
+        <TouchableOpacity
+            style={styles.orderCard}
+            onPress={() => navigation?.navigate('OrderDetail', { orderId: order.id })}
+        >
             <View style={styles.orderHeader}>
-                <Text style={styles.orderId}>#{order.id.slice(0, 8)}</Text>
+                <View style={styles.orderIdContainer}>
+                    <Text style={styles.orderId}>#{order.id.slice(0, 8)}</Text>
+                    <Text style={styles.orderPaymentMethod}>
+                        {getPaymentMethodText(order.payment_method)}
+                    </Text>
+                </View>
                 <View style={[styles.statusBadge, { backgroundColor: getStatusColor(order.status) }]}>
                     <Text style={styles.statusText}>{getStatusText(order.status)}</Text>
                 </View>
             </View>
+
+            {/* Estado de pago */}
+            <View style={styles.paymentStatusContainer}>
+                <Icon
+                    name={getPaymentStatusIcon(order.payment_status)}
+                    size={16}
+                    color={getPaymentStatusColor(order.payment_status)}
+                />
+                <Text style={[styles.paymentStatusText, { color: getPaymentStatusColor(order.payment_status) }]}>
+                    {order.payment_status === 'paid' ? 'Pagado' :
+                        order.payment_status === 'failed' ? 'Pago fallido' :
+                            'Pago pendiente'}
+                </Text>
+                {order.wompi_payment_method && (
+                    <Text style={styles.wompiMethod}>
+                        ({order.wompi_payment_method})
+                    </Text>
+                )}
+            </View>
+
             <View style={styles.orderFooter}>
                 <Text style={styles.orderTotal}>{formatCurrency(order.total)}</Text>
                 <Text style={styles.orderDate}>
-                    {new Date(order.created_at).toLocaleDateString()}
+                    {new Date(order.created_at).toLocaleDateString('es-ES', {
+                        day: '2-digit',
+                        month: 'short',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    })}
                 </Text>
             </View>
-        </View>
+        </TouchableOpacity>
     );
 };
 
-// Componente de tarjeta de producto
-const ProductCard = ({ product }) => (
-    <View style={styles.productCard}>
-        <View style={styles.productImage}>
-            <Icon name="restaurant" size={40} color={COLORS.primary} />
-        </View>
-        <Text style={styles.productName} numberOfLines={1}>
-            {product.name}
-        </Text>
-        <Text style={styles.productPrice}>{formatCurrency(product.price)}</Text>
-        <View style={styles.productRating}>
-            <Icon name="star" size={14} color="#FFD700" />
-            <Text style={styles.productStars}>{product.stars || '0.0'}</Text>
-        </View>
-    </View>
-);
+// Importar el componente de card
+import AdminProductCard from '../components/AdminProductCard';
 
 const styles = StyleSheet.create({
     container: {
@@ -298,23 +441,66 @@ const styles = StyleSheet.create({
         marginTop: SPACING.md,
         fontSize: 16,
         color: COLORS.textSecondary,
+        fontWeight: '600',
     },
     header: {
-        padding: SPACING.xl,
-        paddingTop: SPACING.xxl,
+        height: 220,
+        position: 'relative',
+        overflow: 'hidden',
+    },
+    headerBackgroundImage: {
+        position: 'absolute',
+        width: '100%',
+        height: '100%',
+        resizeMode: 'cover',
+    },
+    headerBackgroundGradient: {
+        position: 'absolute',
+        width: '100%',
+        height: '100%',
+    },
+    headerOverlay: {
+        position: 'absolute',
+        width: '100%',
+        height: '100%',
+        backgroundColor: 'rgba(0, 0, 0, 0.4)',
     },
     headerContent: {
+        flex: 1,
+        justifyContent: 'center',
         alignItems: 'center',
+        paddingTop: SPACING.xl,
+        zIndex: 1,
+    },
+    restaurantIconContainer: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: SPACING.md,
+        borderWidth: 3,
+        borderColor: '#FFF',
     },
     restaurantName: {
-        fontSize: 24,
+        fontSize: 28,
         fontWeight: 'bold',
         color: '#FFF',
         marginBottom: SPACING.xs,
+        textAlign: 'center',
+        textShadowColor: 'rgba(0, 0, 0, 0.75)',
+        textShadowOffset: { width: 0, height: 2 },
+        textShadowRadius: 4,
+        paddingHorizontal: SPACING.lg,
     },
     restaurantStatus: {
-        fontSize: 14,
+        fontSize: 16,
         color: '#FFF',
+        fontWeight: '600',
+        textShadowColor: 'rgba(0, 0, 0, 0.75)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 3,
     },
     statsContainer: {
         padding: SPACING.md,
@@ -370,6 +556,34 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: COLORS.primary,
     },
+    filterContainer: {
+        flexDirection: 'row',
+        marginBottom: SPACING.md,
+        gap: SPACING.sm,
+    },
+    filterButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: SPACING.md,
+        paddingVertical: SPACING.sm,
+        borderRadius: 20,
+        backgroundColor: '#FFF',
+        borderWidth: 1,
+        borderColor: '#E0E0E0',
+        gap: 4,
+    },
+    filterButtonActive: {
+        backgroundColor: COLORS.primary,
+        borderColor: COLORS.primary,
+    },
+    filterText: {
+        fontSize: 13,
+        color: COLORS.text,
+        fontWeight: '600',
+    },
+    filterTextActive: {
+        color: '#FFF',
+    },
     actionsGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
@@ -405,13 +619,36 @@ const styles = StyleSheet.create({
     orderHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'center',
+        alignItems: 'flex-start',
         marginBottom: SPACING.sm,
+    },
+    orderIdContainer: {
+        flex: 1,
     },
     orderId: {
         fontSize: 14,
         fontWeight: '600',
         color: COLORS.text,
+        marginBottom: 2,
+    },
+    orderPaymentMethod: {
+        fontSize: 12,
+        color: COLORS.textSecondary,
+    },
+    paymentStatusContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: SPACING.sm,
+        gap: 4,
+    },
+    paymentStatusText: {
+        fontSize: 12,
+        fontWeight: '600',
+    },
+    wompiMethod: {
+        fontSize: 11,
+        color: COLORS.textSecondary,
+        fontStyle: 'italic',
     },
     statusBadge: {
         paddingHorizontal: SPACING.sm,
@@ -443,47 +680,20 @@ const styles = StyleSheet.create({
         fontSize: 14,
         paddingVertical: SPACING.lg,
     },
-    productCard: {
-        width: 140,
-        backgroundColor: '#FFF',
-        borderRadius: 12,
-        padding: SPACING.md,
-        marginRight: SPACING.sm,
-        elevation: 2,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
+    productsScrollContent: {
+        paddingRight: SPACING.md,
     },
-    productImage: {
-        width: '100%',
-        height: 80,
-        backgroundColor: COLORS.lightGray,
-        borderRadius: 8,
+    emptyProducts: {
+        alignItems: 'center',
         justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: SPACING.sm,
+        paddingVertical: SPACING.xl,
+        paddingHorizontal: SPACING.lg,
     },
-    productName: {
+    emptyProductsText: {
         fontSize: 14,
-        fontWeight: '600',
-        color: COLORS.text,
-        marginBottom: 4,
-    },
-    productPrice: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: COLORS.primary,
-        marginBottom: 4,
-    },
-    productRating: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    productStars: {
-        fontSize: 12,
         color: COLORS.textSecondary,
-        marginLeft: 4,
+        marginTop: SPACING.sm,
+        textAlign: 'center',
     },
 });
 

@@ -5,20 +5,28 @@ const ordersService = {
   // Crear un nuevo pedido
   createOrder: async (orderData) => {
     try {
+      const orderInsert = {
+        user_id: orderData.userId,
+        restaurant_id: orderData.restaurantId,
+        subtotal: orderData.subtotal,
+        delivery_fee: orderData.deliveryFee,
+        total: orderData.total,
+        delivery_address: orderData.deliveryAddress,
+        delivery_coordinates: orderData.deliveryCoordinates,
+        payment_method: orderData.paymentMethod,
+        notes: orderData.notes,
+        estimated_delivery_time: orderData.estimatedDeliveryTime,
+        payment_status: orderData.paymentMethod === 'wompi' ? 'pending' : 'pending'
+      };
+
+      // Si es pago con Wompi, agregar la referencia
+      if (orderData.wompiReference) {
+        orderInsert.wompi_reference = orderData.wompiReference;
+      }
+
       const { data: order, error: orderError } = await supabase
         .from('orders')
-        .insert({
-          user_id: orderData.userId,
-          restaurant_id: orderData.restaurantId,
-          subtotal: orderData.subtotal,
-          delivery_fee: orderData.deliveryFee,
-          total: orderData.total,
-          delivery_address: orderData.deliveryAddress,
-          delivery_coordinates: orderData.deliveryCoordinates,
-          payment_method: orderData.paymentMethod,
-          notes: orderData.notes,
-          estimated_delivery_time: orderData.estimatedDeliveryTime
-        })
+        .insert(orderInsert)
         .select()
         .single();
 
@@ -118,12 +126,32 @@ const ordersService = {
     }
   },
 
+  // Actualizar pedido (genérico)
+  updateOrder: async (orderId, updates) => {
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', orderId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { data };
+    } catch (error) {
+      handleError(error, 'updateOrder');
+    }
+  },
+
   // Actualizar estado del pedido
   updateOrderStatus: async (orderId, status) => {
     try {
       const { data, error } = await supabase
         .from('orders')
-        .update({ 
+        .update({
           status,
           updated_at: new Date().toISOString()
         })
@@ -143,7 +171,7 @@ const ordersService = {
     try {
       const { data, error } = await supabase
         .from('orders')
-        .update({ 
+        .update({
           status: 'cancelled',
           notes: reason,
           updated_at: new Date().toISOString()

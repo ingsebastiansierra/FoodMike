@@ -1,4 +1,5 @@
 import React from 'react';
+import { TouchableOpacity, View, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -22,19 +23,28 @@ const Stack = createStackNavigator();
 const DashboardStack = () => (
     <Stack.Navigator
         screenOptions={{
-            headerStyle: {
-                backgroundColor: COLORS.primary,
-            },
-            headerTintColor: '#fff',
-            headerTitleStyle: {
-                fontWeight: 'bold',
-            },
+            headerShown: false, // Ocultar header del stack, usamos el del Tab
         }}
     >
         <Stack.Screen
             name="DashboardMain"
             component={RestaurantAdminDashboardScreen}
-            options={{ title: 'Dashboard' }}
+            options={{ headerShown: false }}
+        />
+        <Stack.Screen
+            name="OrderDetail"
+            component={OrderDetailScreen}
+            options={{
+                headerShown: true,
+                headerStyle: {
+                    backgroundColor: COLORS.primary,
+                },
+                headerTintColor: '#fff',
+                headerTitleStyle: {
+                    fontWeight: 'bold',
+                },
+                title: 'Detalle del Pedido',
+            }}
         />
     </Stack.Navigator>
 );
@@ -43,38 +53,61 @@ const DashboardStack = () => (
 const ProductsStack = () => (
     <Stack.Navigator
         screenOptions={{
-            headerStyle: {
-                backgroundColor: COLORS.primary,
-            },
-            headerTintColor: '#fff',
-            headerTitleStyle: {
-                fontWeight: 'bold',
-            },
+            headerShown: false, // Ocultar header del stack por defecto
         }}
     >
         <Stack.Screen
             name="ProductsList"
             component={RestaurantProductsScreen}
             options={{
-                title: 'Productos',
-                headerShown: true
+                headerShown: false
             }}
         />
         <Stack.Screen
             name="AddProduct"
             component={AddProductScreen}
-            options={{
+            options={({ navigation }) => ({
+                headerShown: true,
                 title: 'Nuevo Producto',
-                headerShown: true
-            }}
+                headerStyle: {
+                    backgroundColor: COLORS.primary,
+                },
+                headerTintColor: '#fff',
+                headerTitleStyle: {
+                    fontWeight: 'bold',
+                },
+                headerLeft: () => (
+                    <TouchableOpacity
+                        onPress={() => navigation.goBack()}
+                        style={{ marginLeft: 10 }}
+                    >
+                        <Icon name="arrow-back" size={24} color="#fff" />
+                    </TouchableOpacity>
+                ),
+            })}
         />
         <Stack.Screen
             name="EditProduct"
             component={EditProductScreen}
-            options={{
+            options={({ navigation }) => ({
+                headerShown: true,
                 title: 'Editar Producto',
-                headerShown: true
-            }}
+                headerStyle: {
+                    backgroundColor: COLORS.primary,
+                },
+                headerTintColor: '#fff',
+                headerTitleStyle: {
+                    fontWeight: 'bold',
+                },
+                headerLeft: () => (
+                    <TouchableOpacity
+                        onPress={() => navigation.goBack()}
+                        style={{ marginLeft: 10 }}
+                    >
+                        <Icon name="arrow-back" size={24} color="#fff" />
+                    </TouchableOpacity>
+                ),
+            })}
         />
     </Stack.Navigator>
 );
@@ -83,24 +116,28 @@ const ProductsStack = () => (
 const OrdersStack = () => (
     <Stack.Navigator
         screenOptions={{
-            headerStyle: {
-                backgroundColor: COLORS.primary,
-            },
-            headerTintColor: '#fff',
-            headerTitleStyle: {
-                fontWeight: 'bold',
-            },
+            headerShown: false,
         }}
     >
         <Stack.Screen
             name="OrdersList"
             component={RestaurantOrdersScreen}
-            options={{ title: 'Pedidos' }}
+            options={{ headerShown: false }}
         />
         <Stack.Screen
             name="OrderDetail"
             component={OrderDetailScreen}
-            options={{ title: 'Detalle del Pedido' }}
+            options={{
+                headerShown: true,
+                title: 'Detalle del Pedido',
+                headerStyle: {
+                    backgroundColor: COLORS.primary,
+                },
+                headerTintColor: '#fff',
+                headerTitleStyle: {
+                    fontWeight: 'bold',
+                },
+            }}
         />
     </Stack.Navigator>
 );
@@ -109,29 +146,86 @@ const OrdersStack = () => (
 const SettingsStack = () => (
     <Stack.Navigator
         screenOptions={{
-            headerStyle: {
-                backgroundColor: COLORS.primary,
-            },
-            headerTintColor: '#fff',
-            headerTitleStyle: {
-                fontWeight: 'bold',
-            },
+            headerShown: false,
         }}
     >
         <Stack.Screen
             name="SettingsMain"
             component={RestaurantSettingsScreen}
-            options={{ title: 'Configuración' }}
+            options={{ headerShown: false }}
         />
     </Stack.Navigator>
 );
+
+// Importar el componente de pedidos pendientes
+import PendingOrdersButton from '../components/PendingOrdersButton';
+
+// Componente personalizado para el ícono del tab con animación
+const AdminTabIcon = React.memo(({ iconName, focused, size }) => {
+    return (
+        <View style={adminTabIconStyles.container}>
+            <View style={[
+                adminTabIconStyles.iconWrapper,
+                focused && adminTabIconStyles.iconWrapperActive
+            ]}>
+                <Icon
+                    name={iconName}
+                    size={size}
+                    color={focused ? COLORS.primary : COLORS.white}
+                />
+            </View>
+        </View>
+    );
+});
+
+const adminTabIconStyles = StyleSheet.create({
+    container: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 50,
+        height: 50,
+    },
+    iconWrapper: {
+        width: 42,
+        height: 42,
+        borderRadius: 21,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'transparent',
+    },
+    iconWrapperActive: {
+        backgroundColor: COLORS.white,
+        shadowColor: COLORS.white,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+        elevation: 4,
+        transform: [{ translateY: -2 }, { scale: 1.05 }],
+    },
+});
 
 // Navegador principal con tabs
 const RestaurantAdminNavigator = () => {
     return (
         <Tab.Navigator
             screenOptions={({ route }) => ({
-                headerShown: false,
+                headerShown: true, // Mostrar header
+                headerTitle: 'TOC TOC',
+                headerTitleAlign: 'center',
+                headerStyle: {
+                    backgroundColor: COLORS.primary,
+                    elevation: 1,
+                    shadowOpacity: 0.1,
+                    borderBottomWidth: 0,
+                },
+                headerTitleStyle: {
+                    fontWeight: 'bold',
+                    fontSize: 20,
+                    color: COLORS.white,
+                },
+                headerRight: () => <PendingOrdersButton />,
+                tabBarHideOnKeyboard: true,
+                animationEnabled: true,
                 tabBarIcon: ({ focused, color, size }) => {
                     let iconName;
 
@@ -152,21 +246,39 @@ const RestaurantAdminNavigator = () => {
                             iconName = 'circle';
                     }
 
-                    return <Icon name={iconName} size={size} color={color} />;
+                    return (
+                        <AdminTabIcon
+                            iconName={iconName}
+                            focused={focused}
+                            size={focused ? 24 : 20}
+                        />
+                    );
                 },
-                tabBarActiveTintColor: COLORS.primary,
-                tabBarInactiveTintColor: COLORS.textSecondary,
+                tabBarActiveTintColor: COLORS.white,
+                tabBarInactiveTintColor: COLORS.white,
                 tabBarStyle: {
-                    backgroundColor: '#fff',
-                    borderTopWidth: 1,
-                    borderTopColor: '#e0e0e0',
-                    paddingBottom: 5,
-                    paddingTop: 5,
-                    height: 60,
+                    backgroundColor: COLORS.primary,
+                    borderTopWidth: 0,
+                    elevation: 8,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: -1 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 4,
+                    height: 85,
+                    paddingBottom: 20,
+                    paddingTop: 10,
+                },
+                tabBarItemStyle: {
+                    paddingVertical: 5,
                 },
                 tabBarLabelStyle: {
-                    fontSize: 12,
+                    fontSize: 11,
                     fontWeight: '600',
+                    letterSpacing: 0.3,
+                    marginTop: 4,
+                },
+                tabBarIconStyle: {
+                    marginTop: 5,
                 },
             })}
         >

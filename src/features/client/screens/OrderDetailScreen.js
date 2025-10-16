@@ -24,6 +24,14 @@ const OrderDetailScreen = ({ route, navigation }) => {
 
   useEffect(() => {
     loadOrderDetail();
+
+    // Polling automático cada 15 segundos
+    const interval = setInterval(() => {
+      loadOrderDetailSilently();
+    }, 15000);
+
+    // Limpiar el intervalo cuando el componente se desmonte
+    return () => clearInterval(interval);
   }, [orderId]);
 
 
@@ -39,6 +47,32 @@ const OrderDetailScreen = ({ route, navigation }) => {
       navigation.goBack();
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Cargar sin mostrar loading (para el polling)
+  const loadOrderDetailSilently = async () => {
+    try {
+      const response = await ordersService.getOrderById(orderId);
+      const newOrder = response.data;
+
+      // Solo actualizar si el estado cambió
+      if (order && newOrder.status !== order.status) {
+        console.log('🔄 Estado del pedido actualizado:', order.status, '→', newOrder.status);
+        setOrder(newOrder);
+
+        // Mostrar notificación visual del cambio
+        showAlert(
+          '✅ Pedido Actualizado',
+          `Tu pedido ahora está: ${getStatusText(newOrder.status)}`
+        );
+      } else {
+        // Actualizar silenciosamente
+        setOrder(newOrder);
+      }
+    } catch (error) {
+      console.error('Error actualizando pedido:', error);
+      // No mostrar error en actualizaciones automáticas
     }
   };
 
@@ -102,8 +136,8 @@ const OrderDetailScreen = ({ route, navigation }) => {
 
   if (loading) {
     return (
-      <LoadingWrapper 
-        isLoading={loading} 
+      <LoadingWrapper
+        isLoading={loading}
         skeletonType="orderDetail"
       />
     );
@@ -114,7 +148,7 @@ const OrderDetailScreen = ({ route, navigation }) => {
       <View style={styles.errorContainer}>
         <Ionicons name="alert-circle-outline" size={80} color={colors.error} />
         <Text style={styles.errorTitle}>Pedido no encontrado</Text>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
@@ -145,7 +179,7 @@ const OrderDetailScreen = ({ route, navigation }) => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Restaurante</Text>
           <View style={styles.restaurantInfo}>
-            <Image 
+            <Image
               source={{ uri: order.restaurants?.image || 'https://via.placeholder.com/60' }}
               style={styles.restaurantImage}
             />
@@ -167,7 +201,7 @@ const OrderDetailScreen = ({ route, navigation }) => {
           <Text style={styles.sectionTitle}>Productos</Text>
           {order.order_items?.map((item, index) => (
             <View key={index} style={styles.orderItem}>
-              <Image 
+              <Image
                 source={{ uri: item.products?.image || 'https://via.placeholder.com/50' }}
                 style={styles.productImage}
               />
@@ -238,15 +272,50 @@ const OrderDetailScreen = ({ route, navigation }) => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Método de Pago</Text>
           <View style={styles.paymentMethod}>
-            <Ionicons 
-              name={order.payment_method === 'cash' ? 'cash-outline' : 'card-outline'} 
-              size={20} 
-              color={colors.primary} 
+            <Ionicons
+              name={
+                order.payment_method === 'cash' ? 'cash-outline' :
+                  order.wompi_payment_method === 'NEQUI' ? 'phone-portrait-outline' :
+                    order.wompi_payment_method === 'PSE' ? 'business-outline' :
+                      order.wompi_payment_method === 'BANCOLOMBIA_TRANSFER' ? 'swap-horizontal-outline' :
+                        order.wompi_payment_method === 'BANCOLOMBIA_COLLECT' ? 'wallet-outline' :
+                          'card-outline'
+              }
+              size={20}
+              color={colors.primary}
             />
             <Text style={styles.paymentText}>
-              {order.payment_method === 'cash' ? 'Efectivo' : 'Tarjeta'}
+              {
+                order.payment_method === 'cash' ? 'Efectivo' :
+                  order.wompi_payment_method === 'NEQUI' ? 'Nequi' :
+                    order.wompi_payment_method === 'PSE' ? 'PSE' :
+                      order.wompi_payment_method === 'CARD' ? 'Tarjeta de Crédito/Débito' :
+                        order.wompi_payment_method === 'BANCOLOMBIA_TRANSFER' ? 'Transferencia Bancolombia' :
+                          order.wompi_payment_method === 'BANCOLOMBIA_COLLECT' ? 'Botón Bancolombia' :
+                            order.payment_method === 'online' ? 'Pago en línea' :
+                              'Efectivo'
+              }
             </Text>
           </View>
+          {order.wompi_transaction_id && (
+            <View style={styles.transactionInfo}>
+              <Text style={styles.transactionLabel}>ID de transacción:</Text>
+              <Text style={styles.transactionId}>{order.wompi_transaction_id}</Text>
+            </View>
+          )}
+          {order.wompi_payment_status && (
+            <View style={styles.paymentStatusBadge}>
+              <Text style={styles.paymentStatusText}>
+                Estado: {
+                  order.wompi_payment_status === 'APPROVED' ? '✅ Aprobado' :
+                    order.wompi_payment_status === 'PENDING' ? '⏳ Pendiente' :
+                      order.wompi_payment_status === 'DECLINED' ? '❌ Rechazado' :
+                        order.wompi_payment_status === 'ERROR' ? '⚠️ Error' :
+                          order.wompi_payment_status
+                }
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Información de ubicación GPS */}
@@ -528,11 +597,42 @@ const styles = StyleSheet.create({
   paymentMethod: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: spacing.sm,
   },
   paymentText: {
     fontSize: typography.sizes.md,
     color: colors.dark,
     marginLeft: spacing.sm,
+    fontWeight: '600',
+  },
+  transactionInfo: {
+    marginTop: spacing.sm,
+    paddingTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.lightGray,
+  },
+  transactionLabel: {
+    fontSize: typography.sizes.sm,
+    color: colors.gray,
+    marginBottom: spacing.xs,
+  },
+  transactionId: {
+    fontSize: typography.sizes.sm,
+    color: colors.dark,
+    fontFamily: 'monospace',
+  },
+  paymentStatusBadge: {
+    marginTop: spacing.sm,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    backgroundColor: colors.lightGray,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+  },
+  paymentStatusText: {
+    fontSize: typography.sizes.sm,
+    color: colors.dark,
+    fontWeight: '600',
   },
   notesText: {
     fontSize: typography.sizes.md,
