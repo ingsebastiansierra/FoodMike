@@ -15,16 +15,16 @@ import { formatCurrency } from '../shared/utils/format';
 
 const { width } = Dimensions.get('window');
 
-const ProductCard = ({ product, onPress, onAddToCart }) => {
+const ProductCard = ({ product, onPress, onAddToCart, isFavorite, onToggleFavorite }) => {
   // Normalizar la imagen para manejar tanto strings como objetos
   const normalizedImage = normalizeImageSource(product.image);
-  
+
   const renderStars = (stars) => {
     // Asegurarse de que stars sea un número
     const starsValue = typeof stars === 'number' ? stars : 0;
     const fullStars = Math.floor(starsValue);
     const hasHalfStar = starsValue % 1 !== 0;
-    
+
     return (
       <View style={styles.starsContainer}>
         {[...Array(5)].map((_, index) => (
@@ -42,7 +42,7 @@ const ProductCard = ({ product, onPress, onAddToCart }) => {
 
   const renderTags = () => {
     if (!product.tags || product.tags.length === 0) return null;
-    
+
     return (
       <View style={styles.tagsContainer}>
         {product.tags.slice(0, 2).map((tag, index) => (
@@ -66,9 +66,24 @@ const ProductCard = ({ product, onPress, onAddToCart }) => {
         <View style={styles.imageContainer}>
           <Image source={normalizedImage} style={styles.image} resizeMode="cover" />
           {renderTags()}
-          
+
+          {/* Botón de favoritos */}
+          {onToggleFavorite && (
+            <TouchableOpacity
+              style={styles.favoriteButton}
+              onPress={() => onToggleFavorite(product.id)}
+              activeOpacity={0.8}
+            >
+              <Ionicons
+                name={isFavorite ? "heart" : "heart-outline"}
+                size={20}
+                color={isFavorite ? colors.error : colors.white}
+              />
+            </TouchableOpacity>
+          )}
+
           {/* Botón de agregar al carrito */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.addButton}
             onPress={onAddToCart}
             activeOpacity={0.8}
@@ -82,7 +97,7 @@ const ProductCard = ({ product, onPress, onAddToCart }) => {
           <Text style={styles.name} numberOfLines={1} ellipsizeMode="tail">
             {product.name}
           </Text>
-          
+
           <Text style={styles.description} numberOfLines={2} ellipsizeMode="tail">
             {product.description}
           </Text>
@@ -158,6 +173,22 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: 10,
     fontWeight: '600',
+  },
+  favoriteButton: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
   },
   addButton: {
     position: 'absolute',

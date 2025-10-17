@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -6,76 +6,71 @@ import {
   FlatList,
   TouchableOpacity,
   Image,
-  ScrollView
+  RefreshControl
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { colors, spacing, typography } from '../theme';
 import { formatCurrency } from '../shared/utils/format';
+import { normalizeImageSource } from '../shared/utils/imageUtils';
 import LoadingWrapper from './LoadingWrapper';
+import { useFavorites } from '../hooks/useFavorites';
 
 const FavoritosComponent = () => {
   const navigation = useNavigation();
-  const [favorites, setFavorites] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { favorites, loading, toggleFavorite, refreshFavorites } = useFavorites();
+  const [refreshing, setRefreshing] = React.useState(false);
 
-  useEffect(() => {
-    // Simular carga de favoritos
-    setTimeout(() => {
-      setFavorites([
-        // Datos de ejemplo - en una app real vendrían de una API
-        {
-          id: 1,
-          name: 'Pizza Margherita',
-          restaurant: 'Pizzería Italiana',
-          price: 25000,
-          image: 'https://via.placeholder.com/150',
-          rating: 4.5
-        },
-        {
-          id: 2,
-          name: 'Hamburguesa Clásica',
-          restaurant: 'Burger House',
-          price: 18000,
-          image: 'https://via.placeholder.com/150',
-          rating: 4.2
-        }
-      ]);
-      setLoading(false);
-    }, 1000);
-  }, []);
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await refreshFavorites();
+    setRefreshing(false);
+  }, [refreshFavorites]);
 
-  const handleProductPress = (product) => {
-    navigation.navigate('ProductDetail', { productId: product.id });
+  const handleProductPress = (item) => {
+    const product = item.products;
+    if (product) {
+      navigation.navigate('ProductDetail', { product: product });
+    }
   };
 
-  const handleRemoveFavorite = (productId) => {
-    setFavorites(favorites.filter(item => item.id !== productId));
+  const handleRemoveFavorite = async (productId) => {
+    await toggleFavorite(productId);
   };
 
-  const renderFavoriteItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.favoriteCard}
-      onPress={() => handleProductPress(item)}
-    >
-      <Image source={{ uri: item.image }} style={styles.productImage} />
-      <View style={styles.productInfo}>
-        <Text style={styles.productName}>{item.name}</Text>
-        <Text style={styles.restaurantName}>{item.restaurant}</Text>
-        <View style={styles.ratingContainer}>
-          <Ionicons name="star" size={16} color={colors.warning} />
-          <Text style={styles.rating}>{item.rating}</Text>
-        </View>
-        <Text style={styles.price}>{formatCurrency(item.price)}</Text>
-      </View>
+  const renderFavoriteItem = ({ item }) => {
+    const product = item.products;
+    const restaurant = product?.restaurants;
+
+    if (!product) return null;
+
+    return (
       <TouchableOpacity
-        style={styles.removeButton}
-        onPress={() => handleRemoveFavorite(item.id)}
+        style={styles.favoriteCard}
+        onPress={() => handleProductPress(item)}
       >
-        <Ionicons name="heart" size={24} color={colors.error} />
+        <Image
+          source={normalizeImageSource(product.image)}
+          style={styles.productImage}
+        />
+        <View style={styles.productInfo}>
+          <Text style={styles.productName}>{product.name}</Text>
+          <Text style={styles.restaurantName}>{restaurant?.name || 'Restaurante'}</Text>
+          <View style={styles.ratingContainer}>
+            <Ionicons name="star" size={16} color={colors.warning} />
+            <Text style={styles.rating}>{product.stars || 0}</Text>
+          </View>
+          <Text style={styles.price}>{formatCurrency(product.price)}</Text>
+        </View>
+        <TouchableOpacity
+          style={styles.removeButton}
+          onPress={() => handleRemoveFavorite(item.product_id)}
+        >
+          <Ionicons name="heart" size={24} color={colors.error} />
+        </TouchableOpacity>
       </TouchableOpacity>
-    </TouchableOpacity>
-  );
+    );
+  };
 
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
@@ -121,6 +116,13 @@ const FavoritosComponent = () => {
           renderItem={renderFavoriteItem}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.primary}
+            />
+          }
         />
       )}
     </View>

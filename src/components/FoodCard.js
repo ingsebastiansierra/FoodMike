@@ -7,25 +7,42 @@ import { colors, spacing, typography } from '../theme';
 import { normalizeImageSource } from '../shared/utils/imageUtils';
 import { formatCurrency } from "../shared/utils/format";
 
-const FoodCard = ({ image, name, price, stars, onPress, onAddPress }) => {
+const FoodCard = ({ image, name, price, stars, onPress, onAddPress, isFavorite, onToggleFavorite, productId }) => {
   const imageSource = normalizeImageSource(image);
 
   return (
     <TouchableOpacity style={styles.card} onPress={onPress}>
-      {imageSource ? (
-        <Image source={imageSource} style={styles.image} resizeMode="cover" />
-      ) : (
-        <View style={[styles.image, styles.placeholderImage]}>
-          <Ionicons name="fast-food-outline" size={40} color={colors.mediumGray} />
-        </View>
-      )}
+      <View style={styles.imageContainer}>
+        {imageSource ? (
+          <Image source={imageSource} style={styles.image} resizeMode="cover" />
+        ) : (
+          <View style={[styles.image, styles.placeholderImage]}>
+            <Ionicons name="fast-food-outline" size={40} color={colors.mediumGray} />
+          </View>
+        )}
+
+        {/* Botón de favoritos */}
+        {onToggleFavorite && productId && (
+          <TouchableOpacity
+            style={styles.favoriteButton}
+            onPress={() => onToggleFavorite(productId)}
+            activeOpacity={0.8}
+          >
+            <Ionicons
+              name={isFavorite ? "heart" : "heart-outline"}
+              size={18}
+              color={isFavorite ? colors.error : colors.white}
+            />
+          </TouchableOpacity>
+        )}
+      </View>
       <View style={styles.content}>
         <Text style={styles.title} numberOfLines={2}>
           {typeof name === 'string' ? name : (name ? String(name) : '')}
         </Text>
         {typeof stars === 'number' && (
           <View style={styles.starsRow}>
-            {[1,2,3,4,5].map(i => (
+            {[1, 2, 3, 4, 5].map(i => (
               <Ionicons
                 key={i}
                 name={i <= Math.round(stars) ? 'star' : 'star-outline'}
@@ -63,11 +80,32 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     marginBottom: spacing.md,
   },
-  image: {
+  imageContainer: {
+    position: 'relative',
     width: '100%',
     height: 120,
+  },
+  image: {
+    width: '100%',
+    height: '100%',
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
+  },
+  favoriteButton: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
   },
   placeholderImage: {
     backgroundColor: colors.lightGray,

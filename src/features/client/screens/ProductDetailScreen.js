@@ -10,6 +10,8 @@ import { useCart } from '../../../context/CartContext';
 import restaurantsService from '../../../services/restaurantsService'; // 👈 corregí la ruta
 import { formatCurrency } from '../../../shared/utils/format';
 import { useFocusEffect } from '@react-navigation/native';
+import { useFavorites } from '../../../hooks/useFavorites';
+import { showAlert } from '../../core/utils/alert';
 
 const ProductDetailScreen = ({ route, navigation }) => {
   const { product, fromCart } = route.params;
@@ -18,8 +20,8 @@ const ProductDetailScreen = ({ route, navigation }) => {
   console.log('DEBUG ProductDetailScreen product:', product);
 
   const [quantity, setQuantity] = useState(1);
-  const [isFavorite, setIsFavorite] = useState(false);
   const { addToCart } = useCart();
+  const { isFavorite, toggleFavorite } = useFavorites();
 
   // Estado para el restaurante
   const [restaurant, setRestaurant] = useState(null);
@@ -104,12 +106,17 @@ const ProductDetailScreen = ({ route, navigation }) => {
           ) : (
             <TouchableOpacity
               style={styles.backBtn}
-              onPress={() => setIsFavorite(!isFavorite)}
+              onPress={async () => {
+                const result = await toggleFavorite(product.id);
+                if (result.success) {
+                  showAlert('', result.message);
+                }
+              }}
             >
               <Ionicons
-                name={isFavorite ? 'heart' : 'heart-outline'}
+                name={isFavorite(product.id) ? 'heart' : 'heart-outline'}
                 size={20}
-                color={isFavorite ? '#ff4757' : '#222'}
+                color={isFavorite(product.id) ? '#ff4757' : '#222'}
               />
             </TouchableOpacity>
           )}

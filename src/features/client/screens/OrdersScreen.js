@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  FlatList, 
-  TouchableOpacity, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
-  Image
+  Image,
+  ScrollView
 } from 'react-native';
 import LoadingWrapper from '../../../components/LoadingWrapper';
 import { Ionicons } from '@expo/vector-icons';
@@ -24,7 +25,7 @@ const OrdersScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState('all');
-  
+
   // Auto-close cart when this screen gains focus
   useAutoCloseCart();
 
@@ -36,7 +37,7 @@ const OrdersScreen = ({ navigation }) => {
 
   const loadOrders = async () => {
     if (!user) return;
-    
+
     try {
       setLoading(true);
       const response = await ordersService.getUserOrders(user.id);
@@ -97,7 +98,7 @@ const OrdersScreen = ({ navigation }) => {
   });
 
   const renderOrderItem = ({ item: order }) => (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={styles.orderCard}
       onPress={() => {
         console.log('Navegando a OrderDetail con orderId:', order.id);
@@ -110,17 +111,17 @@ const OrdersScreen = ({ navigation }) => {
           <Text style={styles.orderDate}>{formatDate(order.created_at)}</Text>
         </View>
         <View style={[styles.statusBadge, { backgroundColor: getStatusColor(order.status) }]}>
-          <Ionicons 
-            name={getStatusIcon(order.status)} 
-            size={16} 
-            color={colors.white} 
+          <Ionicons
+            name={getStatusIcon(order.status)}
+            size={16}
+            color={colors.white}
           />
           <Text style={styles.statusText}>{getStatusText(order.status)}</Text>
         </View>
       </View>
 
       <View style={styles.restaurantInfo}>
-        <Image 
+        <Image
           source={{ uri: order.restaurants?.image || 'https://via.placeholder.com/50' }}
           style={styles.restaurantImage}
         />
@@ -178,7 +179,7 @@ const OrdersScreen = ({ navigation }) => {
       <Text style={styles.emptySubtitle}>
         Cuando realices tu primer pedido, aparecerá aquí
       </Text>
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.shopButton}
         onPress={() => navigation.navigate('Inicio')}
       >
@@ -189,9 +190,9 @@ const OrdersScreen = ({ navigation }) => {
 
   if (loading) {
     return (
-      <LoadingWrapper 
-        isLoading={loading} 
-        skeletonType="orders" 
+      <LoadingWrapper
+        isLoading={loading}
+        skeletonType="orders"
         skeletonCount={5}
       />
     );
@@ -204,11 +205,17 @@ const OrdersScreen = ({ navigation }) => {
       </View>
 
       {/* Filtros */}
-      <View style={styles.filtersContainer}>
-        {renderFilterButton('all', 'Todos')}
-        {renderFilterButton('pending', 'Pendientes')}
-        {renderFilterButton('delivered', 'Entregados')}
-        {renderFilterButton('cancelled', 'Cancelados')}
+      <View style={styles.filtersWrapper}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filtersContainer}
+        >
+          {renderFilterButton('all', 'Todos')}
+          {renderFilterButton('pending', 'Pendientes')}
+          {renderFilterButton('delivered', 'Entregados')}
+          {renderFilterButton('cancelled', 'Cancelados')}
+        </ScrollView>
       </View>
 
       {/* Lista de pedidos */}
@@ -259,11 +266,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.dark,
   },
+  filtersWrapper: {
+    backgroundColor: colors.white,
+  },
   filtersContainer: {
-    flexDirection: 'row',
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
-    backgroundColor: colors.white,
   },
   filterButton: {
     paddingHorizontal: spacing.md,

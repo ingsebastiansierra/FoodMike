@@ -140,55 +140,20 @@
             Cerrar y Volver a la App
         </button>
         
-        <p class="close-text">Esta ventana se cerrará automáticamente en <span id="countdown">5</span> segundos...</p>
+        <p class="close-text">Abriendo la app en <span id="countdown">2</span> segundos...</p>
     </div>
     
     <script>
-        // Intentar cerrar la ventana automáticamente
-        let countdown = 5;
-        const countdownElement = document.getElementById('countdown');
-        
-        const timer = setInterval(() => {
-            countdown--;
-            countdownElement.textContent = countdown;
-            
-            if (countdown <= 0) {
-                clearInterval(timer);
-                closeWindow();
-            }
-        }, 1000);
-        
-        function closeWindow() {
-            // Intentar cerrar la ventana/pestaña
-            window.close();
-            
-            // Si no se puede cerrar, redirigir a la app (si está configurado deep linking)
-            setTimeout(() => {
-                // Intentar abrir la app con deep link
-                window.location.href = 'toctoc://home';
-                
-                // Si no funciona, mostrar mensaje
-                setTimeout(() => {
-                    document.querySelector('.container').innerHTML = `
-                        <div class="success-icon"></div>
-                        <h1>✅ Todo Listo</h1>
-                        <p>Puedes cerrar esta ventana manualmente y regresar a la app TOC TOC.</p>
-                        <p style="margin-top: 20px; color: #999; font-size: 14px;">
-                            Si la ventana no se cierra automáticamente, ciérrala manualmente.
-                        </p>
-                    `;
-                }, 1000);
-            }, 500);
-        }
-        
         // Detectar si el pago fue exitoso desde los parámetros de la URL
         const urlParams = new URLSearchParams(window.location.search);
         const status = urlParams.get('status');
         const id = urlParams.get('id');
         
-        if (status === 'DECLINED' || status === 'ERROR') {
+        // Verificar si es pago rechazado
+        const isDeclined = status === 'DECLINED' || status === 'ERROR';
+        
+        if (isDeclined) {
             document.querySelector('.success-icon').style.background = '#f44336';
-            document.querySelector('.success-icon::after').content = '✗';
             document.querySelector('h1').textContent = '❌ Pago Rechazado';
             document.querySelector('p').textContent = 'Tu pago no pudo ser procesado. Por favor, intenta nuevamente.';
             document.querySelector('.info-box p:first-child').innerHTML = '<strong>⚠️ Intenta de nuevo</strong>';
@@ -197,6 +162,65 @@
         
         console.log('Payment status:', status);
         console.log('Transaction ID:', id);
+        
+        // Función para redirigir a la app
+        function redirectToApp() {
+            console.log('🚀 Abriendo la app TOC TOC...');
+            
+            // Intentar abrir la app con deep link
+            window.location.href = 'toctoc://';
+            
+            // Fallback: Intentar cerrar la ventana después de 1 segundo
+            setTimeout(() => {
+                window.close();
+            }, 1000);
+            
+            // Si nada funciona, mostrar mensaje después de 2 segundos
+            setTimeout(() => {
+                document.querySelector('.container').innerHTML = `
+                    <div class="success-icon"></div>
+                    <h1>✅ Todo Listo</h1>
+                    <p>Regresa a la app TOC TOC para ver tu pedido.</p>
+                    <p style="margin-top: 20px; color: #999; font-size: 14px;">
+                        Si la app no se abrió automáticamente, ábrela manualmente.
+                    </p>
+                    <button class="button" onclick="window.location.href='toctoc://'">
+                        Abrir App TOC TOC
+                    </button>
+                `;
+            }, 2000);
+        }
+        
+        // Contador regresivo
+        let countdown = 2;
+        const countdownElement = document.getElementById('countdown');
+        countdownElement.textContent = countdown;
+        
+        const timer = setInterval(() => {
+            countdown--;
+            countdownElement.textContent = countdown;
+            
+            if (countdown <= 0) {
+                clearInterval(timer);
+                redirectToApp();
+            }
+        }, 1000);
+        
+        // Botón manual
+        function closeWindow() {
+            redirectToApp();
+        }
+        
+        // Intentar abrir la app inmediatamente (en segundo plano)
+        setTimeout(() => {
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            iframe.src = 'toctoc://';
+            document.body.appendChild(iframe);
+            setTimeout(() => {
+                document.body.removeChild(iframe);
+            }, 1000);
+        }, 500);
     </script>
 </body>
 </html>

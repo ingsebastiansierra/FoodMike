@@ -36,6 +36,8 @@ import RestaurantCard from "../components/RestaurantCard";
 import restaurantsService from "../services/restaurantsService";
 import { search } from "../services/searchService";
 import { formatCurrency } from "../shared/utils/format";
+import { useFavorites } from "../hooks/useFavorites";
+import { showAlert } from "../features/core/utils/alert";
 
 const { width } = Dimensions.get('window');
 
@@ -155,6 +157,7 @@ const HomeContentComponent = ({ user, onAddToCart, onProductPress, onRestaurantP
   const [userName, setUserName] = useState(''); // Inicializado vacío
   const [currentAutoPromo, setCurrentAutoPromo] = useState(0);
   const carouselRef = useRef(null);
+  const { isFavorite, toggleFavorite } = useFavorites();
 
   useEffect(() => {
     loadOpenRestaurants();
@@ -366,6 +369,14 @@ const HomeContentComponent = ({ user, onAddToCart, onProductPress, onRestaurantP
             stars={product.stars}
             onPress={onPress}
             onAddPress={onAddPress}
+            productId={product.id}
+            isFavorite={isFavorite(product.id)}
+            onToggleFavorite={async (productId) => {
+              const result = await toggleFavorite(productId);
+              if (result.success) {
+                showAlert('', result.message);
+              }
+            }}
           />
         </View>
       </Animated.View>

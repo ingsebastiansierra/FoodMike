@@ -25,6 +25,7 @@ import ProductCard from '../../../components/ProductCard';
 import { useCart } from '../../../context/CartContext';
 import { showAlert } from '../../core/utils/alert';
 import { useAutoCloseCart } from '../../../hooks/useAutoCloseCart';
+import { useFavorites } from '../../../hooks/useFavorites';
 import ModalWrapper from '../../../components/ModalWrapper';
 
 const { width, height } = Dimensions.get('window');
@@ -63,6 +64,7 @@ const SearchScreen = ({ navigation }) => {
   const [minStars, setMinStars] = useState(0);
 
   const { addToCart } = useCart();
+  const { isFavorite, toggleFavorite } = useFavorites();
 
   // Auto-close cart when this screen gains focus
   useAutoCloseCart();
@@ -190,6 +192,13 @@ const SearchScreen = ({ navigation }) => {
       product={item}
       onPress={() => handleProductPress(item)}
       onAddToCart={() => handleAddToCart(item)}
+      isFavorite={isFavorite(item.id)}
+      onToggleFavorite={async (productId) => {
+        const result = await toggleFavorite(productId);
+        if (result.success) {
+          showAlert('', result.message);
+        }
+      }}
     />
   );
 

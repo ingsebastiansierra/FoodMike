@@ -249,27 +249,12 @@ const CheckoutScreen = ({ navigation }) => {
 
       // 4. Abrir Wompi para el pago
       console.log('🚀 Abriendo checkout de Wompi...');
-      const result = await wompiService.openCheckout(orderData);
-      console.log('✅ Checkout abierto:', result);
+      await wompiService.openCheckout(orderData);
+      console.log('✅ Checkout abierto');
 
-      // 5. Navegar inmediatamente al detalle del pedido
-      // El usuario verá el estado "Procesando..." hasta que el webhook actualice
-      setTimeout(() => {
-        navigation.reset({
-          index: 1,
-          routes: [
-            { name: 'Inicio', params: { screen: 'HomeInitial' } },
-            { name: 'OrderDetail', params: { orderId: orderId } }
-          ]
-        });
-      }, 2000);
-
-      // Mostrar mensaje informativo
-      Alert.alert(
-        '💳 Pago en Proceso',
-        'Completa tu pago en el navegador. Tu pedido se actualizará automáticamente cuando se confirme el pago.',
-        [{ text: 'Entendido' }]
-      );
+      // 5. Cerrar el checkout inmediatamente para evitar la pantalla de carrito vacío
+      // El deep linking llevará al usuario a Pedidos cuando regrese
+      navigation.goBack();
 
     } catch (error) {
       console.error('❌ Error en handleWompiPayment:', error);

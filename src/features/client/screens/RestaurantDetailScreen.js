@@ -20,6 +20,7 @@ import { searchService } from '../../../services/searchService';
 import { useCart } from '../../../context/CartContext';
 import { showAlert } from '../../core/utils/alert';
 import { useFocusEffect } from '@react-navigation/native';
+import { useFavorites } from '../../../hooks/useFavorites';
 
 const { width } = Dimensions.get('window');
 
@@ -30,6 +31,7 @@ const RestaurantDetailScreen = ({ route, navigation }) => {
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const { addToCart, totalQuantity } = useCart();
+  const { isFavorite, toggleFavorite } = useFavorites();
 
   useEffect(() => {
     loadProducts();
@@ -43,36 +45,36 @@ const RestaurantDetailScreen = ({ route, navigation }) => {
       console.log('Cargando productos para el restaurante ID:', restaurant.id);
       console.log('Tipo de restaurant.id:', typeof restaurant.id);
       console.log('Datos completos del restaurante:', JSON.stringify(restaurant, null, 2));
-      
+
       if (!restaurant.id) {
         console.error('Error: ID de restaurante no válido');
         return;
       }
-      
+
       // Asegurarse de que el ID sea un string para la comparación en Supabase
       const restaurantId = String(restaurant.id);
       console.log('ID de restaurante convertido a string:', restaurantId);
-      
+
       const response = await searchService.getByRestaurant(restaurantId);
       console.log('Productos del restaurante response:', response);
-      
+
       const restaurantProducts = response.data || [];
       console.log('Productos encontrados:', restaurantProducts.length);
-      
+
       // Verificar la estructura de los productos
       if (restaurantProducts.length > 0) {
         console.log('Ejemplo de producto:', JSON.stringify(restaurantProducts[0], null, 2));
       }
-      
+
       setProducts(restaurantProducts);
-      
+
       // Extraer categorías únicas de los productos de este restaurante
       const uniqueCategories = [
         ...new Set(restaurantProducts.map(p => p.category).filter(Boolean))
       ];
       console.log('Categorías únicas encontradas:', uniqueCategories);
       setCategories(uniqueCategories);
-      
+
       // Si no hay categorías pero hay productos, crear una categoría por defecto
       if (uniqueCategories.length === 0 && restaurantProducts.length > 0) {
         console.log('No se encontraron categorías, creando categoría por defecto');
@@ -90,19 +92,19 @@ const RestaurantDetailScreen = ({ route, navigation }) => {
 
   // Filtrar productos por categoría seleccionada
   const filteredProducts = selectedCategory === 'all' || selectedCategory === 'Todos los productos'
-    ? products 
+    ? products
     : products.filter(p => {
-        // Comparación más flexible para categorías
-        if (!p.category) {
-          console.log('Producto sin categoría:', p.id, p.name);
-          return false;
-        }
-        if (typeof p.category !== 'string') return false;
-        const matches = p.category.toLowerCase() === selectedCategory.toLowerCase();
-        console.log(`Producto ${p.id} (${p.name}) - Categoría: ${p.category} - ¿Coincide con ${selectedCategory}? ${matches}`);
-        return matches;
-      });
-  
+      // Comparación más flexible para categorías
+      if (!p.category) {
+        console.log('Producto sin categoría:', p.id, p.name);
+        return false;
+      }
+      if (typeof p.category !== 'string') return false;
+      const matches = p.category.toLowerCase() === selectedCategory.toLowerCase();
+      console.log(`Producto ${p.id} (${p.name}) - Categoría: ${p.category} - ¿Coincide con ${selectedCategory}? ${matches}`);
+      return matches;
+    });
+
   console.log(`Productos filtrados: ${filteredProducts.length} de ${products.length} totales`);
 
   // Renderizar categoría en el carrusel
@@ -129,6 +131,13 @@ const RestaurantDetailScreen = ({ route, navigation }) => {
       onAddToCart={() => {
         addToCart(item);
         showAlert('Éxito', `${item.name} agregado al carrito`);
+      }}
+      isFavorite={isFavorite(item.id)}
+      onToggleFavorite={async (productId) => {
+        const result = await toggleFavorite(productId);
+        if (result.success) {
+          showAlert('', result.message);
+        }
       }}
     />
   );
@@ -175,9 +184,9 @@ const RestaurantDetailScreen = ({ route, navigation }) => {
 
         {/* Productos */}
         <View style={styles.productsSection}>
-          <LoadingWrapper 
-            isLoading={loading} 
-            skeletonType="products" 
+          <LoadingWrapper
+            isLoading={loading}
+            skeletonType="products"
             skeletonCount={6}
           >
             {filteredProducts.length === 0 ? (
