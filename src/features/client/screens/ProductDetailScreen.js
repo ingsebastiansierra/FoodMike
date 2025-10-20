@@ -116,7 +116,7 @@ const ProductDetailScreen = ({ route, navigation }) => {
               <Ionicons
                 name={isFavorite(product.id) ? 'heart' : 'heart-outline'}
                 size={20}
-                color={isFavorite(product.id) ? '#ff4757' : '#222'}
+                color={isFavorite(product.id) ? '#F2A233' : '#222'}
               />
             </TouchableOpacity>
           )}
@@ -237,7 +237,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
+    paddingTop: SPACING.xl + 10,
+    paddingBottom: SPACING.sm,
     backgroundColor: '#fff',
     zIndex: 10,
   },

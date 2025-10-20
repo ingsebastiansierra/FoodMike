@@ -15,6 +15,7 @@ import { formatCurrency } from '../shared/utils/format';
 import { normalizeImageSource } from '../shared/utils/imageUtils';
 import LoadingWrapper from './LoadingWrapper';
 import { useFavorites } from '../hooks/useFavorites';
+import AppHeader from './AppHeader';
 
 const FavoritosComponent = () => {
   const navigation = useNavigation();
@@ -100,13 +101,10 @@ const FavoritosComponent = () => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Mis Favoritos</Text>
-        <Text style={styles.subtitle}>
-          {favorites.length} producto{favorites.length !== 1 ? 's' : ''}
-        </Text>
-      </View>
-
+      <AppHeader
+        screenName="FAVORITES"
+        navigation={navigation}
+      />
       {favorites.length === 0 ? (
         renderEmptyState()
       ) : (
@@ -137,17 +135,13 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: colors.white,
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: colors.lightGray,
   },
-  title: {
-    fontSize: typography.sizes.xl,
-    fontWeight: 'bold',
-    color: colors.dark,
-  },
   subtitle: {
-    fontSize: typography.sizes.sm,
+    fontSize: typography.sizes.md,
+    fontWeight: '600',
     color: colors.gray,
     marginTop: spacing.xs,
   },

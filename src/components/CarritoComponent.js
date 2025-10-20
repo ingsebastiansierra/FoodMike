@@ -15,6 +15,7 @@ import { COLORS } from '../theme/colors';
 import { SPACING } from '../theme/spacing';
 import { showAlert, showConfirmAlert } from '../features/core/utils/alert';
 import { formatCurrency } from '../shared/utils/format';
+import AppHeader from './AppHeader';
 
 const CarritoComponent = () => {
   const { cartItems, totalPrice, clearCart } = useContext(CartContext);
@@ -46,22 +47,6 @@ const CarritoComponent = () => {
     <CartItemCard item={item} />
   );
 
-  const renderHeader = () => (
-    <View style={styles.header}>
-      <View style={styles.headerTop}>
-        <Text style={styles.headerTitle}>
-          Mi Carrito ({cartItems.length})
-        </Text>
-        {cartItems.length > 0 && (
-          <TouchableOpacity onPress={handleClearCart} style={styles.clearButton}>
-            <Icon name="trash" size={18} color={COLORS.error} />
-            <Text style={styles.clearButtonText}>Vaciar</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-    </View>
-  );
-
   const renderEmptyCart = () => (
     <View style={styles.emptyContainer}>
       <Icon name="shopping-cart" size={80} color={COLORS.gray} />
@@ -83,8 +68,11 @@ const CarritoComponent = () => {
   if (cartItems.length === 0) {
     return (
       <View style={styles.container}>
-        <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
-        {renderHeader()}
+        <AppHeader
+          screenName="CART"
+          navigation={navigation}
+          showCart={false}
+        />
         {renderEmptyCart()}
       </View>
     );
@@ -92,8 +80,11 @@ const CarritoComponent = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
-      {renderHeader()}
+      <AppHeader
+        screenName="CART"
+        navigation={navigation}
+        showCart={false}
+      />
 
       <FlatList
         data={cartItems}
@@ -142,36 +133,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
-  header: {
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.lg,
-    paddingBottom: SPACING.md,
-  },
-  headerTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: COLORS.white,
-  },
-  clearButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.white,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: 20,
-  },
-  clearButtonText: {
-    color: COLORS.error,
-    fontSize: 14,
-    fontWeight: '600',
-    marginLeft: SPACING.xs,
-  },
+
   listContent: {
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.md,

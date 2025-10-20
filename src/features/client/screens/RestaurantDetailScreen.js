@@ -138,22 +138,24 @@ const RestaurantDetailScreen = ({ route, navigation }) => {
   );
 
   // Renderizar producto
-  const renderProduct = ({ item }) => (
-    <ProductCard
-      product={item}
-      onPress={() => navigation.navigate('ProductDetail', { product: item })}
-      onAddToCart={() => {
-        addToCart(item);
-        showAlert('Éxito', `${item.name} agregado al carrito`);
-      }}
-      isFavorite={isFavorite(item.id)}
-      onToggleFavorite={async (productId) => {
-        const result = await toggleFavorite(productId);
-        if (result.success) {
-          showAlert('', result.message);
-        }
-      }}
-    />
+  const renderProduct = ({ item, index }) => (
+    <View style={[styles.productWrapper, index % 2 === 1 && styles.productWrapperOffset]}>
+      <ProductCard
+        product={item}
+        onPress={() => navigation.navigate('ProductDetail', { product: item })}
+        onAddToCart={() => {
+          addToCart(item);
+          showAlert('Éxito', `${item.name} agregado al carrito`);
+        }}
+        isFavorite={isFavorite(item.id)}
+        onToggleFavorite={async (productId) => {
+          const result = await toggleFavorite(productId);
+          if (result.success) {
+            showAlert('', result.message);
+          }
+        }}
+      />
+    </View>
   );
 
   return (
@@ -359,7 +361,13 @@ const styles = StyleSheet.create({
   },
   productRow: {
     justifyContent: 'space-between',
+  },
+  productWrapper: {
+    width: '47%',
     marginBottom: spacing.md,
+  },
+  productWrapperOffset: {
+    marginTop: spacing.xl,
   },
   emptyText: {
     textAlign: 'center',

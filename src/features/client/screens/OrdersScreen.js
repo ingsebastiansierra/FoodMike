@@ -18,6 +18,7 @@ import { formatCurrency, formatDate } from '../../../shared/utils/format';
 import ordersService from '../../../services/ordersService';
 import { showAlert } from '../../core/utils/alert';
 import { useAutoCloseCart } from '../../../hooks/useAutoCloseCart';
+import AppHeader from '../../../components/AppHeader';
 
 const OrdersScreen = ({ navigation }) => {
   const { user } = useAuth();
@@ -190,19 +191,26 @@ const OrdersScreen = ({ navigation }) => {
 
   if (loading) {
     return (
-      <LoadingWrapper
-        isLoading={loading}
-        skeletonType="orders"
-        skeletonCount={5}
-      />
+      <View style={styles.container}>
+        <AppHeader
+          screenName="ORDERS"
+          navigation={navigation}
+        />
+        <LoadingWrapper
+          isLoading={loading}
+          skeletonType="orders"
+          skeletonCount={5}
+        />
+      </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Mis Pedidos</Text>
-      </View>
+      <AppHeader
+        screenName="ORDERS"
+        navigation={navigation}
+      />
 
       {/* Filtros */}
       <View style={styles.filtersWrapper}>

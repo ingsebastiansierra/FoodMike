@@ -38,6 +38,7 @@ import { search } from "../services/searchService";
 import { formatCurrency } from "../shared/utils/format";
 import { useFavorites } from "../hooks/useFavorites";
 import { showAlert } from "../features/core/utils/alert";
+import AppHeader from "./AppHeader";
 
 const { width } = Dimensions.get('window');
 
@@ -517,325 +518,331 @@ const HomeContentComponent = ({ user, onAddToCart, onProductPress, onRestaurantP
   }
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false} style={{ backgroundColor: COLORS.background }}>
-      {/* HERO SECTION ELEGANTE */}
-      <LinearGradient
-        colors={['#667eea', '#764ba2']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.modernHero}
-      >
-        <View style={styles.heroContent}>
-          <View style={styles.heroHeader}>
-            <View>
-              <Text style={styles.heroGreeting}>¡Hola {user?.displayName || user?.email?.split('@')[0] || 'Usuario'}! 👋</Text>
-              <Text style={styles.heroTitle}>¿Qué vas a pedir hoy?</Text>
+    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+      <AppHeader
+        screenName="HOME"
+        navigation={navigation}
+      />
+      <ScrollView showsVerticalScrollIndicator={false} style={{ backgroundColor: COLORS.background }}>
+        {/* HERO SECTION ELEGANTE */}
+        <LinearGradient
+          colors={['#667eea', '#764ba2']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.modernHero}
+        >
+          <View style={styles.heroContent}>
+            <View style={styles.heroHeader}>
+              <View>
+                <Text style={styles.heroGreeting}>¡Hola {user?.displayName || user?.email?.split('@')[0] || 'Usuario'}! 👋</Text>
+                <Text style={styles.heroTitle}>¿Qué vas a pedir hoy?</Text>
+              </View>
+              <View style={styles.heroStats}>
+                <Text style={styles.heroStatsText}>🚚 25 min promedio</Text>
+              </View>
             </View>
-            <View style={styles.heroStats}>
-              <Text style={styles.heroStatsText}>🚚 25 min promedio</Text>
+
+            {/* BÚSQUEDAS TRENDING */}
+            <View style={styles.trendingContainer}>
+              <Text style={styles.trendingTitle}>🔥 Trending:</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {TRENDING_SEARCHES.map((search, index) => (
+                  <TouchableOpacity key={index} style={styles.trendingTag}>
+                    <Text style={styles.trendingTagText}>{search}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
             </View>
           </View>
+        </LinearGradient>
 
-          {/* BÚSQUEDAS TRENDING */}
-          <View style={styles.trendingContainer}>
-            <Text style={styles.trendingTitle}>🔥 Trending:</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {TRENDING_SEARCHES.map((search, index) => (
-                <TouchableOpacity key={index} style={styles.trendingTag}>
-                  <Text style={styles.trendingTagText}>{search}</Text>
+        {/* ACCIONES RÁPIDAS */}
+        <View style={styles.quickActionsSection}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickActionsList}>
+            {QUICK_ACTIONS.map(action => (
+              <TouchableOpacity
+                key={action.id}
+                style={[styles.quickActionCard, { borderLeftColor: action.color }]}
+                onPress={() => {
+                  if (action.action === 'shorts') {
+                    navigation.navigate('Shorts');
+                  }
+                }}
+              >
+                <Text style={styles.quickActionIcon}>{action.icon}</Text>
+                <Text style={styles.quickActionTitle}>{action.title}</Text>
+                <Text style={styles.quickActionSubtitle}>{action.subtitle}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
+        {/* CARRUSEL INTERACTIVO DE OFERTAS */}
+        <View style={styles.autoCarouselSection}>
+          <Text style={styles.autoCarouselTitle}>🔥 Ofertas del Momento</Text>
+          <View style={styles.autoCarouselContainer}>
+            <ScrollView
+              ref={carouselRef}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              pagingEnabled
+              decelerationRate="fast"
+              snapToInterval={width - 60}
+              snapToAlignment="center"
+              contentContainerStyle={styles.autoCarouselScrollContent}
+              onMomentumScrollEnd={(event) => {
+                const newIndex = Math.round(event.nativeEvent.contentOffset.x / (width - 60));
+                setCurrentAutoPromo(newIndex % AUTO_CAROUSEL_PROMOS.length);
+              }}
+            >
+              {AUTO_CAROUSEL_PROMOS.map((promo, index) => (
+                <View key={promo.id} style={styles.autoCarouselCardContainer}>
+                  <TouchableOpacity style={styles.autoCarouselCard} activeOpacity={0.9}>
+                    <LinearGradient colors={promo.gradient} style={styles.autoCarouselGradient}>
+                      <View style={styles.autoCarouselBadge}>
+                        <Text style={styles.autoCarouselBadgeText}>{promo.badge}</Text>
+                      </View>
+                      <View style={styles.autoCarouselContent}>
+                        <View style={styles.autoCarouselTextSection}>
+                          <Text style={styles.autoCarouselPromoTitle}>{promo.title}</Text>
+                          <Text style={styles.autoCarouselSubtitle}>{promo.subtitle}</Text>
+                          <Text style={styles.autoCarouselDescription}>{promo.description}</Text>
+                          <TouchableOpacity style={styles.autoCarouselButton}>
+                            <Text style={styles.autoCarouselButtonText}>¡Pedir Ahora!</Text>
+                          </TouchableOpacity>
+                        </View>
+                        <View style={styles.autoCarouselImageSection}>
+                          <Image source={{ uri: promo.image }} style={styles.autoCarouselImage} />
+                        </View>
+                      </View>
+                    </LinearGradient>
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </ScrollView>
+
+            {/* Indicadores */}
+            <View style={styles.autoCarouselIndicators}>
+              {AUTO_CAROUSEL_PROMOS.map((_, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={[
+                    styles.autoCarouselIndicator,
+                    { backgroundColor: index === currentAutoPromo ? COLORS.primary : 'rgba(0,0,0,0.2)' }
+                  ]}
+                  onPress={() => {
+                    setCurrentAutoPromo(index);
+                    if (carouselRef.current) {
+                      carouselRef.current.scrollTo({
+                        x: index * (width - 60),
+                        animated: true
+                      });
+                    }
+                  }}
+                />
+              ))}
+            </View>
+          </View>
+        </View>
+
+
+
+        {/* ESTADÍSTICAS DE ENTREGA */}
+        <View style={styles.statsSection}>
+          <View style={styles.statsContainer}>
+            {DELIVERY_STATS.map((stat, index) => (
+              <View key={index} style={styles.statCard}>
+                <Text style={styles.statIcon}>{stat.icon}</Text>
+                <Text style={styles.statValue}>{stat.value}</Text>
+                <Text style={styles.statLabel}>{stat.label}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* CATEGORÍAS MEJORADAS */}
+        <View style={styles.categoriesSection}>
+          <View style={styles.sectionHeaderModern}>
+            <Text style={styles.sectionTitleModern}>Explora por Categoría</Text>
+          </View>
+
+          <LoadingWrapper
+            isLoading={loadingCategories}
+            skeletonType="simple"
+            skeletonCount={5}
+          >
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoriesListModern}>
+              <TouchableOpacity
+                style={[styles.categoryCardModern, activeCategory === "all" && styles.categoryCardActive]}
+                onPress={() => setActiveCategory("all")}
+              >
+                <LinearGradient
+                  colors={activeCategory === "all" ? ['#667eea', '#764ba2'] : ['#f8f9fa', '#e9ecef']}
+                  style={styles.categoryGradient}
+                >
+                  <Text style={styles.categoryEmojiModern}>🍽️</Text>
+                  <Text style={[styles.categoryTextModern, activeCategory === "all" && styles.categoryTextActive]}>Todas</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              {orderedCategories.map(cat => (
+                <TouchableOpacity
+                  key={cat.id}
+                  style={[styles.categoryCardModern, activeCategory === cat.id && styles.categoryCardActive]}
+                  onPress={() => setActiveCategory(cat.id)}
+                >
+                  <LinearGradient
+                    colors={activeCategory === cat.id ? ['#667eea', '#764ba2'] : ['#f8f9fa', '#e9ecef']}
+                    style={styles.categoryGradient}
+                  >
+                    <Text style={styles.categoryEmojiModern}>
+                      {categoryEmojis[cat.name] || cat.icon || '🍽️'}
+                    </Text>
+                    <Text style={[styles.categoryTextModern, activeCategory === cat.id && styles.categoryTextActive]}>
+                      {cat.name}
+                    </Text>
+                  </LinearGradient>
                 </TouchableOpacity>
               ))}
             </ScrollView>
-          </View>
+          </LoadingWrapper>
         </View>
-      </LinearGradient>
 
-      {/* ACCIONES RÁPIDAS */}
-      <View style={styles.quickActionsSection}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickActionsList}>
-          {QUICK_ACTIONS.map(action => (
-            <TouchableOpacity
-              key={action.id}
-              style={[styles.quickActionCard, { borderLeftColor: action.color }]}
-              onPress={() => {
-                if (action.action === 'shorts') {
-                  navigation.navigate('Shorts');
-                }
-              }}
-            >
-              <Text style={styles.quickActionIcon}>{action.icon}</Text>
-              <Text style={styles.quickActionTitle}>{action.title}</Text>
-              <Text style={styles.quickActionSubtitle}>{action.subtitle}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
+        {/* PRODUCTOS POPULARES MEJORADOS */}
+        <View style={styles.popularSectionModern}>
+          <View style={styles.sectionHeaderModern}>
+            <Text style={styles.sectionTitleModern}>🔥 Populares Ahora</Text>
+          </View>
 
-      {/* CARRUSEL INTERACTIVO DE OFERTAS */}
-      <View style={styles.autoCarouselSection}>
-        <Text style={styles.autoCarouselTitle}>🔥 Ofertas del Momento</Text>
-        <View style={styles.autoCarouselContainer}>
-          <ScrollView
-            ref={carouselRef}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            pagingEnabled
-            decelerationRate="fast"
-            snapToInterval={width - 60}
-            snapToAlignment="center"
-            contentContainerStyle={styles.autoCarouselScrollContent}
-            onMomentumScrollEnd={(event) => {
-              const newIndex = Math.round(event.nativeEvent.contentOffset.x / (width - 60));
-              setCurrentAutoPromo(newIndex % AUTO_CAROUSEL_PROMOS.length);
-            }}
+          <LoadingWrapper
+            isLoading={loadingFoods}
+            skeletonType="products"
+            skeletonCount={4}
           >
-            {AUTO_CAROUSEL_PROMOS.map((promo, index) => (
-              <View key={promo.id} style={styles.autoCarouselCardContainer}>
-                <TouchableOpacity style={styles.autoCarouselCard} activeOpacity={0.9}>
-                  <LinearGradient colors={promo.gradient} style={styles.autoCarouselGradient}>
-                    <View style={styles.autoCarouselBadge}>
-                      <Text style={styles.autoCarouselBadgeText}>{promo.badge}</Text>
-                    </View>
-                    <View style={styles.autoCarouselContent}>
-                      <View style={styles.autoCarouselTextSection}>
-                        <Text style={styles.autoCarouselPromoTitle}>{promo.title}</Text>
-                        <Text style={styles.autoCarouselSubtitle}>{promo.subtitle}</Text>
-                        <Text style={styles.autoCarouselDescription}>{promo.description}</Text>
-                        <TouchableOpacity style={styles.autoCarouselButton}>
-                          <Text style={styles.autoCarouselButtonText}>¡Pedir Ahora!</Text>
-                        </TouchableOpacity>
-                      </View>
-                      <View style={styles.autoCarouselImageSection}>
-                        <Image source={{ uri: promo.image }} style={styles.autoCarouselImage} />
-                      </View>
-                    </View>
-                  </LinearGradient>
-                </TouchableOpacity>
-              </View>
-            ))}
-          </ScrollView>
-
-          {/* Indicadores */}
-          <View style={styles.autoCarouselIndicators}>
-            {AUTO_CAROUSEL_PROMOS.map((_, index) => (
-              <TouchableOpacity
-                key={index}
-                style={[
-                  styles.autoCarouselIndicator,
-                  { backgroundColor: index === currentAutoPromo ? COLORS.primary : 'rgba(0,0,0,0.2)' }
-                ]}
-                onPress={() => {
-                  setCurrentAutoPromo(index);
-                  if (carouselRef.current) {
-                    carouselRef.current.scrollTo({
-                      x: index * (width - 60),
-                      animated: true
-                    });
-                  }
-                }}
-              />
-            ))}
-          </View>
-        </View>
-      </View>
-
-
-
-      {/* ESTADÍSTICAS DE ENTREGA */}
-      <View style={styles.statsSection}>
-        <View style={styles.statsContainer}>
-          {DELIVERY_STATS.map((stat, index) => (
-            <View key={index} style={styles.statCard}>
-              <Text style={styles.statIcon}>{stat.icon}</Text>
-              <Text style={styles.statValue}>{stat.value}</Text>
-              <Text style={styles.statLabel}>{stat.label}</Text>
-            </View>
-          ))}
-        </View>
-      </View>
-
-      {/* CATEGORÍAS MEJORADAS */}
-      <View style={styles.categoriesSection}>
-        <View style={styles.sectionHeaderModern}>
-          <Text style={styles.sectionTitleModern}>Explora por Categoría</Text>
-        </View>
-
-        <LoadingWrapper
-          isLoading={loadingCategories}
-          skeletonType="simple"
-          skeletonCount={5}
-        >
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoriesListModern}>
-            <TouchableOpacity
-              style={[styles.categoryCardModern, activeCategory === "all" && styles.categoryCardActive]}
-              onPress={() => setActiveCategory("all")}
+            <Animated.ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.popularListModern}
+              onScroll={handleScroll}
+              scrollEventThrottle={16}
+              decelerationRate="fast"
+              snapToInterval={200}
+              snapToAlignment="start"
             >
-              <LinearGradient
-                colors={activeCategory === "all" ? ['#667eea', '#764ba2'] : ['#f8f9fa', '#e9ecef']}
-                style={styles.categoryGradient}
-              >
-                <Text style={styles.categoryEmojiModern}>🍽️</Text>
-                <Text style={[styles.categoryTextModern, activeCategory === "all" && styles.categoryTextActive]}>Todas</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-
-            {orderedCategories.map(cat => (
-              <TouchableOpacity
-                key={cat.id}
-                style={[styles.categoryCardModern, activeCategory === cat.id && styles.categoryCardActive]}
-                onPress={() => setActiveCategory(cat.id)}
-              >
-                <LinearGradient
-                  colors={activeCategory === cat.id ? ['#667eea', '#764ba2'] : ['#f8f9fa', '#e9ecef']}
-                  style={styles.categoryGradient}
+              {filteredPopularProducts.map((product, index) => (
+                <TouchableOpacity
+                  key={product.id}
+                  style={styles.productCardModern}
+                  onPress={() => onProductPress(product)}
                 >
-                  <Text style={styles.categoryEmojiModern}>
-                    {categoryEmojis[cat.name] || cat.icon || '🍽️'}
+                  <View style={styles.productImageContainer}>
+                    <Image source={{ uri: product.image }} style={styles.productImageModern} />
+                    <LinearGradient
+                      colors={['transparent', 'rgba(0,0,0,0.7)']}
+                      style={styles.productImageOverlay}
+                    />
+                    <TouchableOpacity
+                      style={styles.productAddButton}
+                      onPress={() => onAddToCart(product)}
+                    >
+                      <Icon name="add" size={20} color={COLORS.white} />
+                    </TouchableOpacity>
+                  </View>
+                  <View style={styles.productInfoModern}>
+                    <Text style={styles.productNameModern} numberOfLines={1}>{product.name}</Text>
+                    <View style={styles.productMetaModern}>
+                      <View style={styles.productRatingModern}>
+                        <Icon name="star" size={14} color="#FFD700" />
+                        <Text style={styles.productRatingText}>{product.stars || '4.5'}</Text>
+                      </View>
+                      <Text style={styles.productPriceModern}>{formatCurrency(product.price)}</Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </Animated.ScrollView>
+          </LoadingWrapper>
+        </View>
+
+        {/* RESTAURANTES DESTACADOS */}
+        <View style={styles.restaurantsSectionModern}>
+          <View style={styles.sectionHeaderModern}>
+            <Text style={styles.sectionTitleModern}>🏪 Restaurantes Destacados</Text>
+          </View>
+
+          <View style={styles.restaurantsGridModern}>
+            {restaurantsList.slice(0, 4).map((restaurant, index) => (
+              <TouchableOpacity
+                key={restaurant.id}
+                style={styles.restaurantCardModern}
+                onPress={() => onRestaurantPress(restaurant)}
+              >
+                <View style={styles.restaurantImageContainer}>
+                  <Image source={{ uri: restaurant.image }} style={styles.restaurantImageModern} />
+                  <View style={styles.restaurantBadge}>
+                    <Text style={styles.restaurantBadgeText}>⚡ Rápido</Text>
+                  </View>
+                </View>
+                <View style={styles.restaurantInfoModern}>
+                  <Text style={styles.restaurantNameModern} numberOfLines={1}>{restaurant.name}</Text>
+                  <View style={styles.restaurantMetaModern}>
+                    <View style={styles.restaurantRatingModern}>
+                      <Icon name="star" size={12} color="#FFD700" />
+                      <Text style={styles.restaurantRatingText}>{restaurant.stars || '4.5'}</Text>
+                    </View>
+                    <Text style={styles.restaurantTimeModern}>25-35 min</Text>
+                  </View>
+                  <Text style={styles.restaurantCuisineModern} numberOfLines={1}>
+                    {restaurant.description || 'Comida deliciosa'}
                   </Text>
-                  <Text style={[styles.categoryTextModern, activeCategory === cat.id && styles.categoryTextActive]}>
-                    {cat.name}
-                  </Text>
-                </LinearGradient>
+                </View>
               </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Botón Ver Todos centrado */}
+          <TouchableOpacity
+            style={styles.viewAllButtonCentered}
+            onPress={() => navigation.navigate('RestaurantsList')}
+          >
+            <Text style={styles.viewAllTextCentered}>Ver Todos los Restaurantes</Text>
+            <Icon name="arrow-forward" size={18} color="#FFF" />
+          </TouchableOpacity>
+        </View>
+
+        {/* SECCIÓN DE TESTIMONIOS MODERNA */}
+        <View style={styles.testimonialsSection}>
+          <Text style={styles.sectionTitleModern}>💬 Lo que dicen nuestros usuarios</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {[
+              { name: 'María G.', rating: 5, text: 'La mejor app para pedir comida. Rápida y confiable.' },
+              { name: 'Carlos R.', rating: 5, text: 'Excelente variedad y los tiempos de entrega son perfectos.' },
+              { name: 'Ana L.', rating: 5, text: 'Me encanta la interfaz y la facilidad para ordenar.' }
+            ].map((testimonial, index) => (
+              <View key={index} style={styles.testimonialCard}>
+                <View style={styles.testimonialHeader}>
+                  <View style={styles.testimonialAvatar}>
+                    <Text style={styles.testimonialAvatarText}>{testimonial.name[0]}</Text>
+                  </View>
+                  <View>
+                    <Text style={styles.testimonialName}>{testimonial.name}</Text>
+                    <View style={styles.testimonialStars}>
+                      {[...Array(testimonial.rating)].map((_, i) => (
+                        <Icon key={i} name="star" size={12} color="#FFD700" />
+                      ))}
+                    </View>
+                  </View>
+                </View>
+                <Text style={styles.testimonialText}>{testimonial.text}</Text>
+              </View>
             ))}
           </ScrollView>
-        </LoadingWrapper>
-      </View>
-
-      {/* PRODUCTOS POPULARES MEJORADOS */}
-      <View style={styles.popularSectionModern}>
-        <View style={styles.sectionHeaderModern}>
-          <Text style={styles.sectionTitleModern}>🔥 Populares Ahora</Text>
         </View>
 
-        <LoadingWrapper
-          isLoading={loadingFoods}
-          skeletonType="products"
-          skeletonCount={4}
-        >
-          <Animated.ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.popularListModern}
-            onScroll={handleScroll}
-            scrollEventThrottle={16}
-            decelerationRate="fast"
-            snapToInterval={200}
-            snapToAlignment="start"
-          >
-            {filteredPopularProducts.map((product, index) => (
-              <TouchableOpacity
-                key={product.id}
-                style={styles.productCardModern}
-                onPress={() => onProductPress(product)}
-              >
-                <View style={styles.productImageContainer}>
-                  <Image source={{ uri: product.image }} style={styles.productImageModern} />
-                  <LinearGradient
-                    colors={['transparent', 'rgba(0,0,0,0.7)']}
-                    style={styles.productImageOverlay}
-                  />
-                  <TouchableOpacity
-                    style={styles.productAddButton}
-                    onPress={() => onAddToCart(product)}
-                  >
-                    <Icon name="add" size={20} color={COLORS.white} />
-                  </TouchableOpacity>
-                </View>
-                <View style={styles.productInfoModern}>
-                  <Text style={styles.productNameModern} numberOfLines={1}>{product.name}</Text>
-                  <View style={styles.productMetaModern}>
-                    <View style={styles.productRatingModern}>
-                      <Icon name="star" size={14} color="#FFD700" />
-                      <Text style={styles.productRatingText}>{product.stars || '4.5'}</Text>
-                    </View>
-                    <Text style={styles.productPriceModern}>{formatCurrency(product.price)}</Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </Animated.ScrollView>
-        </LoadingWrapper>
-      </View>
-
-      {/* RESTAURANTES DESTACADOS */}
-      <View style={styles.restaurantsSectionModern}>
-        <View style={styles.sectionHeaderModern}>
-          <Text style={styles.sectionTitleModern}>🏪 Restaurantes Destacados</Text>
-        </View>
-
-        <View style={styles.restaurantsGridModern}>
-          {restaurantsList.slice(0, 4).map((restaurant, index) => (
-            <TouchableOpacity
-              key={restaurant.id}
-              style={styles.restaurantCardModern}
-              onPress={() => onRestaurantPress(restaurant)}
-            >
-              <View style={styles.restaurantImageContainer}>
-                <Image source={{ uri: restaurant.image }} style={styles.restaurantImageModern} />
-                <View style={styles.restaurantBadge}>
-                  <Text style={styles.restaurantBadgeText}>⚡ Rápido</Text>
-                </View>
-              </View>
-              <View style={styles.restaurantInfoModern}>
-                <Text style={styles.restaurantNameModern} numberOfLines={1}>{restaurant.name}</Text>
-                <View style={styles.restaurantMetaModern}>
-                  <View style={styles.restaurantRatingModern}>
-                    <Icon name="star" size={12} color="#FFD700" />
-                    <Text style={styles.restaurantRatingText}>{restaurant.stars || '4.5'}</Text>
-                  </View>
-                  <Text style={styles.restaurantTimeModern}>25-35 min</Text>
-                </View>
-                <Text style={styles.restaurantCuisineModern} numberOfLines={1}>
-                  {restaurant.description || 'Comida deliciosa'}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Botón Ver Todos centrado */}
-        <TouchableOpacity
-          style={styles.viewAllButtonCentered}
-          onPress={() => navigation.navigate('RestaurantsList')}
-        >
-          <Text style={styles.viewAllTextCentered}>Ver Todos los Restaurantes</Text>
-          <Icon name="arrow-forward" size={18} color="#FFF" />
-        </TouchableOpacity>
-      </View>
-
-      {/* SECCIÓN DE TESTIMONIOS MODERNA */}
-      <View style={styles.testimonialsSection}>
-        <Text style={styles.sectionTitleModern}>💬 Lo que dicen nuestros usuarios</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {[
-            { name: 'María G.', rating: 5, text: 'La mejor app para pedir comida. Rápida y confiable.' },
-            { name: 'Carlos R.', rating: 5, text: 'Excelente variedad y los tiempos de entrega son perfectos.' },
-            { name: 'Ana L.', rating: 5, text: 'Me encanta la interfaz y la facilidad para ordenar.' }
-          ].map((testimonial, index) => (
-            <View key={index} style={styles.testimonialCard}>
-              <View style={styles.testimonialHeader}>
-                <View style={styles.testimonialAvatar}>
-                  <Text style={styles.testimonialAvatarText}>{testimonial.name[0]}</Text>
-                </View>
-                <View>
-                  <Text style={styles.testimonialName}>{testimonial.name}</Text>
-                  <View style={styles.testimonialStars}>
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      <Icon key={i} name="star" size={12} color="#FFD700" />
-                    ))}
-                  </View>
-                </View>
-              </View>
-              <Text style={styles.testimonialText}>{testimonial.text}</Text>
-            </View>
-          ))}
-        </ScrollView>
-      </View>
-
-      {/* ESPACIADO FINAL */}
-      <View style={{ height: 100 }} />
-    </ScrollView>
+        {/* ESPACIADO FINAL */}
+        <View style={{ height: 100 }} />
+      </ScrollView>
+    </View>
   );
 };
 
@@ -1267,7 +1274,7 @@ const styles = StyleSheet.create({
   restaurantCardModern: {
     backgroundColor: COLORS.white,
     borderRadius: 16,
-    width: (width - 60) / 2,
+    width: (width - 70) / 2,
     marginBottom: 16,
     elevation: 3,
     shadowColor: '#000',

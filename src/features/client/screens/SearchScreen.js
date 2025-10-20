@@ -27,6 +27,7 @@ import { showAlert } from '../../core/utils/alert';
 import { useAutoCloseCart } from '../../../hooks/useAutoCloseCart';
 import { useFavorites } from '../../../hooks/useFavorites';
 import ModalWrapper from '../../../components/ModalWrapper';
+import AppHeader from '../../../components/AppHeader';
 
 const { width, height } = Dimensions.get('window');
 
@@ -63,7 +64,7 @@ const SearchScreen = ({ navigation }) => {
   const [priceRange, setPriceRange] = useState({ min: '', max: '' });
   const [minStars, setMinStars] = useState(0);
 
-  const { addToCart } = useCart();
+  const { addToCart, cartItems } = useCart();
   const { isFavorite, toggleFavorite } = useFavorites();
 
   // Auto-close cart when this screen gains focus
@@ -250,32 +251,23 @@ const SearchScreen = ({ navigation }) => {
     );
   }
 
-  return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" />
-
-      <View style={styles.searchAndFilterContainer}>
+  const renderSearchHeader = () => (
+    <>
+      {/* Barra de búsqueda */}
+      <View style={styles.searchContainer}>
         <View style={styles.searchInputWrapper}>
-          <Ionicons name="search" size={20} color={colors.gray} style={styles.searchIcon} />
           <TextInput
             ref={searchInputRef}
             style={styles.searchInput}
-            placeholder="Buscar comida, bebida..."
-            placeholderTextColor={colors.gray}
+            placeholder="Search for any food"
+            placeholderTextColor="#B0B0B0"
             value={searchTerm}
             onChangeText={setSearchTerm}
             returnKeyType="search"
             onSubmitEditing={() => Keyboard.dismiss()}
           />
-          {searchTerm ? (
-            <TouchableOpacity onPress={() => setSearchTerm('')} style={styles.clearButton}>
-              <Ionicons name="close-circle" size={20} color={colors.gray} />
-            </TouchableOpacity>
-          ) : null}
+          <Ionicons name="search" size={20} color={colors.darkGray} style={styles.searchIcon} />
         </View>
-        <TouchableOpacity style={styles.filterButton} onPress={() => setShowFilters(!showFilters)}>
-          <Ionicons name="options-outline" size={20} color={colors.white} />
-        </TouchableOpacity>
       </View>
 
       <View style={styles.categoriesSection}>
@@ -289,14 +281,28 @@ const SearchScreen = ({ navigation }) => {
         />
       </View>
 
+      {renderResultsHeader()}
+    </>
+  );
+
+  return (
+    <View style={styles.container}>
+      <AppHeader
+        screenName="SEARCH"
+        navigation={navigation}
+      />
       <FlatList
         data={searchResults}
-        renderItem={renderProduct}
+        renderItem={({ item, index }) => (
+          <View style={[styles.productWrapper, index % 2 === 1 && styles.productWrapperOffset]}>
+            {renderProduct({ item })}
+          </View>
+        )}
         keyExtractor={(item) => item.id}
         numColumns={2}
         contentContainerStyle={styles.productList}
         columnWrapperStyle={styles.productRow}
-        ListHeaderComponent={renderResultsHeader}
+        ListHeaderComponent={renderSearchHeader}
         ListEmptyComponent={renderEmptyState}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
@@ -354,66 +360,53 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'white',
   },
-  searchAndFilterContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  searchContainer: {
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.md,
+    backgroundColor: colors.white,
   },
   searchInputWrapper: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.white,
-    borderRadius: 25,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    borderRadius: 30,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
     elevation: 2,
     shadowColor: colors.black,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
   },
   searchIcon: {
-    marginRight: 8,
+    marginLeft: 8,
   },
   searchInput: {
     flex: 1,
     fontSize: typography.sizes.md,
     color: colors.darkGray,
   },
-  clearButton: {
-    marginLeft: 8,
-  },
-  filterButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-    borderRadius: 20,
-    padding: spacing.sm,
-    marginLeft: spacing.sm,
-    elevation: 2,
-  },
   categoriesSection: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.lg,
   },
   categoriesList: {
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
   },
   categoryButton: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
     marginRight: spacing.md,
-    borderRadius: 20,
-    backgroundColor: '#f0f0f0',
+    borderRadius: 25,
+    backgroundColor: '#F5F5F5',
   },
   categoryButtonActive: {
     backgroundColor: colors.primary,
   },
   categoryText: {
-    fontSize: typography.sizes.sm,
-    color: colors.darkGray,
+    fontSize: 14,
+    color: '#9E9E9E',
     fontWeight: '600',
   },
   categoryTextActive: {
@@ -425,7 +418,13 @@ const styles = StyleSheet.create({
   },
   productRow: {
     justifyContent: 'space-between',
+  },
+  productWrapper: {
+    width: '47%',
     marginBottom: spacing.md,
+  },
+  productWrapperOffset: {
+    marginTop: spacing.xl,
   },
   resultsHeader: {
     flexDirection: 'row',

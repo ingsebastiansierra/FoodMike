@@ -372,7 +372,7 @@ const ClientNavigator = () => {
         ref={setNavigationRef}
 
         screenOptions={({ route }) => ({
-          headerShown: route.name !== 'Shorts', // Ocultar header solo en Shorts
+          headerShown: false, // Ocultar header del Tab Navigator (usamos AppHeader en cada pantalla)
           headerTitle: 'TOC TOC',
           headerTitleAlign: 'center',
           headerStyle: {
