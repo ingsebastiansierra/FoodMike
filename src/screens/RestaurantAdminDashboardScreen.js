@@ -183,6 +183,18 @@ const RestaurantAdminDashboardScreen = ({ navigation }) => {
                 <Text style={styles.sectionTitle}>Acciones Rápidas</Text>
                 <View style={styles.actionsGrid}>
                     <ActionButton
+                        icon="videocam"
+                        label="Crear Short"
+                        color="#FF6B6B"
+                        onPress={() => navigation.navigate('CreateShort', { restaurantId: restaurant.id })}
+                    />
+                    <ActionButton
+                        icon="video-library"
+                        label="Mis Shorts"
+                        color="#9B59B6"
+                        onPress={() => navigation.navigate('ManageShorts', { restaurantId: restaurant.id })}
+                    />
+                    <ActionButton
                         icon="add-circle"
                         label="Nuevo Producto"
                         color="#667eea"
@@ -203,7 +215,7 @@ const RestaurantAdminDashboardScreen = ({ navigation }) => {
                     <ActionButton
                         icon="settings"
                         label="Configuración"
-                        color="#FF6B6B"
+                        color="#6BCF7F"
                         onPress={() => navigation.navigate('Settings')}
                     />
                 </View>
@@ -594,6 +606,7 @@ const styles = StyleSheet.create({
         margin: SPACING.xs,
         borderRadius: 12,
         overflow: 'hidden',
+        minHeight: 100,
     },
     actionGradient: {
         padding: SPACING.lg,

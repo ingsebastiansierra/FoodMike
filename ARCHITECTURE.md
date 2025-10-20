@@ -355,10 +355,11 @@ describe('Header Component', () => {
 - [x] Sistema de temas
 
 #### Fase 2: Funcionalidades Core
-- [ ] Gestión de restaurantes
-- [ ] Sistema de órdenes
-- [ ] Carrito de compras
-- [ ] Perfiles de usuario
+- [x] Gestión de restaurantes
+- [x] Sistema de órdenes
+- [x] Carrito de compras
+- [x] Perfiles de usuario
+- [x] Sistema de Shorts (videos cortos)
 
 #### Fase 3: Características Avanzadas
 - [ ] Notificaciones push

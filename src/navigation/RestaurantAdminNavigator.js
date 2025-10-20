@@ -13,6 +13,8 @@ import RestaurantSettingsScreen from '../screens/RestaurantSettingsScreen';
 import AddProductScreen from '../screens/AddProductScreen';
 import EditProductScreen from '../screens/EditProductScreen';
 import OrderDetailScreen from '../screens/OrderDetailScreen';
+import CreateShortScreen from '../screens/CreateShortScreen';
+import ManageShortsScreen from '../screens/ManageShortsScreen';
 
 
 
@@ -30,6 +32,28 @@ const DashboardStack = () => (
             name="DashboardMain"
             component={RestaurantAdminDashboardScreen}
             options={{ headerShown: false }}
+        />
+        <Stack.Screen
+            name="CreateShort"
+            component={CreateShortScreen}
+            options={{
+                headerShown: true,
+                headerStyle: {
+                    backgroundColor: COLORS.primary,
+                },
+                headerTintColor: '#fff',
+                headerTitleStyle: {
+                    fontWeight: 'bold',
+                },
+                title: 'Crear Short',
+            }}
+        />
+        <Stack.Screen
+            name="ManageShorts"
+            component={ManageShortsScreen}
+            options={{
+                headerShown: false,
+            }}
         />
         <Stack.Screen
             name="OrderDetail"

@@ -554,7 +554,15 @@ const HomeContentComponent = ({ user, onAddToCart, onProductPress, onRestaurantP
       <View style={styles.quickActionsSection}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickActionsList}>
           {QUICK_ACTIONS.map(action => (
-            <TouchableOpacity key={action.id} style={[styles.quickActionCard, { borderLeftColor: action.color }]}>
+            <TouchableOpacity
+              key={action.id}
+              style={[styles.quickActionCard, { borderLeftColor: action.color }]}
+              onPress={() => {
+                if (action.action === 'shorts') {
+                  navigation.navigate('Shorts');
+                }
+              }}
+            >
               <Text style={styles.quickActionIcon}>{action.icon}</Text>
               <Text style={styles.quickActionTitle}>{action.title}</Text>
               <Text style={styles.quickActionSubtitle}>{action.subtitle}</Text>

@@ -9,11 +9,11 @@ export const COLORS = {
   accent: '#2ED573',         // Verde fresco (lechuga/hierbas)
   accentDark: '#26C65B',     // Verde más intenso
   accentLight: '#4FE085',    // Verde suave
-  
+
   // 🎨 Colores de apoyo
   tertiary: '#5352ED',       // Púrpura moderno
   quaternary: '#FF6348',     // Coral vibrante
-  
+
   // 🌈 Paleta extendida para categorías
   categories: {
     pizza: '#FF4757',        // Rojo tomate
@@ -25,7 +25,7 @@ export const COLORS = {
     mexican: '#FF7675',      // Rojo chile
     asian: '#FDCB6E',        // Amarillo curry
   },
-  
+
   // 🎯 Base colors mejorados
   white: '#FFFFFF',
   black: '#2C2C54',          // Negro más suave
@@ -36,16 +36,15 @@ export const COLORS = {
   lightPrimary: '#FFF5F5',   // Fondo suave rojo
   lightSecondary: '#FFF8E1', // Fondo suave naranja
   lightAccent: '#F0FFF4',    // Fondo suave verde
-  
+
   // 📝 Text colors mejorados
-  text: {
-    primary: '#2C2C54',      // Texto principal más suave
-    secondary: '#747D8C',     // Texto secundario
-    disabled: '#A4B0BE',      // Texto deshabilitado
-    inverse: '#FFFFFF',       // Texto sobre fondos oscuros
-    accent: '#FF4757',        // Texto de acento
-  },
-  
+  text: '#2C2C54',           // Texto principal
+  textSecondary: '#747D8C',  // Texto secundario
+  textDisabled: '#A4B0BE',   // Texto deshabilitado
+  textInverse: '#FFFFFF',    // Texto sobre fondos oscuros
+  textAccent: '#FF4757',     // Texto de acento
+  border: '#E1E8ED',         // Color de bordes
+
   // 🏠 Background colors renovados
   background: {
     primary: '#FFFFFF',       // Fondo principal
@@ -64,7 +63,7 @@ export const COLORS = {
     dark: 'rgba(44, 44, 84, 0.2)',       // Sombra oscura
     colored: 'rgba(255, 165, 2, 0.3)',   // Sombra naranja
   },
-  
+
   // 🎪 Gradients para fondos atractivos
   gradients: {
     primary: ['#FF4757', '#FF3742'],
@@ -75,15 +74,15 @@ export const COLORS = {
     fire: ['#FF4757', '#FF6348'],
     warm: ['#FFA502', '#FF6B9D'],
   },
-  
+
   onboardingBackground: '#FF4757',
-  
+
   // ✅ Status colors más vibrantes
   success: '#2ED573',        // Verde éxito
   error: '#FF4757',          // Rojo error (consistente con primary)
   warning: '#FFA502',        // Naranja advertencia
   info: '#3742FA',           // Azul información
-  
+
   // 🏷️ Estados interactivos
   states: {
     active: '#FF4757',
@@ -93,7 +92,7 @@ export const COLORS = {
     selected: '#FFF5F5',
     disabled: '#F1F2F6',
   },
-  
+
   // 🛍️ E-commerce específicos
   ecommerce: {
     price: '#2ED573',         // Verde para precios
@@ -103,7 +102,7 @@ export const COLORS = {
     rating: '#FFA502',        // Naranja para calificaciones
     delivery: '#3742FA',      // Azul para delivery
   },
-  
+
   // 🎨 Alias para compatibilidad
   dark: '#2F3542',
   background: '#F8F9FA',

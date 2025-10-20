@@ -62,12 +62,15 @@ import ProfileScreen from '../features/client/screens/ProfileScreen';
 
 // Pantallas de detalle (para el Stack)
 import RestaurantDetailScreen from '../features/client/screens/RestaurantDetailScreen';
+import RestaurantProfileScreen from '../screens/RestaurantProfileScreen';
+import RestaurantShortsViewerScreen from '../screens/RestaurantShortsViewerScreen';
 import RestaurantsListScreen from '../screens/RestaurantsListScreen';
 import ProductDetailScreen from '../features/client/screens/ProductDetailScreen';
 import CartProductDetailScreen from '../features/client/screens/CartProductDetailScreen';
 import CheckoutScreen from '../features/client/screens/CheckoutScreen';
 import OrderDetailScreen from '../features/client/screens/OrderDetailScreen';
 import CarritoComponent from '../components/CarritoComponent';
+import ShortsScreen from '../screens/ShortsScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -101,6 +104,18 @@ const HomeStack = () => (
       }}
     />
     <Stack.Screen name="RestaurantDetail" component={RestaurantDetailScreen} />
+    <Stack.Screen
+      name="RestaurantProfile"
+      component={RestaurantProfileScreen}
+      options={{ headerShown: false }}
+    />
+    <Stack.Screen
+      name="RestaurantShortsViewer"
+      component={RestaurantShortsViewerScreen}
+      options={{
+        headerShown: false,
+      }}
+    />
     <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
     <Stack.Screen
       name="Carrito"
@@ -135,6 +150,29 @@ const HomeStack = () => (
       options={{
         headerRight: () => null,
         gestureEnabled: false,
+      }}
+    />
+  </Stack.Navigator>
+);
+
+const ShortsStack = () => (
+  <Stack.Navigator screenOptions={stackScreenOptions}>
+    <Stack.Screen
+      name="ShortsInitial"
+      component={ShortsScreen}
+      options={{ headerShown: false }}
+    />
+    <Stack.Screen name="RestaurantDetail" component={RestaurantDetailScreen} />
+    <Stack.Screen
+      name="RestaurantProfile"
+      component={RestaurantProfileScreen}
+      options={{ headerShown: false }}
+    />
+    <Stack.Screen
+      name="RestaurantShortsViewer"
+      component={RestaurantShortsViewerScreen}
+      options={{
+        headerShown: false,
       }}
     />
   </Stack.Navigator>
@@ -225,44 +263,26 @@ const OrdersStack = () => (
   </Stack.Navigator>
 );
 
-const FavoritesStack = () => (
-  <Stack.Navigator screenOptions={stackScreenOptions}>
-    <Stack.Screen name="FavoritesInitial" component={FavoritesScreen} />
-    <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
-    <Stack.Screen name="RestaurantDetail" component={RestaurantDetailScreen} />
-    <Stack.Screen
-      name="Carrito"
-      component={CarritoComponent}
-      options={{
-        headerRight: () => null,
-        headerTitle: 'Mi Carrito',
-        presentation: 'modal',
-        gestureEnabled: false,
-        animationTypeForReplace: 'push',
-      }}
-    />
-    <Stack.Screen
-      name="CartProductDetail"
-      component={CartProductDetailScreen}
-      options={{
-        headerShown: false,
-        gestureEnabled: false,
-      }}
-    />
-    <Stack.Screen
-      name="Checkout"
-      component={CheckoutScreen}
-      options={{
-        headerRight: () => null,
-        gestureEnabled: false,
-      }}
-    />
-  </Stack.Navigator>
-);
-
 const ProfileStack = () => (
   <Stack.Navigator screenOptions={stackScreenOptions}>
     <Stack.Screen name="ProfileInitial" component={ProfileScreen} />
+    <Stack.Screen
+      name="Favorites"
+      component={FavoritesScreen}
+      options={{
+        headerShown: true,
+        headerTitle: 'Mis Favoritos',
+        headerStyle: {
+          backgroundColor: COLORS.primary,
+        },
+        headerTintColor: '#fff',
+        headerTitleStyle: {
+          fontWeight: 'bold',
+        },
+      }}
+    />
+    <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
+    <Stack.Screen name="RestaurantDetail" component={RestaurantDetailScreen} />
     <Stack.Screen
       name="Carrito"
       component={CarritoComponent}
@@ -322,9 +342,9 @@ const ClientNavigator = () => {
         let initialScreen = 'HomeInitial';
         switch (route.name) {
           case 'Inicio': initialScreen = 'HomeInitial'; break;
+          case 'Shorts': initialScreen = 'ShortsInitial'; break;
           case 'Buscar': initialScreen = 'SearchInitial'; break;
           case 'Pedidos': initialScreen = 'OrdersInitial'; break;
-          case 'Favoritos': initialScreen = 'FavoritesInitial'; break;
           case 'Perfil': initialScreen = 'ProfileInitial'; break;
         }
 
@@ -352,7 +372,7 @@ const ClientNavigator = () => {
         ref={setNavigationRef}
 
         screenOptions={({ route }) => ({
-          headerShown: true, // Mostrar header a nivel de Tab
+          headerShown: route.name !== 'Shorts', // Ocultar header solo en Shorts
           headerTitle: 'TOC TOC',
           headerTitleAlign: 'center',
           headerStyle: {
@@ -367,15 +387,15 @@ const ClientNavigator = () => {
             color: COLORS.white,
           },
           headerRight: () => <CartHeaderButton />,
-          lazy: false, // Cargar todas las pantallas inmediatamente
+          lazy: true, // Cargar pantallas solo cuando se necesiten
           tabBarHideOnKeyboard: true,
           animationEnabled: true,
           tabBarIcon: ({ focused, color, size }) => {
             let iconName;
             if (route.name === 'Inicio') iconName = 'home';
+            else if (route.name === 'Shorts') iconName = 'play-circle';
             else if (route.name === 'Buscar') iconName = 'search';
             else if (route.name === 'Pedidos') iconName = 'file-text';
-            else if (route.name === 'Favoritos') iconName = 'heart';
             else if (route.name === 'Perfil') iconName = 'user';
 
             return (
@@ -422,6 +442,13 @@ const ClientNavigator = () => {
           })}
         />
         <Tab.Screen
+          name="Shorts"
+          component={ShortsStack}
+          listeners={({ navigation }) => ({
+            tabPress: (e) => handleTabPress(e, navigation, 'Shorts')
+          })}
+        />
+        <Tab.Screen
           name="Buscar"
           component={SearchStack}
           listeners={({ navigation }) => ({
@@ -433,13 +460,6 @@ const ClientNavigator = () => {
           component={OrdersStack}
           listeners={({ navigation }) => ({
             tabPress: (e) => handleTabPress(e, navigation, 'Pedidos')
-          })}
-        />
-        <Tab.Screen
-          name="Favoritos"
-          component={FavoritesStack}
-          listeners={({ navigation }) => ({
-            tabPress: (e) => handleTabPress(e, navigation, 'Favoritos')
           })}
         />
         <Tab.Screen

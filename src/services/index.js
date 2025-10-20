@@ -1,3 +1,4 @@
 export { restaurantsService } from './restaurantsService';
 export { productsService } from './productsService';
-export { searchService } from './searchService'; 
+export { searchService } from './searchService';
+export { shortsService } from './shortsService'; 

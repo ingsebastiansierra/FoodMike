@@ -1,10 +1,10 @@
 import React, { useState, useRef } from 'react';
-import { 
-  View, 
-  Text, 
-  ScrollView, 
-  TouchableOpacity, 
-  StyleSheet, 
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  StyleSheet,
   StatusBar,
   Dimensions,
   Image,
@@ -13,6 +13,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { useAuth } from '../../../context/AuthContext';
+import { useNavigation } from '@react-navigation/native';
 import { COLORS } from '../../../theme/colors';
 import { SPACING } from '../../../theme/spacing';
 import { showAlert, showConfirmAlert } from '../../core/utils/alert';
@@ -25,9 +26,10 @@ const HEADER_MIN_HEIGHT = 80;
 
 const ProfileScreen = () => {
   const { user, logout } = useAuth();
+  const navigation = useNavigation();
   const [showSettings, setShowSettings] = useState(false);
   const scrollY = useRef(new Animated.Value(0)).current;
-  
+
   // Auto-close cart when this screen gains focus
   useAutoCloseCart();
 
@@ -38,9 +40,9 @@ const ProfileScreen = () => {
     phone: '+57 300 123 4567',
     memberSince: '2024',
     avatar: user?.photoURL,
-    stats: { 
-      orders: 24, 
-      favorites: 12, 
+    stats: {
+      orders: 24,
+      favorites: 12,
       reviews: 8,
       points: 1250
     },
@@ -64,7 +66,7 @@ const ProfileScreen = () => {
       subtitle: 'Historial y seguimiento',
       icon: 'shopping-bag',
       color: COLORS.primary,
-      action: () => {}
+      action: () => { }
     },
     {
       id: 2,
@@ -72,7 +74,7 @@ const ProfileScreen = () => {
       subtitle: 'Restaurantes y platos',
       icon: 'heart',
       color: COLORS.error,
-      action: () => {}
+      action: () => navigation.navigate('Favorites')
     },
     {
       id: 3,
@@ -80,7 +82,7 @@ const ProfileScreen = () => {
       subtitle: 'Gestionar ubicaciones',
       icon: 'map-marker',
       color: COLORS.accent,
-      action: () => {}
+      action: () => { }
     },
     {
       id: 4,
@@ -88,7 +90,7 @@ const ProfileScreen = () => {
       subtitle: 'Tarjetas y billeteras',
       icon: 'credit-card',
       color: COLORS.secondary,
-      action: () => {}
+      action: () => { }
     },
     {
       id: 5,
@@ -96,7 +98,7 @@ const ProfileScreen = () => {
       subtitle: 'Preferencias de avisos',
       icon: 'bell',
       color: COLORS.info,
-      action: () => {}
+      action: () => { }
     },
     {
       id: 6,
@@ -104,7 +106,7 @@ const ProfileScreen = () => {
       subtitle: 'Centro de ayuda',
       icon: 'question-circle',
       color: COLORS.warning,
-      action: () => {}
+      action: () => { }
     }
   ];
 
@@ -136,7 +138,7 @@ const ProfileScreen = () => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
-      
+
       {/* Header animado fijo */}
       <Animated.View style={[styles.fixedHeader, { height: headerHeight }]}>
         <LinearGradient
@@ -176,7 +178,7 @@ const ProfileScreen = () => {
                     <Icon name="camera" size={14} color={COLORS.white} />
                   </TouchableOpacity>
                 </View>
-                
+
                 <View style={styles.userInfo}>
                   <Text style={styles.userName}>{userData.name}</Text>
                   <Text style={styles.userEmail}>{userData.email}</Text>
@@ -193,8 +195,8 @@ const ProfileScreen = () => {
         </LinearGradient>
       </Animated.View>
 
-      <Animated.ScrollView 
-        style={styles.scrollContent} 
+      <Animated.ScrollView
+        style={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { y: scrollY } } }],
@@ -230,8 +232,8 @@ const ProfileScreen = () => {
         {/* Menú de opciones */}
         <View style={styles.menuContainer}>
           {menuItems.map((item) => (
-            <TouchableOpacity 
-              key={item.id} 
+            <TouchableOpacity
+              key={item.id}
               style={styles.menuItem}
               onPress={item.action}
               activeOpacity={0.7}
@@ -251,19 +253,19 @@ const ProfileScreen = () => {
         {/* Sección de configuración adicional */}
         <View style={styles.settingsSection}>
           <Text style={styles.sectionTitle}>Configuración</Text>
-          
+
           <TouchableOpacity style={styles.settingItem} onPress={handleResetOnboarding}>
             <Icon name="refresh" size={20} color={COLORS.info} />
             <Text style={styles.settingText}>Ver Tutorial de Nuevo</Text>
             <Icon name="chevron-right" size={16} color={COLORS.mediumGray} />
           </TouchableOpacity>
-          
+
           <TouchableOpacity style={styles.settingItem}>
             <Icon name="shield" size={20} color={COLORS.accent} />
             <Text style={styles.settingText}>Privacidad y Seguridad</Text>
             <Icon name="chevron-right" size={16} color={COLORS.mediumGray} />
           </TouchableOpacity>
-          
+
           <TouchableOpacity style={styles.settingItem}>
             <Icon name="info-circle" size={20} color={COLORS.warning} />
             <Text style={styles.settingText}>Acerca de TOC TOC</Text>

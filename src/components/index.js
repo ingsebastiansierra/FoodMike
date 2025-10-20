@@ -43,4 +43,8 @@ export { default as AutoCarousel } from './AutoCarousel';
 export { default as HomeContentComponent } from './HomeContentComponent';
 
 // Componentes de seguridad
-export { default as ProtectedRoute } from './ProtectedRoute'; 
+export { default as ProtectedRoute } from './ProtectedRoute';
+
+// Componentes de Shorts
+export { default as ShortCard } from './ShortCard';
+export { default as CommentsModal } from './CommentsModal'; 

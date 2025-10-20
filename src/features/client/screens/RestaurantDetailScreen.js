@@ -16,7 +16,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, typography } from '../../../theme';
 import ProductCard from '../../../components/ProductCard';
+import DailyMenuCard from '../../../components/DailyMenuCard';
 import { searchService } from '../../../services/searchService';
+import { dailyMenuService } from '../../../services/dailyMenuService';
 import { useCart } from '../../../context/CartContext';
 import { showAlert } from '../../core/utils/alert';
 import { useFocusEffect } from '@react-navigation/native';
@@ -27,6 +29,7 @@ const { width } = Dimensions.get('window');
 const RestaurantDetailScreen = ({ route, navigation }) => {
   const { restaurant } = route.params;
   const [products, setProducts] = useState([]);
+  const [dailyMenus, setDailyMenus] = useState([]);
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -35,6 +38,7 @@ const RestaurantDetailScreen = ({ route, navigation }) => {
 
   useEffect(() => {
     loadProducts();
+    loadDailyMenus();
   }, []);
 
 
@@ -87,6 +91,16 @@ const RestaurantDetailScreen = ({ route, navigation }) => {
       setCategories([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadDailyMenus = async () => {
+    try {
+      const menus = await dailyMenuService.getAllDailyMenus(restaurant.id);
+      setDailyMenus(menus);
+    } catch (error) {
+      console.error('Error cargando menús del día:', error);
+      setDailyMenus([]);
     }
   };
 
@@ -169,6 +183,40 @@ const RestaurantDetailScreen = ({ route, navigation }) => {
             </Text>
           </View>
         </View>
+
+        {/* Menús del Día */}
+        {dailyMenus.length > 0 && (
+          <View style={styles.dailyMenusSection}>
+            <View style={styles.sectionHeader}>
+              <Ionicons name="restaurant" size={24} color={colors.primary} />
+              <Text style={styles.sectionTitle}>Menús del Día</Text>
+            </View>
+            {dailyMenus.map((menu) => (
+              <DailyMenuCard
+                key={menu.id}
+                menu={menu}
+                onPress={() => {
+                  // Puedes agregar navegación a detalle del menú si lo deseas
+                }}
+                onAddToCart={() => {
+                  // Convertir el menú a formato de producto para el carrito
+                  const menuAsProduct = {
+                    id: `menu-${menu.id}`,
+                    name: menu.name,
+                    description: menu.description,
+                    price: menu.price,
+                    image: menu.image_url,
+                    restaurantid: restaurant.id,
+                    restaurant: restaurant.name,
+                    isDailyMenu: true,
+                  };
+                  addToCart(menuAsProduct);
+                  showAlert('Éxito', `${menu.name} agregado al carrito`);
+                }}
+              />
+            ))}
+          </View>
+        )}
 
         {/* Categorías */}
         <View style={styles.categoriesSection}>
@@ -318,6 +366,33 @@ const styles = StyleSheet.create({
     color: colors.gray,
     fontSize: 18,
     marginTop: 32,
+  },
+  dailyMenusSection: {
+    paddingHorizontal: spacing.lg,
+    marginTop: spacing.md,
+    marginBottom: spacing.lg,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+    gap: spacing.sm,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.dark,
+    flex: 1,
+  },
+  viewAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  viewAllText: {
+    fontSize: 14,
+    color: colors.primary,
+    fontWeight: '600',
   },
 
 });
