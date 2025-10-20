@@ -137,6 +137,7 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.md,
+    paddingBottom: 100,
   },
   footerSpace: {
     width: SPACING.md,
@@ -181,7 +182,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.lg,
-    paddingBottom: SPACING.lg,
+    paddingBottom: 120,
     elevation: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -4 },

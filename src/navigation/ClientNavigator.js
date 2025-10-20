@@ -8,6 +8,7 @@ import CartHeaderButton from '../components/CartHeaderButton';
 import { COLORS } from '../theme/colors';
 import { useNavigation } from '@react-navigation/native';
 import CartNavigationHandler from '../components/CartNavigationHandler';
+import CustomTabBar from '../components/CustomTabBar';
 
 // Componente personalizado para el ícono con efecto de mordida
 const TabIconWithBite = React.memo(({ iconName, focused, size }) => {
@@ -370,69 +371,13 @@ const ClientNavigator = () => {
     <CartNavigationHandler>
       <Tab.Navigator
         ref={setNavigationRef}
-
-        screenOptions={({ route }) => ({
-          headerShown: false, // Ocultar header del Tab Navigator (usamos AppHeader en cada pantalla)
-          headerTitle: 'TOC TOC',
-          headerTitleAlign: 'center',
-          headerStyle: {
-            backgroundColor: COLORS.primary,
-            elevation: 1,
-            shadowOpacity: 0.1,
-            borderBottomWidth: 0,
-          },
-          headerTitleStyle: {
-            fontWeight: 'bold',
-            fontSize: 20,
-            color: COLORS.white,
-          },
-          headerRight: () => <CartHeaderButton />,
-          lazy: true, // Cargar pantallas solo cuando se necesiten
+        tabBar={(props) => <CustomTabBar {...props} />}
+        screenOptions={{
+          headerShown: false,
+          lazy: true,
           tabBarHideOnKeyboard: true,
           animationEnabled: true,
-          tabBarIcon: ({ focused, color, size }) => {
-            let iconName;
-            if (route.name === 'Inicio') iconName = 'home';
-            else if (route.name === 'Shorts') iconName = 'play-circle';
-            else if (route.name === 'Buscar') iconName = 'search';
-            else if (route.name === 'Pedidos') iconName = 'file-text';
-            else if (route.name === 'Perfil') iconName = 'user';
-
-            return (
-              <TabIconWithBite
-                iconName={iconName}
-                focused={focused}
-                size={focused ? 24 : 20}
-              />
-            );
-          },
-          tabBarActiveTintColor: COLORS.white,
-          tabBarInactiveTintColor: COLORS.white,
-          tabBarStyle: {
-            backgroundColor: COLORS.primary,
-            borderTopWidth: 0,
-            elevation: 8,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: -1 },
-            shadowOpacity: 0.1,
-            shadowRadius: 4,
-            height: 85,
-            paddingBottom: 20,
-            paddingTop: 10,
-          },
-          tabBarItemStyle: {
-            paddingVertical: 5,
-          },
-          tabBarLabelStyle: {
-            fontSize: 11,
-            fontWeight: '600',
-            letterSpacing: 0.3,
-            marginTop: 4,
-          },
-          tabBarIconStyle: {
-            marginTop: 5,
-          },
-        })}
+        }}
       >
         <Tab.Screen
           name="Inicio"

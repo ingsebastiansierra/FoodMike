@@ -388,6 +388,7 @@ const styles = StyleSheet.create({
     },
     listContainer: {
         padding: SPACING.md,
+        paddingBottom: 100,
     },
     productCard: {
         backgroundColor: '#FFF',

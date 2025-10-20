@@ -15,22 +15,52 @@ import { useFocusEffect } from '@react-navigation/native';
 import { COLORS, SPACING } from '../theme';
 import { shortsService } from '../services/shortsService';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../config/supabase';
 
 const ManageShortsScreen = ({ navigation, route }) => {
     const { user } = useAuth();
-    const restaurantId = route.params?.restaurantId || user?.restaurant_id;
-
+    const [restaurantId, setRestaurantId] = useState(null);
     const [shorts, setShorts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
 
+    useEffect(() => {
+        loadRestaurantId();
+    }, [user]);
+
+    const loadRestaurantId = async () => {
+        try {
+            if (route.params?.restaurantId) {
+                setRestaurantId(route.params.restaurantId);
+                return;
+            }
+
+            if (user?.id) {
+                const { data: profile, error } = await supabase
+                    .from('profiles')
+                    .select('restaurant_id')
+                    .eq('id', user.id)
+                    .single();
+
+                if (error) throw error;
+                setRestaurantId(profile.restaurant_id);
+            }
+        } catch (error) {
+            console.error('Error loading restaurant ID:', error);
+        }
+    };
+
     useFocusEffect(
         useCallback(() => {
-            loadShorts();
-        }, [])
+            if (restaurantId) {
+                loadShorts();
+            }
+        }, [restaurantId])
     );
 
     const loadShorts = async () => {
+        if (!restaurantId) return;
+
         try {
             setLoading(true);
             const data = await shortsService.getRestaurantShorts(restaurantId);

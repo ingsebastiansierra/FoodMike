@@ -4,6 +4,8 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { COLORS } from '../theme/colors';
+import CustomAdminTabBar from '../components/CustomAdminTabBar';
+import AppHeaderAdmin from '../components/AppHeaderAdmin';
 
 // Screens
 import RestaurantAdminDashboardScreen from '../screens/RestaurantAdminDashboardScreen';
@@ -68,6 +70,36 @@ const DashboardStack = () => (
                     fontWeight: 'bold',
                 },
                 title: 'Detalle del Pedido',
+            }}
+        />
+    </Stack.Navigator>
+);
+
+// Stack para Shorts
+const ShortsStack = () => (
+    <Stack.Navigator
+        screenOptions={{
+            headerShown: false,
+        }}
+    >
+        <Stack.Screen
+            name="ShortsMain"
+            component={ManageShortsScreen}
+            options={{ headerShown: false }}
+        />
+        <Stack.Screen
+            name="CreateShort"
+            component={CreateShortScreen}
+            options={{
+                headerShown: true,
+                headerStyle: {
+                    backgroundColor: COLORS.primary,
+                },
+                headerTintColor: '#fff',
+                headerTitleStyle: {
+                    fontWeight: 'bold',
+                },
+                title: 'Crear Short',
             }}
         />
     </Stack.Navigator>
@@ -232,105 +264,43 @@ const adminTabIconStyles = StyleSheet.create({
 const RestaurantAdminNavigator = () => {
     return (
         <Tab.Navigator
+            tabBar={(props) => <CustomAdminTabBar {...props} />}
             screenOptions={({ route }) => ({
-                headerShown: true, // Mostrar header
-                headerTitle: 'TOC TOC',
-                headerTitleAlign: 'center',
-                headerStyle: {
-                    backgroundColor: COLORS.primary,
-                    elevation: 1,
-                    shadowOpacity: 0.1,
-                    borderBottomWidth: 0,
-                },
-                headerTitleStyle: {
-                    fontWeight: 'bold',
-                    fontSize: 20,
-                    color: COLORS.white,
-                },
-                headerRight: () => <PendingOrdersButton />,
+                headerShown: true,
+                header: ({ navigation }) => (
+                    <AppHeaderAdmin
+                        screenName={route.name.toUpperCase()}
+                        navigation={navigation}
+                    />
+                ),
                 tabBarHideOnKeyboard: true,
                 animationEnabled: true,
-                tabBarIcon: ({ focused, color, size }) => {
-                    let iconName;
-
-                    switch (route.name) {
-                        case 'Dashboard':
-                            iconName = 'dashboard';
-                            break;
-                        case 'Products':
-                            iconName = 'restaurant-menu';
-                            break;
-                        case 'Orders':
-                            iconName = 'receipt-long';
-                            break;
-                        case 'Settings':
-                            iconName = 'settings';
-                            break;
-                        default:
-                            iconName = 'circle';
-                    }
-
-                    return (
-                        <AdminTabIcon
-                            iconName={iconName}
-                            focused={focused}
-                            size={focused ? 24 : 20}
-                        />
-                    );
-                },
-                tabBarActiveTintColor: COLORS.white,
-                tabBarInactiveTintColor: COLORS.white,
-                tabBarStyle: {
-                    backgroundColor: COLORS.primary,
-                    borderTopWidth: 0,
-                    elevation: 8,
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: -1 },
-                    shadowOpacity: 0.1,
-                    shadowRadius: 4,
-                    height: 85,
-                    paddingBottom: 20,
-                    paddingTop: 10,
-                },
-                tabBarItemStyle: {
-                    paddingVertical: 5,
-                },
-                tabBarLabelStyle: {
-                    fontSize: 11,
-                    fontWeight: '600',
-                    letterSpacing: 0.3,
-                    marginTop: 4,
-                },
-                tabBarIconStyle: {
-                    marginTop: 5,
-                },
             })}
         >
             <Tab.Screen
-                name="Dashboard"
+                name="Inicio"
                 component={DashboardStack}
-                options={{ title: 'Inicio' }}
             />
             <Tab.Screen
-                name="Products"
+                name="Shorts"
+                component={ShortsStack}
+            />
+            <Tab.Screen
+                name="Pedidos"
+                component={OrdersStack}
+            />
+            <Tab.Screen
+                name="Productos"
                 component={ProductsStack}
-                options={{ title: 'Productos' }}
                 listeners={({ navigation }) => ({
                     tabPress: (e) => {
-                        // Navegar a la primera pantalla del stack
-                        navigation.navigate('Products', { screen: 'ProductsList' });
+                        navigation.navigate('Productos', { screen: 'ProductsList' });
                     },
                 })}
             />
             <Tab.Screen
-                name="Orders"
-                component={OrdersStack}
-                options={{ title: 'Pedidos' }}
-            />
-            <Tab.Screen
-                name="Settings"
+                name="Ajustes"
                 component={SettingsStack}
-                options={{ title: 'Ajustes' }}
             />
         </Tab.Navigator>
     );

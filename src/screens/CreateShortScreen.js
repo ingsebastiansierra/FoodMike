@@ -221,7 +221,10 @@ const CreateShortScreen = ({ route }) => {
     };
 
     return (
-        <ScrollView style={styles.container}>
+        <ScrollView
+            style={styles.container}
+            contentContainerStyle={styles.scrollContent}
+        >
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()}>
                     <Ionicons name="close" size={28} color={COLORS.text} />
@@ -457,6 +460,9 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: 'white',
+    },
+    scrollContent: {
+        paddingBottom: 120,
     },
     header: {
         flexDirection: 'row',

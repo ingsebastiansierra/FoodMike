@@ -349,6 +349,7 @@ const CheckoutScreen = ({ navigation }) => {
       {/* Contenido en Acordeón */}
       <ScrollView
         style={styles.scrollContainer}
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         bounces={true}
         scrollEventThrottle={16}
@@ -547,6 +548,9 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flex: 1,
   },
+  scrollContent: {
+    paddingBottom: 180,
+  },
   // Acordeón
   accordionSection: {
     marginHorizontal: SPACING.lg,
@@ -685,7 +689,8 @@ const styles = StyleSheet.create({
   bottomContainer: {
     backgroundColor: COLORS.white,
     paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.lg,
+    paddingTop: SPACING.lg,
+    paddingBottom: 120,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     elevation: 8,

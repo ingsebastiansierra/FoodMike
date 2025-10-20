@@ -154,7 +154,11 @@ const RestaurantSettingsScreen = ({ navigation }) => {
     }
 
     return (
-        <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        <ScrollView
+            style={styles.container}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+        >
             {/* Header con gradiente y foto del restaurante */}
             <LinearGradient
                 colors={['#667eea', '#764ba2']}
@@ -328,6 +332,9 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: COLORS.background,
+    },
+    scrollContent: {
+        paddingBottom: 100,
     },
     header: {
         paddingTop: SPACING.xl,

@@ -114,6 +114,7 @@ const RestaurantAdminDashboardScreen = ({ navigation }) => {
     return (
         <ScrollView
             style={styles.container}
+            contentContainerStyle={styles.scrollContent}
             refreshControl={
                 <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
             }
@@ -186,37 +187,40 @@ const RestaurantAdminDashboardScreen = ({ navigation }) => {
                         icon="videocam"
                         label="Crear Short"
                         color="#FF6B6B"
-                        onPress={() => navigation.navigate('CreateShort', { restaurantId: restaurant.id })}
+                        onPress={() => navigation.navigate('Shorts', {
+                            screen: 'CreateShort',
+                            params: { restaurantId: restaurant.id }
+                        })}
                     />
                     <ActionButton
                         icon="video-library"
                         label="Mis Shorts"
                         color="#9B59B6"
-                        onPress={() => navigation.navigate('ManageShorts', { restaurantId: restaurant.id })}
+                        onPress={() => navigation.navigate('Shorts')}
                     />
                     <ActionButton
                         icon="add-circle"
                         label="Nuevo Producto"
                         color="#667eea"
-                        onPress={() => navigation.navigate('Products', { screen: 'AddProduct' })}
+                        onPress={() => navigation.navigate('Productos', { screen: 'AddProduct' })}
                     />
                     <ActionButton
                         icon="list-alt"
                         label="Ver Productos"
                         color="#4ECDC4"
-                        onPress={() => navigation.navigate('Products')}
+                        onPress={() => navigation.navigate('Productos')}
                     />
                     <ActionButton
                         icon="receipt"
                         label="Pedidos"
                         color="#FFD93D"
-                        onPress={() => navigation.navigate('Orders')}
+                        onPress={() => navigation.navigate('Pedidos')}
                     />
                     <ActionButton
                         icon="settings"
                         label="Configuración"
                         color="#6BCF7F"
-                        onPress={() => navigation.navigate('Settings')}
+                        onPress={() => navigation.navigate('Ajustes')}
                     />
                 </View>
             </View>
@@ -225,7 +229,7 @@ const RestaurantAdminDashboardScreen = ({ navigation }) => {
             <View style={styles.section}>
                 <View style={styles.sectionHeader}>
                     <Text style={styles.sectionTitle}>Pedidos Recientes</Text>
-                    <TouchableOpacity onPress={() => navigation.navigate('Orders')}>
+                    <TouchableOpacity onPress={() => navigation.navigate('Pedidos')}>
                         <Text style={styles.seeAllText}>Ver todos</Text>
                     </TouchableOpacity>
                 </View>
@@ -277,7 +281,7 @@ const RestaurantAdminDashboardScreen = ({ navigation }) => {
             <View style={styles.section}>
                 <View style={styles.sectionHeader}>
                     <Text style={styles.sectionTitle}>Productos Destacados</Text>
-                    <TouchableOpacity onPress={() => navigation.navigate('Products')}>
+                    <TouchableOpacity onPress={() => navigation.navigate('Productos')}>
                         <Text style={styles.seeAllText}>Ver todos</Text>
                     </TouchableOpacity>
                 </View>
@@ -291,11 +295,11 @@ const RestaurantAdminDashboardScreen = ({ navigation }) => {
                             <AdminProductCard
                                 key={product.id}
                                 product={product}
-                                onPress={() => navigation.navigate('Products', {
+                                onPress={() => navigation.navigate('Productos', {
                                     screen: 'EditProduct',
                                     params: { product: product }
                                 })}
-                                onEdit={() => navigation.navigate('Products', {
+                                onEdit={() => navigation.navigate('Productos', {
                                     screen: 'EditProduct',
                                     params: { product: product }
                                 })}
@@ -442,6 +446,9 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: COLORS.background,
+    },
+    scrollContent: {
+        paddingBottom: 100,
     },
     loadingContainer: {
         flex: 1,
