@@ -137,6 +137,9 @@ const LoginRegisterScreen = ({ navigation }) => {
                   </LinearGradient>
                 </View>
 
+                {/* App Name */}
+                <Text style={styles.appName}>TOC TOC</Text>
+
                 {/* Hero Text */}
                 <Text style={styles.heroTitle}>Comienza ahora</Text>
                 <Text style={styles.heroSubtitle}>
@@ -312,17 +315,17 @@ const LoginRegisterScreen = ({ navigation }) => {
                 <Icon name="apple" size={22} color="#000000" />
               </TouchableOpacity>
             </View>
-          </Animated.View>
 
-          {/* Footer */}
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>
-              Al continuar, aceptas nuestros{' '}
-              <Text style={styles.footerLink}>Términos de Servicio</Text>
-              {' '}y{' '}
-              <Text style={styles.footerLink}>Política de Privacidad</Text>
-            </Text>
-          </View>
+            {/* Footer */}
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>
+                Al continuar, aceptas nuestros{' '}
+                <Text style={styles.footerLink}>Términos de Servicio</Text>
+                {' '}y{' '}
+                <Text style={styles.footerLink}>Política de Privacidad</Text>
+              </Text>
+            </View>
+          </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
@@ -339,8 +342,8 @@ const styles = StyleSheet.create({
   },
   heroSection: {
     width: width,
-    height: height * 0.45,
-    marginBottom: -30,
+    height: height * 0.55,
+    marginBottom: 0,
   },
   heroBackground: {
     width: '100%',
@@ -354,8 +357,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 40,
+    paddingBottom: SPACING.xl + 30,
   },
   logoBadge: {
+    marginTop: SPACING.xl + 40,
     marginBottom: SPACING.lg,
   },
   logoBadgeGradient: {
@@ -372,14 +377,25 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 10,
   },
-  heroTitle: {
-    fontSize: 38,
+  appName: {
+    fontSize: 48,
     fontWeight: '900',
     color: COLORS.white,
     textShadowColor: 'rgba(0, 0, 0, 0.5)',
     textShadowOffset: { width: 2, height: 2 },
     textShadowRadius: 8,
-    letterSpacing: 1,
+    letterSpacing: 3,
+    marginTop: SPACING.md,
+    marginBottom: SPACING.lg,
+  },
+  heroTitle: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: COLORS.white,
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 8,
+    letterSpacing: 0.5,
     marginBottom: SPACING.sm,
   },
   heroSubtitle: {
@@ -394,16 +410,9 @@ const styles = StyleSheet.create({
   },
   mainCard: {
     backgroundColor: COLORS.white,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
     padding: SPACING.xl,
     paddingTop: SPACING.xl + 10,
     marginHorizontal: 0,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -5 },
-    shadowOpacity: 0.15,
-    shadowRadius: 15,
-    elevation: 15,
   },
   tabsContainer: {
     flexDirection: 'row',
@@ -574,10 +583,9 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   footer: {
-    marginTop: SPACING.lg,
-    paddingHorizontal: SPACING.xl,
+    marginTop: SPACING.xl,
+    paddingHorizontal: SPACING.md,
     paddingBottom: SPACING.xl,
-    backgroundColor: COLORS.white,
   },
   footerText: {
     color: '#999',
