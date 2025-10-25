@@ -1,16 +1,16 @@
 import React, { useContext, useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  FlatList, 
-  TouchableOpacity, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
   ScrollView,
   StatusBar,
   Dimensions
 } from 'react-native';
 import { CartContext } from '../context/CartContext';
-import CartItemCard from './CartItemCard';
+import CartItemCard from '../components/CartItemCard';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -27,8 +27,8 @@ const ConfirmarOrdenComponente = () => {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const [isProcessing, setIsProcessing] = useState(false);
-  
-  
+
+
   const shippingCost = totalPrice >= 50 ? 0 : 5;
   const finalTotal = totalPrice + shippingCost;
 
@@ -51,7 +51,7 @@ const ConfirmarOrdenComponente = () => {
         setTimeout(() => {
           setIsProcessing(false);
           showAlert(
-            '¡Pago Exitoso!', 
+            '¡Pago Exitoso!',
             'Tu pedido ha sido procesado correctamente. Recibirás una confirmación por email.',
             () => {
               clearCart();
@@ -72,7 +72,7 @@ const ConfirmarOrdenComponente = () => {
       <Icon name="shopping-cart" size={80} color={COLORS.gray} />
       <Text style={styles.emptyTitle}>Carrito Vacío</Text>
       <Text style={styles.emptySubtitle}>No hay productos para confirmar</Text>
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.continueButton}
         onPress={() => navigation.navigate('ClientDashboard')}
       >
@@ -84,7 +84,7 @@ const ConfirmarOrdenComponente = () => {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
-      
+
       {/* Header */}
       <LinearGradient
         colors={[COLORS.primary, COLORS.primary + 'DD']}
@@ -94,14 +94,14 @@ const ConfirmarOrdenComponente = () => {
           <TouchableOpacity style={styles.backButton} onPress={handleBack}>
             <Icon name="arrow-left" size={18} color={COLORS.white} />
           </TouchableOpacity>
-          
+
           <View style={styles.headerContent}>
             <Text style={styles.headerTitle}>Confirmar Pedido</Text>
             <Text style={styles.headerSubtitle}>
               {cartItems.length} {cartItems.length === 1 ? 'producto' : 'productos'}
             </Text>
           </View>
-          
+
           <View style={styles.placeholder} />
         </View>
       </LinearGradient>
@@ -115,26 +115,26 @@ const ConfirmarOrdenComponente = () => {
             {/* Order Summary */}
             <View style={styles.summaryCard}>
               <Text style={styles.summaryTitle}>Resumen del Pedido</Text>
-              
+
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Subtotal:</Text>
                 <Text style={styles.summaryValue}>{formatCurrency(totalPrice)}</Text>
               </View>
-              
+
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Envío:</Text>
                 <Text style={styles.summaryValue}>
                   {shippingCost === 0 ? 'Gratis' : formatCurrency(shippingCost)}
                 </Text>
               </View>
-              
+
               <View style={styles.divider} />
-              
+
               <View style={styles.summaryRow}>
                 <Text style={styles.totalLabel}>Total:</Text>
                 <Text style={styles.totalValue}>{formatCurrency(finalTotal)}</Text>
               </View>
-              
+
               {shippingCost === 0 && (
                 <Text style={styles.freeShippingText}>
                   🎉 ¡Envío gratis en pedidos superiores a $50!
@@ -169,10 +169,10 @@ const ConfirmarOrdenComponente = () => {
               colors={isProcessing ? [COLORS.gray, COLORS.gray] : [COLORS.primary, COLORS.primary + 'DD']}
               style={styles.paymentButtonGradient}
             >
-              <Icon 
-                name={isProcessing ? "spinner" : "credit-card"} 
-                size={20} 
-                color={COLORS.white} 
+              <Icon
+                name={isProcessing ? "spinner" : "credit-card"}
+                size={20}
+                color={COLORS.white}
               />
               <Text style={styles.paymentButtonText}>
                 {isProcessing ? 'Procesando...' : `Pagar ${formatCurrency(finalTotal)}`}

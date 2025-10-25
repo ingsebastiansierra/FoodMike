@@ -1,0 +1,361 @@
+import React, { useEffect } from 'react';
+import { TouchableOpacity, View, StyleSheet } from 'react-native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createStackNavigator } from '@react-navigation/stack';
+import { LinearGradient } from 'expo-linear-gradient';
+import Icon from 'react-native-vector-icons/FontAwesome';
+import CartHeaderButton from '../components/CartHeaderButton';
+import { COLORS } from '../theme/colors';
+import { useNavigation } from '@react-navigation/native';
+import CartNavigationHandler from '../components/CartNavigationHandler';
+import CustomTabBar from '../components/CustomTabBar';
+
+// Componente personalizado para el ícono con efecto de mordida
+const TabIconWithBite = React.memo(({ iconName, focused, size }) => {
+  return (
+    <View style={tabIconStyles.container}>
+      <View style={[
+        tabIconStyles.iconWrapper,
+        focused && tabIconStyles.iconWrapperActive
+      ]}>
+        <Icon
+          name={iconName}
+          size={size}
+          color={focused ? COLORS.primary : COLORS.white}
+        />
+      </View>
+    </View>
+  );
+});
+
+const tabIconStyles = StyleSheet.create({
+  container: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 50,
+    height: 50,
+  },
+  iconWrapper: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
+  },
+  iconWrapperActive: {
+    backgroundColor: COLORS.white,
+    shadowColor: COLORS.white,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+    transform: [{ translateY: -2 }, { scale: 1.05 }],
+  },
+});
+
+// Pantallas del Cliente
+import ClientHomeScreen from '../screens/client/ClientHomeScreen';
+import SearchScreen from '../screens/client/SearchScreen';
+import RestaurantsListScreen from '../screens/client/RestaurantsListScreen';
+import ShortsScreen from '../screens/client/ShortsScreen';
+import OrdersScreen from '../screens/client/OrdersScreen';
+import FavoritesScreen from '../screens/client/FavoritesScreen';
+import ProfileScreen from '../screens/client/ProfileScreen';
+
+// Pantallas de detalle (para el Stack)
+import RestaurantDetailScreen from '../screens/client/RestaurantDetailScreen';
+import ProductDetailScreen from '../screens/client/ProductDetailScreen';
+import CartProductDetailScreen from '../screens/client/CartProductDetailScreen';
+import CheckoutScreen from '../screens/client/CheckoutScreen';
+import OrderDetailScreen from '../screens/client/OrderDetailScreen';
+import CarritoComponent from '../components/CarritoComponent';
+
+const Tab = createBottomTabNavigator();
+const Stack = createStackNavigator();
+
+// Opciones básicas para los stacks (sin header)
+const stackScreenOptions = {
+  headerShown: false,
+  gestureEnabled: false,
+  cardOverlayEnabled: false,
+  animationEnabled: false,
+};
+
+// Stacks para cada pestaña
+const HomeStack = () => (
+  <Stack.Navigator
+    screenOptions={stackScreenOptions}
+  >
+    <Stack.Screen name="HomeInitial" component={ClientHomeScreen} />
+    <Stack.Screen name="RestaurantsList" component={RestaurantsListScreen} />
+    <Stack.Screen name="RestaurantDetail" component={RestaurantDetailScreen} />
+    <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
+    <Stack.Screen
+      name="Carrito"
+      component={CarritoComponent}
+      options={{
+        headerRight: () => null,
+        headerTitle: 'Mi Carrito',
+        presentation: 'modal',
+        gestureEnabled: false,
+        animationTypeForReplace: 'push',
+      }}
+    />
+    <Stack.Screen
+      name="CartProductDetail"
+      component={CartProductDetailScreen}
+      options={{
+        headerShown: false,
+        gestureEnabled: false,
+      }}
+    />
+    <Stack.Screen
+      name="Checkout"
+      component={CheckoutScreen}
+      options={{
+        headerRight: () => null,
+        gestureEnabled: false,
+      }}
+    />
+    <Stack.Screen
+      name="OrderDetail"
+      component={OrderDetailScreen}
+      options={{
+        headerShown: false,
+        gestureEnabled: false,
+      }}
+    />
+  </Stack.Navigator>
+);
+
+const ShortsStack = () => (
+  <Stack.Navigator screenOptions={stackScreenOptions}>
+    <Stack.Screen name="ShortsInitial" component={ShortsScreen} />
+    <Stack.Screen name="RestaurantDetail" component={RestaurantDetailScreen} />
+    <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
+  </Stack.Navigator>
+);
+
+const SearchStack = () => (
+  <Stack.Navigator screenOptions={stackScreenOptions}>
+    <Stack.Screen name="SearchInitial" component={SearchScreen} />
+    <Stack.Screen name="RestaurantsList" component={RestaurantsListScreen} />
+    <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
+    <Stack.Screen name="RestaurantDetail" component={RestaurantDetailScreen} />
+    <Stack.Screen
+      name="Carrito"
+      component={CarritoComponent}
+      options={{
+        headerRight: () => null,
+        headerTitle: 'Mi Carrito',
+        presentation: 'modal',
+        gestureEnabled: false,
+      }}
+    />
+    <Stack.Screen
+      name="CartProductDetail"
+      component={CartProductDetailScreen}
+      options={{
+        headerShown: false,
+        gestureEnabled: false,
+      }}
+    />
+    <Stack.Screen
+      name="Checkout"
+      component={CheckoutScreen}
+      options={{ headerRight: () => null }}
+    />
+  </Stack.Navigator>
+);
+
+const OrdersStack = () => (
+  <Stack.Navigator screenOptions={stackScreenOptions}>
+    <Stack.Screen name="OrdersInitial" component={OrdersScreen} />
+    <Stack.Screen
+      name="Carrito"
+      component={CarritoComponent}
+      options={{
+        headerRight: () => null,
+        headerTitle: 'Mi Carrito',
+        presentation: 'modal',
+        gestureEnabled: false,
+        animationTypeForReplace: 'push',
+      }}
+    />
+    <Stack.Screen
+      name="CartProductDetail"
+      component={CartProductDetailScreen}
+      options={{
+        headerShown: false,
+        gestureEnabled: false,
+      }}
+    />
+    <Stack.Screen
+      name="Checkout"
+      component={CheckoutScreen}
+      options={{
+        headerRight: () => null,
+        gestureEnabled: false,
+      }}
+    />
+    <Stack.Screen
+      name="OrderDetail"
+      component={OrderDetailScreen}
+      options={{
+        headerShown: false,
+        gestureEnabled: false,
+      }}
+    />
+  </Stack.Navigator>
+);
+
+const ProfileStack = () => (
+  <Stack.Navigator screenOptions={stackScreenOptions}>
+    <Stack.Screen name="ProfileInitial" component={ProfileScreen} />
+    <Stack.Screen
+      name="Favorites"
+      component={FavoritesScreen}
+      options={{
+        headerShown: false,
+      }}
+    />
+    <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
+    <Stack.Screen name="RestaurantDetail" component={RestaurantDetailScreen} />
+    <Stack.Screen
+      name="Carrito"
+      component={CarritoComponent}
+      options={{
+        headerRight: () => null,
+        headerTitle: 'Mi Carrito',
+        presentation: 'modal',
+        gestureEnabled: false,
+        animationTypeForReplace: 'push',
+      }}
+    />
+    <Stack.Screen
+      name="CartProductDetail"
+      component={CartProductDetailScreen}
+      options={{
+        headerShown: false,
+        gestureEnabled: false,
+      }}
+    />
+    <Stack.Screen
+      name="Checkout"
+      component={CheckoutScreen}
+      options={{
+        headerRight: () => null,
+        gestureEnabled: false,
+      }}
+    />
+  </Stack.Navigator>
+);
+
+const ClientNavigator = () => {
+  const [navigationRef, setNavigationRef] = React.useState(null);
+
+  const handleTabPress = (e, navigation, targetTabName) => {
+    const state = navigation.getState();
+    const currentTab = state.routes[state.index];
+
+    // Verificar si el tab actual tiene navegación anidada (más de una pantalla en el stack)
+    const hasNestedNavigation = currentTab.state?.routes && currentTab.state.routes.length > 1;
+
+    // Verificar si hay carrito abierto
+    let hasCartInAnyTab = false;
+    state.routes.forEach((route) => {
+      if (route.state?.routes) {
+        const hasCart = route.state.routes.some(r => r.name === 'Carrito');
+        if (hasCart) {
+          hasCartInAnyTab = true;
+        }
+      }
+    });
+
+    // Si hay navegación anidada o carrito, resetear al cambiar de tab
+    if (hasCartInAnyTab || hasNestedNavigation) {
+      e.preventDefault();
+
+      const newRoutes = state.routes.map(route => {
+        let initialScreen = 'HomeInitial';
+        switch (route.name) {
+          case 'Inicio': initialScreen = 'HomeInitial'; break;
+          case 'Shorts': initialScreen = 'ShortsInitial'; break;
+          case 'Buscar': initialScreen = 'SearchInitial'; break;
+          case 'Pedidos': initialScreen = 'OrdersInitial'; break;
+          case 'Perfil': initialScreen = 'ProfileInitial'; break;
+        }
+
+        return {
+          ...route,
+          state: {
+            routes: [{ name: initialScreen }],
+            index: 0,
+          },
+        };
+      });
+
+      const targetIndex = newRoutes.findIndex(r => r.name === targetTabName);
+
+      navigation.reset({
+        index: targetIndex >= 0 ? targetIndex : state.index,
+        routes: newRoutes,
+      });
+    }
+  };
+
+  return (
+    <CartNavigationHandler>
+      <Tab.Navigator
+        ref={setNavigationRef}
+        tabBar={(props) => <CustomTabBar {...props} />}
+        initialRouteName="Inicio"
+        screenOptions={{
+          headerShown: false,
+          lazy: false,
+          tabBarHideOnKeyboard: true,
+          animationEnabled: false,
+        }}
+      >
+        <Tab.Screen
+          name="Inicio"
+          component={HomeStack}
+          listeners={({ navigation }) => ({
+            tabPress: (e) => handleTabPress(e, navigation, 'Inicio')
+          })}
+        />
+        <Tab.Screen
+          name="Shorts"
+          component={ShortsStack}
+          listeners={({ navigation }) => ({
+            tabPress: (e) => handleTabPress(e, navigation, 'Shorts')
+          })}
+        />
+        <Tab.Screen
+          name="Buscar"
+          component={SearchStack}
+          listeners={({ navigation }) => ({
+            tabPress: (e) => handleTabPress(e, navigation, 'Buscar')
+          })}
+        />
+        <Tab.Screen
+          name="Pedidos"
+          component={OrdersStack}
+          listeners={({ navigation }) => ({
+            tabPress: (e) => handleTabPress(e, navigation, 'Pedidos')
+          })}
+        />
+        <Tab.Screen
+          name="Perfil"
+          component={ProfileStack}
+          listeners={({ navigation }) => ({
+            tabPress: (e) => handleTabPress(e, navigation, 'Perfil')
+          })}
+        />
+      </Tab.Navigator>
+    </CartNavigationHandler>
+  );
+};
+
+export default ClientNavigator;

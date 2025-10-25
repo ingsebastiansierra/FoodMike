@@ -21,6 +21,8 @@ const ShortsScreen = () => {
     const navigation = useNavigation();
     const { user } = useAuth();
     const flatListRef = useRef(null);
+    const hasLoadedRef = useRef(false);
+    const isMountedRef = useRef(true);
 
     const [shorts, setShorts] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -29,23 +31,53 @@ const ShortsScreen = () => {
     const [commentsModalVisible, setCommentsModalVisible] = useState(false);
     const [selectedShortId, setSelectedShortId] = useState(null);
     const [hasMore, setHasMore] = useState(true);
-    const [isScreenFocused, setIsScreenFocused] = useState(true);
+    const [isScreenFocused, setIsScreenFocused] = useState(false);
+    const [isTabActive, setIsTabActive] = useState(false);
 
+    // Verificar si el tab de Shorts está activo
     useEffect(() => {
-        loadShorts();
-    }, []);
+        const unsubscribe = navigation.addListener('state', () => {
+            const state = navigation.getState();
+            const currentRoute = state.routes[state.index];
+            const isActive = currentRoute.name === 'Shorts';
+            setIsTabActive(isActive);
+
+            if (!isActive) {
+                setIsScreenFocused(false);
+            }
+        });
+
+        return unsubscribe;
+    }, [navigation]);
 
     // Pausar videos cuando sales de la pantalla
     useFocusEffect(
         useCallback(() => {
-            // Cuando la pantalla está enfocada
-            setIsScreenFocused(true);
+            // Solo activar si el tab está activo
+            const checkAndActivate = () => {
+                const state = navigation.getState();
+                const currentRoute = state.routes[state.index];
+                const isActive = currentRoute.name === 'Shorts';
+
+                if (isActive) {
+                    setIsScreenFocused(true);
+                    setIsTabActive(true);
+
+                    // Cargar shorts solo la primera vez que se enfoca la pantalla
+                    if (!hasLoadedRef.current) {
+                        hasLoadedRef.current = true;
+                        loadShorts();
+                    }
+                }
+            };
+
+            checkAndActivate();
 
             // Cuando la pantalla pierde el foco
             return () => {
                 setIsScreenFocused(false);
             };
-        }, [])
+        }, [navigation])
     );
 
     const loadShorts = async (refresh = false) => {
@@ -170,13 +202,22 @@ const ShortsScreen = () => {
     const renderShort = ({ item, index }) => (
         <ShortCard
             short={item}
-            isActive={index === currentIndex && isScreenFocused}
+            isActive={index === currentIndex && isScreenFocused && isTabActive}
             onLike={() => handleLike(item)}
             onComment={() => handleComment(item)}
             onShare={() => handleShare(item)}
             onRestaurantPress={() => handleRestaurantPress(item)}
         />
     );
+
+    // No renderizar nada hasta que el tab esté activo
+    if (!isTabActive) {
+        return (
+            <View style={styles.container}>
+                <StatusBar barStyle="light-content" />
+            </View>
+        );
+    }
 
     return (
         <View style={styles.container}>

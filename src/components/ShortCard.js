@@ -32,25 +32,26 @@ const ShortCard = ({
 
     useEffect(() => {
         const playVideo = async () => {
-            if (isActive && videoRef.current) {
-                try {
+            if (!videoRef.current) return;
+
+            try {
+                if (isActive) {
                     await videoRef.current.playAsync();
                     setIsPlaying(true);
-                } catch (error) {
-                    console.log('Error playing video:', error);
-                }
-            } else if (!isActive && videoRef.current) {
-                try {
+                } else {
                     await videoRef.current.pauseAsync();
-                    await videoRef.current.setPositionAsync(0); // Reiniciar al inicio
+                    await videoRef.current.setPositionAsync(0);
                     setIsPlaying(false);
-                } catch (error) {
-                    console.log('Error pausing video:', error);
                 }
+            } catch (error) {
+                console.log('Error controlling video:', error);
             }
         };
 
-        playVideo();
+        // Solo ejecutar si isActive cambió a true o false explícitamente
+        if (isActive !== undefined) {
+            playVideo();
+        }
     }, [isActive]);
 
     // Limpiar al desmontar el componente
@@ -133,7 +134,7 @@ const ShortCard = ({
                 style={styles.video}
                 resizeMode="cover"
                 isLooping
-                shouldPlay={isActive}
+                shouldPlay={false}
                 useNativeControls={false}
                 onLoad={() => {
                     setIsLoading(false);

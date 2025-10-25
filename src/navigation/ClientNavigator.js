@@ -56,7 +56,7 @@ const tabIconStyles = StyleSheet.create({
 
 // Pantallas del Cliente
 import ClientHomeScreen from '../features/client/screens/ClientHomeScreen';
-import SearchScreen from '../features/client/screens/SearchScreen';
+import SearchScreenNew from '../features/client/screens/SearchScreenNew';
 import OrdersScreen from '../features/client/screens/OrdersScreen';
 import FavoritesScreen from '../features/client/screens/FavoritesScreen';
 import ProfileScreen from '../features/client/screens/ProfileScreen';
@@ -156,32 +156,43 @@ const HomeStack = () => (
   </Stack.Navigator>
 );
 
-const ShortsStack = () => (
-  <Stack.Navigator screenOptions={stackScreenOptions}>
-    <Stack.Screen
-      name="ShortsInitial"
-      component={ShortsScreen}
-      options={{ headerShown: false }}
-    />
-    <Stack.Screen name="RestaurantDetail" component={RestaurantDetailScreen} />
-    <Stack.Screen
-      name="RestaurantProfile"
-      component={RestaurantProfileScreen}
-      options={{ headerShown: false }}
-    />
-    <Stack.Screen
-      name="RestaurantShortsViewer"
-      component={RestaurantShortsViewerScreen}
-      options={{
-        headerShown: false,
+const ShortsStack = () => {
+  const [isFocused, setIsFocused] = React.useState(false);
+
+  return (
+    <Stack.Navigator
+      screenOptions={stackScreenOptions}
+      screenListeners={{
+        focus: () => setIsFocused(true),
+        blur: () => setIsFocused(false),
       }}
-    />
-  </Stack.Navigator>
-);
+    >
+      <Stack.Screen
+        name="ShortsInitial"
+        component={ShortsScreen}
+        options={{ headerShown: false }}
+        initialParams={{ isFocused }}
+      />
+      <Stack.Screen name="RestaurantDetail" component={RestaurantDetailScreen} />
+      <Stack.Screen
+        name="RestaurantProfile"
+        component={RestaurantProfileScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="RestaurantShortsViewer"
+        component={RestaurantShortsViewerScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
+    </Stack.Navigator>
+  );
+};
 
 const SearchStack = () => (
   <Stack.Navigator screenOptions={stackScreenOptions}>
-    <Stack.Screen name="SearchInitial" component={SearchScreen} />
+    <Stack.Screen name="SearchInitial" component={SearchScreenNew} />
     <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
     <Stack.Screen name="RestaurantDetail" component={RestaurantDetailScreen} />
     <Stack.Screen
@@ -372,9 +383,10 @@ const ClientNavigator = () => {
       <Tab.Navigator
         ref={setNavigationRef}
         tabBar={(props) => <CustomTabBar {...props} />}
+        initialRouteName="Inicio"
         screenOptions={{
           headerShown: false,
-          lazy: true,
+          lazy: false,
           tabBarHideOnKeyboard: true,
           animationEnabled: true,
         }}

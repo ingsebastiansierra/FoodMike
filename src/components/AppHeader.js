@@ -12,7 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing } from '../theme';
 import { useCart } from '../context/CartContext';
 
-const AppHeader = ({
+const AppHeader = React.memo(({
     screenName = 'HOME',
     showCart = true,
     onCartPress,
@@ -118,4 +118,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default AppHeader;
+export default React.memo(AppHeader);

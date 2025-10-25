@@ -28,6 +28,7 @@ import { useAutoCloseCart } from '../../../hooks/useAutoCloseCart';
 import { useFavorites } from '../../../hooks/useFavorites';
 import ModalWrapper from '../../../components/ModalWrapper';
 import AppHeader from '../../../components/AppHeader';
+import SearchInput from '../../../components/SearchInput';
 
 const { width, height } = Dimensions.get('window');
 
@@ -84,7 +85,6 @@ const SearchScreen = ({ navigation }) => {
 
       setCategories(categoriesResponse.data || []);
       setAllProducts(productsResponse.data || []);
-      setSearchResults(productsResponse.data || []);
     } catch (error) {
       console.error('Error cargando datos iniciales:', error);
       showAlert('Error', 'No se pudieron cargar los datos. Inténtalo de nuevo.');
@@ -93,7 +93,8 @@ const SearchScreen = ({ navigation }) => {
     }
   };
 
-  const filterProducts = useCallback(() => {
+  // Usar useMemo para calcular los resultados filtrados sin causar re-renders
+  const filteredResults = React.useMemo(() => {
     let filtered = [...allProducts];
 
     if (selectedCategory !== 'all') {
@@ -141,12 +142,8 @@ const SearchScreen = ({ navigation }) => {
       filtered = filtered.filter((product) => product.stars >= minStars);
     }
 
-    setSearchResults(filtered);
+    return filtered;
   }, [searchTerm, selectedCategory, allProducts, categories, priceRange, minStars]);
-
-  useEffect(() => {
-    filterProducts();
-  }, [filterProducts]);
 
   const handleRefresh = useCallback(() => {
     setRefreshing(true);
@@ -171,7 +168,7 @@ const SearchScreen = ({ navigation }) => {
     showAlert('Éxito', `${product.name} agregado al carrito`);
   };
 
-  const renderCategory = ({ item }) => (
+  const renderCategory = useCallback(({ item }) => (
     <TouchableOpacity
       style={[
         styles.categoryButton,
@@ -186,9 +183,9 @@ const SearchScreen = ({ navigation }) => {
         {item.name}
       </Text>
     </TouchableOpacity>
-  );
+  ), [selectedCategory]);
 
-  const renderProduct = ({ item }) => (
+  const renderProduct = useCallback(({ item }) => (
     <ProductCard
       product={item}
       onPress={() => handleProductPress(item)}
@@ -201,12 +198,12 @@ const SearchScreen = ({ navigation }) => {
         }
       }}
     />
-  );
+  ), [isFavorite, toggleFavorite]);
 
-  const renderResultsHeader = () => (
+  const renderResultsHeader = useCallback(() => (
     <View style={styles.resultsHeader}>
       <Text style={styles.resultsCount}>
-        {searchResults.length} {searchResults.length === 1 ? 'resultado' : 'resultados'}
+        {filteredResults.length} {filteredResults.length === 1 ? 'resultado' : 'resultados'}
       </Text>
       {(selectedCategory !== 'all' || searchTerm || priceRange.min || priceRange.max || minStars > 0) && (
         <TouchableOpacity style={styles.clearFiltersButton} onPress={clearFilter}>
@@ -214,7 +211,7 @@ const SearchScreen = ({ navigation }) => {
         </TouchableOpacity>
       )}
     </View>
-  );
+  ), [filteredResults.length, selectedCategory, searchTerm, priceRange, minStars]);
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
@@ -251,25 +248,8 @@ const SearchScreen = ({ navigation }) => {
     );
   }
 
-  const renderSearchHeader = () => (
+  const renderListHeader = useCallback(() => (
     <>
-      {/* Barra de búsqueda */}
-      <View style={styles.searchContainer}>
-        <View style={styles.searchInputWrapper}>
-          <TextInput
-            ref={searchInputRef}
-            style={styles.searchInput}
-            placeholder="Search for any food"
-            placeholderTextColor="#B0B0B0"
-            value={searchTerm}
-            onChangeText={setSearchTerm}
-            returnKeyType="search"
-            onSubmitEditing={() => Keyboard.dismiss()}
-          />
-          <Ionicons name="search" size={20} color={colors.darkGray} style={styles.searchIcon} />
-        </View>
-      </View>
-
       <View style={styles.categoriesSection}>
         <FlatList
           horizontal
@@ -283,16 +263,34 @@ const SearchScreen = ({ navigation }) => {
 
       {renderResultsHeader()}
     </>
-  );
+  ), [categories, renderCategory, renderResultsHeader]);
+
+  const handleSearchChange = useCallback((text) => {
+    setSearchTerm(text);
+  }, []);
+
+  const handleSearchSubmit = useCallback(() => {
+    Keyboard.dismiss();
+  }, []);
 
   return (
     <View style={styles.container}>
       <AppHeader
         screenName="SEARCH"
         navigation={navigation}
+        showCart={false}
       />
+
+      {/* Barra de búsqueda aislada con React.memo */}
+      <SearchInput
+        value={searchTerm}
+        onChangeText={handleSearchChange}
+        onSubmitEditing={handleSearchSubmit}
+        inputRef={searchInputRef}
+      />
+
       <FlatList
-        data={searchResults}
+        data={filteredResults}
         renderItem={({ item, index }) => (
           <View style={[styles.productWrapper, index % 2 === 1 && styles.productWrapperOffset]}>
             {renderProduct({ item })}
@@ -302,7 +300,7 @@ const SearchScreen = ({ navigation }) => {
         numColumns={2}
         contentContainerStyle={styles.productList}
         columnWrapperStyle={styles.productRow}
-        ListHeaderComponent={renderSearchHeader}
+        ListHeaderComponent={renderListHeader}
         ListEmptyComponent={renderEmptyState}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
@@ -359,33 +357,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'white',
-  },
-  searchContainer: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.md,
-    backgroundColor: colors.white,
-  },
-  searchInputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.white,
-    borderRadius: 30,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    elevation: 2,
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-  },
-  searchIcon: {
-    marginLeft: 8,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: typography.sizes.md,
-    color: colors.darkGray,
   },
   categoriesSection: {
     marginBottom: spacing.lg,
